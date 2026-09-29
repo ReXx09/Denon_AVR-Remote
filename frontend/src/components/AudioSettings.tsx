@@ -9,6 +9,7 @@ interface Props {
 export default function AudioSettings({ state, post }: Props) {
   const [profileExists, setProfileExists] = useState(false)
   const [profileMessage, setProfileMessage] = useState('')
+  const [settingMessage, setSettingMessage] = useState('')
   const source = state?.source
   const dynamicEq = state?.dynamic_eq
   const dynamicVol = state?.dynamic_volume
@@ -18,6 +19,12 @@ export default function AudioSettings({ state, post }: Props) {
   const dialogEnabled = state?.dialog_level_enabled
   const dialogLevel = state?.dialog_level ?? 0
   const referenceLevel = state?.ref_level_offset ?? 0
+
+  const updateSetting = async (path: string, body: Record<string, unknown>) => {
+    setSettingMessage('Sending...')
+    const result = await post(path, body)
+    setSettingMessage(result.ok ? 'Command sent' : 'Receiver did not accept the command')
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -174,8 +181,10 @@ export default function AudioSettings({ state, post }: Props) {
       <div className="flex items-center justify-between">
         <span className="text-xs text-denon-muted">Dynamic EQ</span>
         <button
-          onClick={() => post('/dynamic-eq', { enabled: !dynamicEq })}
-          className={`text-xs px-3 py-1.5 rounded-lg transition-all ${
+          type="button"
+          onClick={() => void updateSetting('/dynamic-eq', { enabled: !dynamicEq })}
+          aria-pressed={Boolean(dynamicEq)}
+          className={`min-w-[52px] text-xs px-3 py-2 rounded-lg transition-all ${
             dynamicEq
               ? 'bg-denon-gold/20 text-denon-gold'
               : 'bg-denon-surface text-denon-muted'
@@ -184,6 +193,7 @@ export default function AudioSettings({ state, post }: Props) {
           {dynamicEq ? 'On' : 'Off'}
         </button>
       </div>
+      {settingMessage && <p className="text-[10px] text-denon-muted -mt-3">{settingMessage}</p>}
 
       {/* Dynamic Volume */}
       <div>

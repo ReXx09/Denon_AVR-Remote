@@ -282,7 +282,7 @@ export default function SourceSelector({
               <button
                 key={source.id}
                 onClick={() => sendCommand(`${prefix}${source.id}`)}
-                className={`shrink-0 py-2 px-3 rounded-lg text-xs font-medium transition-all ${
+                className={`shrink-0 min-w-[150px] py-2.5 px-4 rounded-lg text-xs font-medium transition-all ${
                   current === source.id
                     ? 'bg-gradient-to-br from-denon-gold/20 to-amber-500/10 text-denon-gold ring-1 ring-denon-gold/40'
                     : 'bg-denon-surface/70 text-denon-text hover:bg-denon-surface'
