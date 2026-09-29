@@ -1,0 +1,65 @@
+services:
+  denon-dashboard:
+    # Override IMAGE_TAG to pin a specific release (e.g. v1.2.3 or a commit SHA).
+    # The :latest default is convenient for first-time setup; pin in production.
+    image: ghcr.io/rexx09/Denon_AVR-Remote:${IMAGE_TAG:-latest}
+    container_name: denon-dashboard
+    restart: unless-stopped
+
+    # ── Network Mode ───────────────────────────────────────────────────────────
+    # WARNING: network_mode: host exposes ALL container ports to the host network.
+    # Only use if you need SSDP auto-discovery. Prefer setting
+    # DENON_DASHBOARD_DENON_HOST to the receiver IP and using bridge mode
+    # (default) for better isolation.
+    #network_mode: host
+
+    ports:
+      - "8080:8080"
+
+    # ── Security hardening ────────────────────────────────────────────────────
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+
+    environment:
+      # ── Discovery ────────────────────────────────────────────────────────────
+      # Leave empty for automatic SSDP discovery (requires network_mode: host).
+      # Set to your receiver's IP if using bridge mode or auto-discovery doesn't work.
+      - DENON_DASHBOARD_DENON_HOST=
+
+      # ── Port ─────────────────────────────────────────────────────────────────
+      # Dashboard port (default 8080). Change if 8080 is taken on your host.
+      #- DENON_DASHBOARD_PORT=8080
+
+      # ── Optional ─────────────────────────────────────────────────────────────
+      #- DENON_DASHBOARD_DENON_TELNET_PORT=23
+      #- DENON_DASHBOARD_DENON_DEVICE_NAME=My Receiver
+      #- DENON_DASHBOARD_DENON_ZONE1_NAME=Main Zone
+      #- DENON_DASHBOARD_DENON_ZONE2_NAME=Zone 2
+      #- DENON_DASHBOARD_DENON_SOURCE_NAMES={"GAME":"Game Console","TV":"TV Audio","NET":"Streaming","BD":"Blu-ray","BT":"Bluetooth"}
+      #- DENON_DASHBOARD_LOG_LEVEL=INFO
+
+      # ── Demo mode ────────────────────────────────────────────────────────────
+      # Serve a fully simulated AVR with no physical receiver — the whole UI
+      # works over the real WebSocket. Leave unset/false for normal operation.
+      #- DENON_DASHBOARD_DEMO_MODE=false
+
+    # ── Traefik labels (optional) ─────────────────────────────────────────────
+    # See compose.override.yaml for a working example with Traefik.
+    #labels:
+    #  - "traefik.enable=true"
+    #  - "traefik.http.routers.denon-dashboard.rule=Host(`denon.example.com`)"
+    #  - "traefik.http.routers.denon-dashboard.entrypoints=websecure"
+    #  - "traefik.http.routers.denon-dashboard.tls=true"
+    #  - "traefik.http.routers.denon-dashboard.tls.certresolver=letsencrypt"
+    #  - "traefik.http.services.denon-dashboard.loadbalancer.server.port=8080"
+    #networks:
+    #  - traefik_proxy
+
+#networks:
+#  traefik_proxy:
+#    external: true
