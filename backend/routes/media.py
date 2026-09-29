@@ -13,6 +13,16 @@ from dependencies import get_app_state
 router = APIRouter(prefix="/api/v1/media", tags=["media"])
 
 
+async def _sync_play_state(state: AppState) -> None:
+    """Refresh HEOS playback state immediately after a transport command."""
+    if not state.heos:
+        return
+    play_state = await state.heos.get_play_state()
+    if play_state:
+        state.media_state["play_state"] = play_state
+        await state.broadcast_state()
+
+
 @router.post("/play")
 async def media_play(state: AppState = Depends(get_app_state)):
     if not state.heos:
@@ -20,6 +30,7 @@ async def media_play(state: AppState = Depends(get_app_state)):
     ok = await state.heos.play()
     if not ok:
         raise HTTPException(502, "Play command failed")
+    await _sync_play_state(state)
     return {"ok": True}
 
 
@@ -30,6 +41,7 @@ async def media_pause(state: AppState = Depends(get_app_state)):
     ok = await state.heos.pause()
     if not ok:
         raise HTTPException(502, "Pause command failed")
+    await _sync_play_state(state)
     return {"ok": True}
 
 
