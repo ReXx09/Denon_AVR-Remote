@@ -24,13 +24,11 @@
 }
 @supports (-webkit-touch-callout: none) {
   .mobile-bottom-nav {
-    bottom: 3.25rem;
+    bottom: calc(3.25rem + env(safe-area-inset-bottom));
   }
 }
 @media (display-mode: standalone) {
-  .mobile-bottom-nav {
-    bottom: 0;
-  }
+  .mobile-bottom-nav { bottom: env(safe-area-inset-bottom); }
 }
 
 @layer components {

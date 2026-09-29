@@ -198,6 +198,9 @@ class AppState:
             commands.append(f"PSTRE {int(profile['treble']):02d}")
         if profile.get("subwoofer_level") is not None:
             commands.append(f"PSSWL {int(profile['subwoofer_level']):02d}")
+        for channel, level in (profile.get("channel_volumes") or {}).items():
+            if isinstance(channel, str) and isinstance(level, (int, float)):
+                commands.append(f"CV{channel} {int(level):02d}")
         if profile.get("dialog_enabled") is not None:
             commands.append(f"PSDIL {'ON' if profile['dialog_enabled'] else 'OFF'}")
         if profile.get("dialog_level") is not None:

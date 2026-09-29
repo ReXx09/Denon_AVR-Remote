@@ -29,6 +29,18 @@ export default function StatusBar({ deviceName, state, info, post, wsConnected, 
         <h1 className="text-lg font-bold text-denon-text tracking-tight">{deviceName}</h1>
         <div className="flex items-center gap-2">
           <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="h-8 w-8 rounded-full text-denon-muted hover:bg-denon-surface hover:text-denon-text transition-colors"
+            aria-label="Reload dashboard"
+            title="Reload dashboard"
+          >
+            <svg className="mx-auto h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M20 11a8.1 8.1 0 0 0-15.5-2M4 5v4h4" />
+              <path d="M4 13a8.1 8.1 0 0 0 15.5 2M20 19v-4h-4" />
+            </svg>
+          </button>
+          <button
             onClick={() => setExpanded(!expanded)}
             className={`${ok ? 'badge-green' : 'badge-red'} cursor-pointer hover:brightness-110 transition-all`}
           >
