@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import type { PostFn, SendCommandFn } from '../types'
 
 const CHANNEL_ORDER: string[] = ['FL', 'FR', 'C', 'SW', 'SW2', 'SL', 'SR', 'SBL', 'SBR', 'SB',
@@ -14,7 +14,6 @@ interface Props {
 
 export default function ChannelLevels({ channels, channelNames, post, calibration }: Props) {
   const [localLevels, setLocalLevels] = useState<Record<string, number>>({})
-  const debounceRefs = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
 
   const entries = Object.entries(channels).sort((a, b) =>
     (CHANNEL_ORDER.indexOf(a[0]) ?? 99) - (CHANNEL_ORDER.indexOf(b[0]) ?? 99)
@@ -23,17 +22,13 @@ export default function ChannelLevels({ channels, channelNames, post, calibratio
   const handleChange = useCallback((ch: string, val: string) => {
     const v = parseInt(val)
     setLocalLevels(prev => ({ ...prev, [ch]: v }))
-
-    if (debounceRefs.current[ch]) clearTimeout(debounceRefs.current[ch])
-    debounceRefs.current[ch] = setTimeout(() => {
-      post('/channel-volume', { channel: ch, level: v })
-      setLocalLevels(prev => {
-        const next = { ...prev }
-        delete next[ch]
-        return next
-      })
-    }, 200)
+    void post('/channel-volume', { channel: ch, level: v })
   }, [post])
+
+  const adjustLevel = useCallback((ch: string, current: number, delta: number) => {
+    const next = Math.max(38, Math.min(62, current + delta))
+    handleChange(ch, String(next))
+  }, [handleChange])
 
   // Effective dB = calibration offset + trim adjustment
   // Calibration: from Audyssey (e.g. FR = -4.5 dB)
@@ -93,13 +88,28 @@ export default function ChannelLevels({ channels, channelNames, post, calibratio
                   </span>
                 </div>
               </div>
-              <input
-                type="range"
-                min={38} max={62} step={1}
-                value={val}
-                onChange={(e) => handleChange(ch, e.target.value)}
-                className="w-full"
-              />
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => adjustLevel(ch, val, -1)}
+                  className="btn-ghost h-8 w-8 shrink-0 rounded-lg text-base font-bold"
+                  aria-label={`Decrease ${name}`}
+                >−</button>
+                <input
+                  type="range"
+                  min={38} max={62} step={1}
+                  value={val}
+                  onChange={(e) => handleChange(ch, e.target.value)}
+                  className="w-full"
+                  aria-label={`${name} level`}
+                />
+                <button
+                  type="button"
+                  onClick={() => adjustLevel(ch, val, 1)}
+                  className="btn-ghost h-8 w-8 shrink-0 rounded-lg text-base font-bold"
+                  aria-label={`Increase ${name}`}
+                >+</button>
+              </div>
             </div>
           )
         })}

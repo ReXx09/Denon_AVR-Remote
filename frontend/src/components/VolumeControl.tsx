@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import type { ReceiverState, SendCommandFn, PostFn } from '../types'
 
 interface Props {
@@ -13,7 +13,6 @@ export default function VolumeControl({ state, sendCommand, post }: Props) {
   const volumeMax = state?.volume_max || 98
   const [dragging, setDragging] = useState(false)
   const [localVol, setLocalVol] = useState<number | undefined>(volume)
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     if (!dragging && volume != null) setLocalVol(volume)
@@ -26,11 +25,7 @@ export default function VolumeControl({ state, sendCommand, post }: Props) {
     const val = parseFloat(e.target.value)
     setLocalVol(val)
     setDragging(true)
-    if (debounceRef.current) clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => {
-      post('/volume', { level: val })
-      setDragging(false)
-    }, 150)
+    void post('/volume', { level: val })
   }, [post])
 
   return (
