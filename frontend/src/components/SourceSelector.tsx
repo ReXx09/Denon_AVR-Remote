@@ -165,6 +165,8 @@ export default function SourceSelector({
     ? sources
     : Object.entries(DEFAULT_SOURCES).map(([id, name]) => ({ id, name }))
 
+  const getName = (code: string) => sourceNameMap?.[code] || DEFAULT_SOURCES[code] || code
+
   const categorizedSources = useMemo(() => {
     const grouped: Record<SourceCategory, SourceEntry[]> = {
       inputs: [], network: [], media: [], other: [],
@@ -178,7 +180,6 @@ export default function SourceSelector({
 
   const visibleSources = categorizedSources[sourceCategory]
 
-  const getName = (code: string) => sourceNameMap?.[code] || DEFAULT_SOURCES[code] || code
   const getDefaultName = (code: string) => {
     const discovered = sources.find(s => s.id === code)?.name
     return discovered || DEFAULT_SOURCES[code] || code
