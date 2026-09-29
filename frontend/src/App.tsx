@@ -341,38 +341,6 @@ export default function App() {
         </div>
       )}
 
-      {false && zone === 'zone2' && (
-        <div className="fade-in">
-          <Zone2Controls
-            state={state}
-            sendCommand={sendCommand}
-            post={post}
-            sources={configuredSources}
-            sourceNameMap={sourceNameMap}
-            sourceNameOverrides={sourceNameOverrides}
-            radioFavorites={radioFavorites}
-            onRenameSource={renameSource}
-            onRadioFavoriteChange={saveRadioFavorite}
-            zoneName={z2Name}
-          />
-        </div>
-      )}
-
-      {false && zone === 'zone3' && (
-        <div className="fade-in">
-          <Zone3Controls
-            state={state}
-            sendCommand={sendCommand}
-            post={post}
-            sources={configuredSources}
-            sourceNameMap={sourceNameMap}
-            sourceNameOverrides={sourceNameOverrides}
-            radioFavorites={radioFavorites}
-            onRenameSource={renameSource}
-            onRadioFavoriteChange={saveRadioFavorite}
-          />
-        </div>
-      )}
     </div>
 
     {/* Mobile bottom navigation — thumb-reachable zone + section tabs */}
