@@ -14,6 +14,13 @@ const RadioTowerIcon = () => (
   </svg>
 )
 
+const ChevronDownIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+       strokeLinecap="round" strokeLinejoin="round" className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-denon-muted">
+    <path d="m6 9 6 6 6-6" />
+  </svg>
+)
+
 const BluetoothIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
        strokeLinecap="round" strokeLinejoin="round" className="inline w-4 h-4 align-text-bottom">
@@ -249,6 +256,11 @@ export default function SourceSelector({
           <span className="text-xs text-denon-gold font-medium flex items-center gap-1">
             <span className="text-base">{getIcon(current, currentDisplayName)}</span>
             {currentDisplayName}
+            {(heosServiceCode || current === 'NET') && (
+              <span className="ml-1 rounded-full bg-denon-green/10 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-denon-green">
+                HEOS
+              </span>
+            )}
           </span>
         )}
       </div>
@@ -286,29 +298,35 @@ export default function SourceSelector({
       )}
 
       <div className="flex items-center gap-2 mb-2">
-        <select
-          value={sourceCategory}
-          onChange={(event) => setSourceCategory(event.target.value as SourceCategory)}
-          className="flex-1 bg-denon-surface text-denon-text text-xs rounded-lg px-3 py-2 border border-denon-border"
-          aria-label="Source category"
-        >
-          {SOURCE_CATEGORIES.map(category => (
-            <option key={category.id} value={category.id}>
-              {category.label} ({categorizedSources[category.id].length})
-            </option>
-          ))}
-        </select>
-        <select
-          value={selectedSource}
-          onChange={(event) => {
-            if (event.target.value) sendCommand(`${prefix}${event.target.value}`)
-          }}
-          className="flex-1 bg-denon-surface text-denon-text text-xs rounded-lg px-3 py-2 border border-denon-border"
-          aria-label="Select source"
-        >
-          <option value="">Select source...</option>
-          {visibleSources.map(source => <option key={source.id} value={source.id}>{getName(source.id)}</option>)}
-        </select>
+        <label className="relative flex-1">
+          <select
+            value={sourceCategory}
+            onChange={(event) => setSourceCategory(event.target.value as SourceCategory)}
+            className="w-full appearance-none bg-denon-surface text-denon-text text-xs rounded-lg px-3 py-2 pr-8 border border-denon-border"
+            aria-label="Source category"
+          >
+            {SOURCE_CATEGORIES.map(category => (
+              <option key={category.id} value={category.id}>
+                {category.label} ({categorizedSources[category.id].length})
+              </option>
+            ))}
+          </select>
+          <ChevronDownIcon />
+        </label>
+        <label className="relative flex-1">
+          <select
+            value={selectedSource}
+            onChange={(event) => {
+              if (event.target.value) sendCommand(`${prefix}${event.target.value}`)
+            }}
+            className="w-full appearance-none bg-denon-surface text-denon-text text-xs rounded-lg px-3 py-2 pr-8 border border-denon-border"
+            aria-label="Select source"
+          >
+            <option value="">Select source...</option>
+            {visibleSources.map(source => <option key={source.id} value={source.id}>{getName(source.id)}</option>)}
+          </select>
+          <ChevronDownIcon />
+        </label>
         <button
           onClick={() => setShowAllSources(value => !value)}
           className="shrink-0 px-2.5 py-2 rounded-lg bg-denon-surface text-denon-muted hover:text-denon-text text-xs"
