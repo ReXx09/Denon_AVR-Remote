@@ -289,6 +289,33 @@ export default function App() {
 
             {activeSection === 'speakers' && (
               <>
+                <div className="card">
+                  <div className="flex items-center justify-between mb-3">
+                    <h2 className="text-xs font-medium text-denon-muted uppercase tracking-wider">Input Profiles</h2>
+                    <span className="text-[10px] text-denon-muted">Select source</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                    {configuredSources.map(source => {
+                      const active = state.source === source.id
+                      const commandSource = source.id === 'IRADIO' ? 'NET' : source.id
+                      return (
+                        <button
+                          key={source.id}
+                          type="button"
+                          onClick={() => sendCommand(`SI${commandSource}`)}
+                          className={`min-w-0 rounded-lg px-3 py-2 text-left text-xs transition-all ${
+                            active
+                              ? 'bg-denon-gold/20 text-denon-gold ring-1 ring-denon-gold/40'
+                              : 'bg-denon-surface/70 text-denon-muted hover:bg-denon-surface hover:text-denon-text'
+                          }`}
+                        >
+                          <span className="block truncate">{source.name}</span>
+                          <span className="mt-0.5 block text-[10px] opacity-50">{source.id}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
                 <MemoChannelLevels
                   channels={state.channel_volumes || {}}
                   channelNames={channelNames}
