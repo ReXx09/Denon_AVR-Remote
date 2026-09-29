@@ -297,13 +297,13 @@ export default function App() {
                   calibration={state.speaker_calibration}
                 />
                 <SubwooferLevel state={state} post={post} />
+                <ToneControls state={state} post={post} />
               </>
             )}
 
             {activeSection === 'audio' && (
               <>
                 <AudioDiagnostics state={state} />
-                <ToneControls state={state} post={post} />
                 <MemoAudioSettings state={state} post={post} />
               </>
             )}
