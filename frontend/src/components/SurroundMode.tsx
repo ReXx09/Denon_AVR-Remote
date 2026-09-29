@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useCallback } from 'react'
+import { useState, useMemo, useRef, useCallback, useEffect } from 'react'
 import { getModeInfo } from '../data/soundModeInfo'
 import ModeInfoPopover from './ModeInfoPopover'
 import ModeInfoPanel from './ModeInfoPanel'
@@ -89,6 +89,12 @@ export default function SurroundMode({ state, sendCommand }: Props) {
   const [selectedInfoMode, setSelectedInfoMode] = useState<string | null>(null)
   const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const buttonRefs = useRef<Record<string, HTMLButtonElement | null>>({})
+
+  useEffect(() => {
+    setSelectedInfoMode(null)
+    setHoveredMode(null)
+    if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current)
+  }, [current])
 
   /* Reset the 3-second auto-collapse timer */
   const resetCollapseTimer = useCallback(() => {
