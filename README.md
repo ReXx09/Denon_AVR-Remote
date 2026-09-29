@@ -8,6 +8,8 @@ A modern, real-time web dashboard for controlling Denon/Marantz AVR receivers. B
 
 > **Disclaimer:** This is an unofficial, community-developed project. Not affiliated with or endorsed by Denon, Marantz, or Sound United/Masimo. All product names and trademarks are the property of their respective owners.
 
+> **Fork notice:** This repository is a fork of [OxygenLack/Denon-Marantz-AVR-Dashboard](https://github.com/OxygenLack/Denon-Marantz-AVR-Dashboard). Copyright and the original license remain with the upstream project and its copyright holders. This fork is maintained by ReXx09.
+
 <div align="center">
 
 | Controls | Audio / EQ |
