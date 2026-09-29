@@ -78,6 +78,8 @@ class SourceRequest(BaseModel):
 class SourceAudioProfile(BaseModel):
     volume: float | None = Field(None, ge=0, le=98)
     channel_volumes: dict[str, int] | None = None
+    analog_input_level: int | None = Field(None, ge=-12, le=12)
+    digital_input_level: int | None = Field(None, ge=-12, le=12)
     bass: int | None = Field(None, ge=44, le=56)
     treble: int | None = Field(None, ge=44, le=56)
     tone_enabled: bool | None = None

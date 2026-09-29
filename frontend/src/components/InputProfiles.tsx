@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import type { ReceiverState, SourceEntry } from '../types'
 
 interface SourceProfile {
+  analog_input_level?: number
+  digital_input_level?: number
   bass?: number
   treble?: number
   tone_enabled?: boolean
@@ -63,6 +65,8 @@ export default function InputProfiles({ sources, state, channelNames }: Props) {
     updateProfile({ channel_volumes: { ...profile.channel_volumes, [channel]: clamp(current + delta, 38, 62) } })
   }
 
+  const inputLevel = (kind: 'analog_input_level' | 'digital_input_level') => profile[kind] ?? 0
+
   const saveProfile = async () => {
     const response = await fetch(`/api/v1/source-profiles/${encodeURIComponent(selectedSource)}`, {
       method: 'PUT',
@@ -102,6 +106,18 @@ export default function InputProfiles({ sources, state, channelNames }: Props) {
       </div>
 
       <div className="mt-4 border-t border-denon-border/50 pt-3 space-y-4">
+        <div className="grid grid-cols-2 gap-3">
+          {(['analog_input_level', 'digital_input_level'] as const).map(kind => {
+            const value = inputLevel(kind)
+            return (
+              <div key={kind}>
+                <div className="flex justify-between text-xs mb-1"><span className="text-denon-muted">{kind === 'analog_input_level' ? 'Analog input' : 'Digital input'}</span><strong>{value > 0 ? '+' : ''}{value} dB</strong></div>
+                <input type="range" min={-12} max={12} step={1} value={value} onChange={event => updateProfile({ [kind]: Number(event.target.value) })} className="w-full" aria-label={`${kind} profile level`} />
+                <div className="flex justify-between text-[10px] text-denon-muted/60"><span>−12</span><span>0</span><span>+12 dB</span></div>
+              </div>
+            )
+          })}
+        </div>
         <div className="grid grid-cols-2 gap-3">
           {(['bass', 'treble'] as const).map(setting => {
             const value = profile[setting] ?? 50
