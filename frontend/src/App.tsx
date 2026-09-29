@@ -27,7 +27,7 @@ import ShortcutOverlay from './experience/ShortcutOverlay'
 import type { Zone, ThemeName, UiEffects, RadioFavorite } from './types'
 import type { NightModeConfigState } from './components/NightModeModal'
 
-type Section = 'controls' | 'speakers' | 'audio'
+type Section = 'controls' | 'audio' | 'profiles'
 
 // Fallback channel names if API hasn't loaded yet
 const FALLBACK_CHANNEL_NAMES: Record<string, string> = {
@@ -183,8 +183,8 @@ export default function App() {
 
   const mainSections: { id: Section; label: string }[] = [
     { id: 'controls', label: 'Controls' },
-    { id: 'speakers', label: 'Speakers' },
-    { id: 'audio', label: 'Audio / EQ' },
+    { id: 'audio', label: 'Audio' },
+    { id: 'profiles', label: 'Profiles' },
   ]
 
   return (
@@ -288,9 +288,9 @@ export default function App() {
               </>
             )}
 
-            {activeSection === 'speakers' && (
+            {activeSection === 'audio' && (
               <>
-                <InputProfiles sources={configuredSources} state={state} channelNames={channelNames} />
+                <AudioDiagnostics state={state} />
                 <MemoChannelLevels
                   channels={state.channel_volumes || {}}
                   channelNames={channelNames}
@@ -300,13 +300,13 @@ export default function App() {
                 />
                 <SubwooferLevel state={state} post={post} />
                 <ToneControls state={state} post={post} />
+                <MemoAudioSettings state={state} post={post} />
               </>
             )}
 
-            {activeSection === 'audio' && (
+            {activeSection === 'profiles' && (
               <>
-                <AudioDiagnostics state={state} />
-                <MemoAudioSettings state={state} post={post} />
+                <InputProfiles sources={configuredSources} state={state} channelNames={channelNames} />
               </>
             )}
           </div>
