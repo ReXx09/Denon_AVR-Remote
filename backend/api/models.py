@@ -75,6 +75,20 @@ class SourceRequest(BaseModel):
                         description="Source command code (e.g. 'GAME', 'BD', 'TV')")
 
 
+class SourceAudioProfile(BaseModel):
+    volume: float | None = Field(None, ge=0, le=98)
+    bass: int | None = Field(None, ge=44, le=56)
+    treble: int | None = Field(None, ge=44, le=56)
+    tone_enabled: bool | None = None
+    subwoofer_level: int | None = Field(None, ge=38, le=62)
+    dialog_level: int | None = Field(None, ge=0, le=12)
+    dialog_enabled: bool | None = None
+    multeq: str | None = Field(None, pattern=r"^[A-Z.]{2,10}$")
+    dynamic_eq: bool | None = None
+    dynamic_volume: str | None = Field(None, pattern=r"^[A-Z]{2,6}$")
+    ref_level_offset: int | None = Field(None, ge=0, le=15)
+
+
 class SourceNameRequest(BaseModel):
     name: str = Field(..., min_length=1, max_length=50,
                       description="Custom display name for an input source")

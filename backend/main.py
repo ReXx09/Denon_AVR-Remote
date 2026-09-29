@@ -79,6 +79,7 @@ async def lifespan(app: FastAPI):
     # Build source name cache from env config
     app_state.source_name_cache = settings.source_name_map.copy()
     app_state.load_source_name_overrides()
+    app_state.load_source_profiles()
     app_state.load_ui_settings()
     app_state.load_night_mode_config()
     app_state.load_radio_favorites()

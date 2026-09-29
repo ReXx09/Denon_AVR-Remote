@@ -35,15 +35,18 @@ def isolate_persistent_data(tmp_path):
     from state import app_state
 
     app_state.source_name_overrides_path = tmp_path / "source_names.json"
+    app_state.source_profiles_path = tmp_path / "audio_profiles.json"
     app_state.ui_settings_path = tmp_path / "ui_settings.json"
     app_state.night_mode_config_path = tmp_path / "night_mode.json"
     app_state.radio_favorites_path = tmp_path / "radio_favorites.json"
     app_state.source_name_overrides = {}
+    app_state.source_profiles = {}
     app_state.ui_settings = {}
     app_state.night_mode_config = {"mode": "offset", "channels": []}
     app_state.radio_favorites = []
     yield
     app_state.source_name_overrides = {}
+    app_state.source_profiles = {}
     app_state.ui_settings = {}
     app_state.night_mode_config = {"mode": "offset", "channels": []}
     app_state.radio_favorites = []

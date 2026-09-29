@@ -1,6 +1,8 @@
 """Audio settings endpoints: surround, source, channel volume, tone, EQ, eco, sleep."""
 from __future__ import annotations
 
+import re
+
 from fastapi import APIRouter, HTTPException, Depends
 
 from api.models import (
@@ -14,6 +16,7 @@ from api.models import (
     NightModeConfigRequest,
     NightModeRequest,
     SleepTimerRequest,
+    SourceAudioProfile,
     SourceRequest,
     SubwooferLevelRequest,
     SurroundRequest,
@@ -31,6 +34,31 @@ router = APIRouter(prefix="/api/v1", tags=["audio"])
 @router.post("/source")
 async def set_source(req: SourceRequest, state: AppState = Depends(get_app_state)):
     return await send_command(state, f"SI{req.source}")
+
+
+@router.get("/source-profiles")
+async def get_source_profiles(state: AppState = Depends(get_app_state)):
+    return {"profiles": state.source_profiles}
+
+
+@router.put("/source-profiles/{source:path}")
+async def save_source_profile(source: str, req: SourceAudioProfile, state: AppState = Depends(get_app_state)):
+    code = source.strip().upper()
+    if not re.fullmatch(r"[A-Z0-9/]{1,10}", code):
+        raise HTTPException(400, "Invalid source code")
+    state.source_profiles[code] = req.model_dump(exclude_none=True)
+    state.save_source_profiles()
+    return {"ok": True, "source": code, "profile": state.source_profiles[code]}
+
+
+@router.delete("/source-profiles/{source:path}")
+async def delete_source_profile(source: str, state: AppState = Depends(get_app_state)):
+    code = source.strip().upper()
+    if not re.fullmatch(r"[A-Z0-9/]{1,10}", code):
+        raise HTTPException(400, "Invalid source code")
+    state.source_profiles.pop(code, None)
+    state.save_source_profiles()
+    return {"ok": True, "source": code}
 
 
 @router.post("/surround")

@@ -33,12 +33,15 @@ class AppState:
         self.source_name_overrides: dict[str, str] = {}
         self.data_dir = Path(os.environ.get("DENON_DASHBOARD_DATA_DIR", "/data"))
         self.source_name_overrides_path = self.data_dir / "source_names.json"
+        self.source_profiles_path = self.data_dir / "audio_profiles.json"
         self.ui_settings_path = self.data_dir / "ui_settings.json"
         self.night_mode_config_path = self.data_dir / "night_mode.json"
         self.radio_favorites_path = self.data_dir / "radio_favorites.json"
         self.ui_settings: dict[str, Any] = {}
         self.night_mode_config: dict[str, Any] = self.default_night_mode_config()
         self.radio_favorites: list[dict[str, Any]] = []
+        self.source_profiles: dict[str, dict[str, Any]] = {}
+        self._profile_source: str | None = None
         self.night_mode_auto_active: bool = False
         self.heos_available_services: set[str] = set()  # HEOS service names from receiver
         self.media_state: dict[str, Any] = {"now_playing": None, "play_state": None}
@@ -135,6 +138,57 @@ class AppState:
         except Exception as exc:
             _LOGGER.error("Failed to save source name overrides: %s", exc)
             raise
+
+    def load_source_profiles(self) -> None:
+        """Load persisted per-source audio profiles."""
+        try:
+            if not self.source_profiles_path.exists():
+                self.source_profiles = {}
+                return
+            data = json.loads(self.source_profiles_path.read_text())
+            self.source_profiles = data if isinstance(data, dict) else {}
+        except Exception as exc:
+            _LOGGER.warning("Failed to load audio profiles: %s", exc)
+            self.source_profiles = {}
+
+    def save_source_profiles(self) -> None:
+        """Persist per-source audio profiles to the data volume."""
+        self.source_profiles_path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = self.source_profiles_path.with_suffix(".json.tmp")
+        tmp.write_text(json.dumps(self.source_profiles, indent=2, sort_keys=True))
+        tmp.replace(self.source_profiles_path)
+
+    async def apply_source_profile(self, source: str) -> None:
+        """Apply the saved profile for a source, if one exists."""
+        profile = self.source_profiles.get(source)
+        if not profile or not self.telnet:
+            return
+        commands: list[str] = []
+        if profile.get("volume") is not None:
+            volume = float(profile["volume"])
+            commands.append(f"MV{int(volume):02d}" + ("5" if volume % 1 else ""))
+        if profile.get("tone_enabled") is not None:
+            commands.append(f"PSTONE CTRL {'ON' if profile['tone_enabled'] else 'OFF'}")
+        if profile.get("bass") is not None:
+            commands.append(f"PSBAS {int(profile['bass']):02d}")
+        if profile.get("treble") is not None:
+            commands.append(f"PSTRE {int(profile['treble']):02d}")
+        if profile.get("subwoofer_level") is not None:
+            commands.append(f"PSSWL {int(profile['subwoofer_level']):02d}")
+        if profile.get("dialog_enabled") is not None:
+            commands.append(f"PSDIL {'ON' if profile['dialog_enabled'] else 'OFF'}")
+        if profile.get("dialog_level") is not None:
+            commands.append(f"PSDIL {int(profile['dialog_level']):02d}")
+        if profile.get("multeq") is not None:
+            commands.append(f"PSMULTEQ:{profile['multeq']}")
+        if profile.get("dynamic_eq") is not None:
+            commands.append(f"PSDYNEQ {'ON' if profile['dynamic_eq'] else 'OFF'}")
+        if profile.get("dynamic_volume") is not None:
+            commands.append(f"PSDYNVOL {profile['dynamic_volume']}")
+        if profile.get("ref_level_offset") is not None:
+            commands.append(f"PSREFLEV {int(profile['ref_level_offset'])}")
+        for command in commands:
+            await self.telnet.send(command)
 
     def reset_source_name_override(self, code: str) -> None:
         self.source_name_overrides.pop(code, None)
@@ -382,6 +436,10 @@ class AppState:
     async def broadcast_state(self, force: bool = False) -> None:
         """Broadcast current state to all connected WebSocket clients."""
         data = self.build_status()
+        source = data.get("source")
+        if source and source != self._profile_source:
+            self._profile_source = source
+            asyncio.create_task(self.apply_source_profile(source))
         if not force and data == self._last_broadcast_state:
             return
         self._last_broadcast_state = data

@@ -409,6 +409,27 @@ async def test_device_info(mock_app_state):
 
 
 @pytest.mark.asyncio
+async def test_source_audio_profile_persist_and_delete(mock_app_state):
+    from main import app
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        resp = await ac.put("/api/v1/source-profiles/GAME1", json={
+            "volume": 42.5,
+            "bass": 52,
+            "treble": 48,
+            "tone_enabled": True,
+        })
+        assert resp.status_code == 200
+        resp = await ac.get("/api/v1/source-profiles")
+        assert resp.json()["profiles"]["GAME1"]["volume"] == 42.5
+        resp = await ac.delete("/api/v1/source-profiles/GAME1")
+        assert resp.status_code == 200
+        resp = await ac.get("/api/v1/source-profiles")
+        assert "GAME1" not in resp.json()["profiles"]
+
+
+@pytest.mark.asyncio
 async def test_source_name_persist_and_reset(mock_app_state):
     from main import app
 
