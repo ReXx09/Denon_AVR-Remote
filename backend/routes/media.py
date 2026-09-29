@@ -69,6 +69,15 @@ async def media_now_playing(state: AppState = Depends(get_app_state)):
     return state.media_state
 
 
+@router.get("/queue")
+async def media_queue(state: AppState = Depends(get_app_state)):
+    """Return the current HEOS playback queue."""
+    if not state.heos:
+        raise HTTPException(503, "HEOS not connected")
+    queue = await state.heos.get_queue()
+    return {"queue": queue, "total": len(queue)}
+
+
 # ── Radio Browser ─────────────────────────────────────────────────────────────
 
 import asyncio

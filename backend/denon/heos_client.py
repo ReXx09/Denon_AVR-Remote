@@ -203,6 +203,13 @@ class HeosClient:
             return resp["payload"]
         return None
 
+    async def get_queue(self) -> list[dict[str, Any]]:
+        """Return the current HEOS playback queue."""
+        resp = await self._command("player/get_queue", self._pid_param(), timeout=5.0)
+        if resp and isinstance(resp.get("payload"), list):
+            return resp["payload"]
+        return []
+
     async def get_music_sources(self) -> list[dict[str, Any]]:
         """Return available HEOS music sources (streaming services)."""
         resp = await self._command("browse/get_music_sources")

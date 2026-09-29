@@ -38,6 +38,7 @@ def _make_mock_heos():
     mock.previous_track = AsyncMock(return_value=True)
     mock.get_now_playing = AsyncMock(return_value={"song": "Test Song"})
     mock.get_play_state = AsyncMock(return_value="play")
+    mock.get_queue = AsyncMock(return_value=[{"song": "Queued Song", "artist": "Test Artist", "qid": 1}])
     mock.check_account = AsyncMock(return_value={"signed_in": True, "username": "demo@heos", "reachable": True})
     mock.is_source_available = AsyncMock(return_value=True)
     mock.disconnect = AsyncMock()
@@ -265,6 +266,20 @@ async def test_media_now_playing(mock_app_state):
     data = resp.json()
     assert data["now_playing"]["song"] == "Test Song"
     assert data["play_state"] == "play"
+
+
+@pytest.mark.asyncio
+async def test_media_queue(mock_app_state):
+    from main import app
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        resp = await ac.get("/api/v1/media/queue")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["total"] == 1
+    assert data["queue"][0]["song"] == "Queued Song"
+    mock_app_state.heos.get_queue.assert_called_once()
 
 
 # ── Radio status ───────────────────────────────────────────────────────────────

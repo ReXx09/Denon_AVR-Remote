@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import type { ReceiverState, SendCommandFn, PostFn, Zone } from '../types'
 
 const MEDIA_SOURCES = ['NET', 'MPLAY', 'BT', 'USB', 'USB/IPOD', 'SPOTIFY', 'PANDORA', 'SIRIUSXM', 'IRADIO', 'SERVER', 'FAVORITES']
@@ -19,6 +20,14 @@ interface Props {
   zone?: Zone
 }
 
+interface QueueItem {
+  song?: string
+  artist?: string
+  album?: string
+  image_url?: string
+  qid?: number
+}
+
 export default function MediaControls({ state, zone = 'main' }: Props) {
   const source = zone === 'main' ? state?.source : zone === 'zone2' ? state?.z2_source : state?.z3_source
   const mediaCapable = source != null && MEDIA_SOURCES.includes(source)
@@ -26,6 +35,10 @@ export default function MediaControls({ state, zone = 'main' }: Props) {
   // Now-playing data comes from WebSocket state (backend polls HEOS once for all clients)
   const nowPlaying = state?.now_playing
   const playState = state?.play_state
+  const [queue, setQueue] = useState<QueueItem[]>([])
+  const [queueOpen, setQueueOpen] = useState(false)
+  const [queueLoading, setQueueLoading] = useState(false)
+  const [queueError, setQueueError] = useState(false)
 
   const doMedia = async (action: string) => {
     if (!VALID_ACTIONS.has(action)) return
@@ -33,6 +46,25 @@ export default function MediaControls({ state, zone = 'main' }: Props) {
       await fetch(`/api/v1/media/${action}`, { method: 'POST' })
     } catch { /* ignore */ }
   }
+
+  const loadQueue = async () => {
+    setQueueLoading(true)
+    setQueueError(false)
+    try {
+      const response = await fetch('/api/v1/media/queue')
+      if (!response.ok) throw new Error('Queue request failed')
+      const data = await response.json() as { queue?: QueueItem[] }
+      setQueue(Array.isArray(data.queue) ? data.queue : [])
+    } catch {
+      setQueueError(true)
+    } finally {
+      setQueueLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (mediaCapable) void loadQueue()
+  }, [mediaCapable, nowPlaying?.song, nowPlaying?.station])
 
   if (!mediaCapable) return null
 
@@ -119,6 +151,56 @@ export default function MediaControls({ state, zone = 'main' }: Props) {
             <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/>
           </svg>
         </button>
+      </div>
+
+      <div className="mt-4 border-t border-denon-border/50 pt-3">
+        <button
+          onClick={() => {
+            const nextOpen = !queueOpen
+            setQueueOpen(nextOpen)
+            if (nextOpen) void loadQueue()
+          }}
+          className="w-full flex items-center justify-between text-xs text-denon-muted hover:text-denon-text transition-colors"
+          aria-expanded={queueOpen}
+        >
+          <span className="uppercase tracking-wider">Queue {queue.length > 0 ? `(${queue.length})` : ''}</span>
+          <span aria-hidden="true">{queueOpen ? '▲' : '▼'}</span>
+        </button>
+
+        {queueOpen && (
+          <div className="mt-3">
+            {queueLoading && <p className="text-xs text-denon-muted">Loading queue...</p>}
+            {!queueLoading && queueError && (
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-xs text-denon-muted">Queue unavailable</p>
+                <button
+                  onClick={() => void loadQueue()}
+                  className="text-xs text-denon-gold hover:text-denon-text"
+                >
+                  Retry
+                </button>
+              </div>
+            )}
+            {!queueLoading && !queueError && queue.length === 0 && (
+              <p className="text-xs text-denon-muted">No queue for this source</p>
+            )}
+            {!queueLoading && !queueError && queue.length > 0 && (
+              <ol className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                {queue.map((item, index) => (
+                  <li key={item.qid ?? `${item.song}-${index}`} className="flex gap-2 min-w-0">
+                    <span className="w-5 shrink-0 text-right text-xs text-denon-muted">{index + 1}</span>
+                    <div className="min-w-0">
+                      <p className="text-xs text-denon-text truncate">{item.song || 'Unknown title'}</p>
+                      {(item.artist || item.album) && (
+                        <p className="text-[10px] text-denon-muted truncate">{item.artist || item.album}</p>
+                      )}
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )
