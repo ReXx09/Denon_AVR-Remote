@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import type { ReceiverState, PostFn } from '../types'
 
 interface Props {
@@ -7,10 +7,7 @@ interface Props {
 }
 
 export default function AudioSettings({ state, post }: Props) {
-  const [profileExists, setProfileExists] = useState(false)
-  const [profileMessage, setProfileMessage] = useState('')
   const [settingMessage, setSettingMessage] = useState('')
-  const source = state?.source
   const dynamicEq = state?.dynamic_eq
   const dynamicVol = state?.dynamic_volume
   const multeq = state?.multeq
@@ -26,58 +23,6 @@ export default function AudioSettings({ state, post }: Props) {
     setSettingMessage(result.ok ? 'Command sent' : 'Receiver did not accept the command')
   }
 
-  useEffect(() => {
-    let cancelled = false
-    setProfileExists(false)
-    setProfileMessage('')
-    if (!source) return () => { cancelled = true }
-    fetch('/api/v1/source-profiles')
-      .then(response => response.ok ? response.json() as Promise<{ profiles?: Record<string, unknown> }> : Promise.reject())
-      .then(data => {
-        if (!cancelled) setProfileExists(Boolean(data.profiles?.[source]))
-      })
-      .catch(() => { if (!cancelled) setProfileMessage('Profile unavailable') })
-    return () => { cancelled = true }
-  }, [source])
-
-  const saveProfile = async () => {
-    if (!source) return
-    const profile = {
-      volume: state.volume,
-      channel_volumes: state.channel_volumes,
-      bass: state.bass,
-      treble: state.treble,
-      tone_enabled: state.tone_control,
-      subwoofer_level: state.subwoofer_level,
-      dialog_level: state.dialog_level,
-      dialog_enabled: state.dialog_level_enabled,
-      multeq: state.multeq,
-      dynamic_eq: state.dynamic_eq,
-      dynamic_volume: state.dynamic_volume,
-      ref_level_offset: state.ref_level_offset,
-    }
-    const response = await fetch(`/api/v1/source-profiles/${encodeURIComponent(source)}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(profile),
-    })
-    if (response.ok) {
-      setProfileExists(true)
-      setProfileMessage('Profile saved')
-    } else {
-      setProfileMessage('Profile could not be saved')
-    }
-  }
-
-  const deleteProfile = async () => {
-    if (!source) return
-    const response = await fetch(`/api/v1/source-profiles/${encodeURIComponent(source)}`, { method: 'DELETE' })
-    if (response.ok) {
-      setProfileExists(false)
-      setProfileMessage('Profile deleted')
-    }
-  }
-
   const dynVolModes = ['OFF', 'LIT', 'MED', 'HEV']
   const dynVolLabels: Record<string, string> = { OFF: 'Off', LIT: 'Light', MED: 'Medium', HEV: 'Heavy' }
   const multeqModes = ['AUDYSSEY', 'BYP.LR', 'FLAT', 'MANUAL', 'OFF']
@@ -87,35 +32,6 @@ export default function AudioSettings({ state, post }: Props) {
   return (
     <div className="card space-y-5">
       <h2 className="text-sm font-medium text-denon-muted">Audio Settings</h2>
-
-      <div className="border-b border-denon-border/50 pb-4">
-        <div className="flex items-center justify-between gap-3 mb-2">
-          <div>
-            <span className="text-xs text-denon-muted block">Source profile</span>
-            <span className="text-xs text-denon-text">{source || 'No source selected'}</span>
-          </div>
-          {profileExists && <span className="text-[10px] text-denon-green">Active</span>}
-        </div>
-        <div className="flex gap-2">
-          <button
-            onClick={() => void saveProfile()}
-            disabled={!source}
-            className="flex-1 text-xs px-3 py-1.5 rounded-lg bg-denon-gold/20 text-denon-gold hover:bg-denon-gold/30 disabled:opacity-40"
-          >
-            Save current settings
-          </button>
-          {profileExists && (
-            <button
-              onClick={() => void deleteProfile()}
-              className="text-xs px-3 py-1.5 rounded-lg bg-denon-surface text-denon-muted hover:text-denon-text"
-            >
-              Reset
-            </button>
-          )}
-        </div>
-        {profileMessage && <p className="text-[10px] text-denon-muted mt-2">{profileMessage}</p>}
-        <p className="text-[10px] text-denon-muted/60 mt-2">Applied automatically when this source is selected.</p>
-      </div>
 
       {/* Dialog Enhancer */}
       <div className="space-y-3">

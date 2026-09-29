@@ -215,6 +215,8 @@ class AppState:
             commands.append(f"PSREFLEV {int(profile['ref_level_offset'])}")
         for command in commands:
             await self.telnet.send(command)
+        if commands:
+            await self.telnet.refresh()
 
     def reset_source_name_override(self, code: str) -> None:
         self.source_name_overrides.pop(code, None)

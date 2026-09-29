@@ -454,6 +454,7 @@ async def test_source_audio_profile_can_be_applied(mock_app_state):
 
     assert resp.status_code == 200
     mock_app_state.telnet.send.assert_called_with("PSSWL 38")
+    mock_app_state.telnet.refresh.assert_awaited_once()
 
 
 @pytest.mark.asyncio

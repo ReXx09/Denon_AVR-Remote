@@ -59,6 +59,7 @@ async def apply_source_profile(source: str, state: AppState = Depends(get_app_st
     if code not in state.source_profiles:
         raise HTTPException(404, "No saved profile for this source")
     await state.apply_source_profile(code)
+    await state.broadcast_state(force=True)
     return {"ok": True, "source": code}
 
 
