@@ -80,8 +80,6 @@ async def connect_to_receiver(req: CommandRequest, state: AppState = Depends(get
 
 @router.get("/status", response_model=StatusResponse)
 async def status(state: AppState = Depends(get_app_state)):
-    if not state.telnet:
-        raise HTTPException(503, "Not initialized")
     return StatusResponse(**state.build_status())
 
 
@@ -103,6 +101,17 @@ async def device_info(state: AppState = Depends(get_app_state)):
 
     # Add any env-configured sources not discovered by the receiver
     for code, name in state.source_name_cache.items():
+        if code not in seen:
+            sources.append({
+                "id": code,
+                "name": state.source_name_overrides.get(code, name),
+            })
+            seen.add(code)
+
+    # Some AVR firmware versions do not return physical inputs from SSFUN ?.
+    # Keep the standard Denon input set usable until the receiver reports its
+    # source list; SSSOD DEL below still removes inputs explicitly hidden there.
+    for code, name in DEFAULT_SOURCES.items():
         if code not in seen:
             sources.append({
                 "id": code,

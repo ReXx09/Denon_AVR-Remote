@@ -121,7 +121,8 @@ async def test_status_not_initialized(mock_app_no_connection):
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         resp = await ac.get("/api/v1/status")
-    assert resp.status_code == 503
+    assert resp.status_code == 200
+    assert resp.json()["connected"] is False
 
 
 # ── Power ──────────────────────────────────────────────────────────────────────
@@ -387,6 +388,7 @@ async def test_device_info(mock_app_state):
     assert data["device_name"] == "Denon AVR"
     assert data["zone3_name"] == "Zone 3"
     assert "channel_names" in data
+    assert any(source["id"] == "GAME" for source in data["sources"])
     assert data["source_name_map"]["GAME"] == "Game Console"
 
 

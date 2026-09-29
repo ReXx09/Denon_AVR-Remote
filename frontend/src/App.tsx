@@ -211,26 +211,16 @@ export default function App() {
           </span>
         </button>
         <button
-          onClick={() => setZone('zone3')}
+          onClick={() => setZone(zone === 'zone3' ? 'zone3' : 'zone2')}
           className={`flex-1 py-3 px-4 rounded-xl text-sm font-semibold transition-all duration-200 ${
-            zone === 'zone3'
-              ? 'bg-gradient-to-r from-denon-gold to-amber-500 text-denon-dark shadow-lg shadow-denon-gold/25'
-              : 'text-denon-muted hover:text-denon-text'
-          }`}
-        >
-          {z3Name}
-        </button>
-        <button
-          onClick={() => setZone('zone2')}
-          className={`flex-1 py-3 px-4 rounded-xl text-sm font-semibold transition-all duration-200 ${
-            zone === 'zone2'
+            zone === 'zone2' || zone === 'zone3'
               ? 'bg-gradient-to-r from-denon-gold to-amber-500 text-denon-dark shadow-lg shadow-denon-gold/25'
               : 'text-denon-muted hover:text-denon-text'
           }`}
         >
           <span className="flex items-center justify-center gap-2">
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
-            {z2Name}
+            Zone 2/3
           </span>
         </button>
       </div>
@@ -298,8 +288,60 @@ export default function App() {
         </>
       )}
 
-      {/* Zone 2 */}
-      {zone === 'zone2' && (
+      {/* Zone 2 / Zone 3 */}
+      {(zone === 'zone2' || zone === 'zone3') && (
+        <div className="fade-in">
+          <div className="card mb-4 p-1.5">
+            <div className="grid grid-cols-2 gap-1">
+              <button
+                onClick={() => setZone('zone2')}
+                className={`py-2.5 px-3 rounded-xl text-xs font-semibold transition-all ${
+                  zone === 'zone2'
+                    ? 'bg-denon-surface text-denon-gold border border-denon-gold/30'
+                    : 'text-denon-muted hover:text-denon-text'
+                }`}
+              >
+                {z2Name}
+              </button>
+              <button
+                onClick={() => setZone('zone3')}
+                className={`py-2.5 px-3 rounded-xl text-xs font-semibold transition-all ${
+                  zone === 'zone3'
+                    ? 'bg-denon-surface text-denon-gold border border-denon-gold/30'
+                    : 'text-denon-muted hover:text-denon-text'
+                }`}
+              >
+                {z3Name}
+              </button>
+            </div>
+          </div>
+          {zone === 'zone2' && <Zone2Controls
+            state={state}
+            sendCommand={sendCommand}
+            post={post}
+            sources={configuredSources}
+            sourceNameMap={sourceNameMap}
+            sourceNameOverrides={sourceNameOverrides}
+            radioFavorites={radioFavorites}
+            onRenameSource={renameSource}
+            onRadioFavoriteChange={saveRadioFavorite}
+            zoneName={z2Name}
+          />}
+          {zone === 'zone3' && <Zone3Controls
+            state={state}
+            sendCommand={sendCommand}
+            post={post}
+            sources={configuredSources}
+            sourceNameMap={sourceNameMap}
+            sourceNameOverrides={sourceNameOverrides}
+            radioFavorites={radioFavorites}
+            onRenameSource={renameSource}
+            onRadioFavoriteChange={saveRadioFavorite}
+          />}
+        </div>
+      )}
+
+      {false && zone === 'zone2' && (
         <div className="fade-in">
           <Zone2Controls
             state={state}
@@ -316,7 +358,7 @@ export default function App() {
         </div>
       )}
 
-      {zone === 'zone3' && (
+      {false && zone === 'zone3' && (
         <div className="fade-in">
           <Zone3Controls
             state={state}
@@ -352,24 +394,14 @@ export default function App() {
             {zoneName}
           </button>
           <button
-            onClick={() => setZone('zone2')}
+            onClick={() => setZone(zone === 'zone3' ? 'zone3' : 'zone2')}
             className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all ${
-              zone === 'zone2'
+              zone === 'zone2' || zone === 'zone3'
                 ? 'bg-gradient-to-r from-denon-gold to-amber-500 text-denon-dark'
                 : 'text-denon-muted hover:text-denon-text'
             }`}
           >
-            {z2Name}
-          </button>
-          <button
-            onClick={() => setZone('zone3')}
-            className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all ${
-              zone === 'zone3'
-                ? 'bg-gradient-to-r from-denon-gold to-amber-500 text-denon-dark'
-                : 'text-denon-muted hover:text-denon-text'
-            }`}
-          >
-            {z3Name}
+            Zone 2/3
           </button>
         </div>
         {/* Section tabs (main zone only) */}

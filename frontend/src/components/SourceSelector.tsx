@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import RadioBrowser from './RadioBrowser'
 import type { ReceiverState, SendCommandFn, SourceEntry, RadioFavorite, Zone } from '../types'
 
@@ -104,6 +104,31 @@ const DEFAULT_SOURCES: Record<string, string> = {
   AUX1: 'AUX1', AUX2: 'AUX2',
 }
 
+type SourceCategory = 'inputs' | 'network' | 'media' | 'other'
+
+const SOURCE_CATEGORIES: { id: SourceCategory; label: string }[] = [
+  { id: 'inputs', label: 'Inputs' },
+  { id: 'network', label: 'Network' },
+  { id: 'media', label: 'Media' },
+  { id: 'other', label: 'Other' },
+]
+
+const INPUT_SOURCES = new Set([
+  'PHONO', 'CD', 'TUNER', 'DVD', 'BD', 'TV', 'SAT/CBL', 'MPLAY', 'GAME',
+  'AUX1', 'AUX2', 'AUX3', 'AUX4', 'AUX5', 'AUX6', 'AUX7',
+])
+const NETWORK_SOURCES = new Set([
+  'NET', 'BT', 'SPOTIFY', 'PANDORA', 'SIRIUSXM', 'HDRADIO', 'IRADIO',
+])
+const MEDIA_SOURCES = new Set(['SERVER', 'FAVORITES', 'USB', 'USB/IPOD'])
+
+function getSourceCategory(id: string): SourceCategory {
+  if (INPUT_SOURCES.has(id)) return 'inputs'
+  if (NETWORK_SOURCES.has(id)) return 'network'
+  if (MEDIA_SOURCES.has(id)) return 'media'
+  return 'other'
+}
+
 interface Props {
   state: ReceiverState
   sendCommand: SendCommandFn
@@ -133,11 +158,25 @@ export default function SourceSelector({
   const [editMode, setEditMode] = useState(false)
   const [editingCode, setEditingCode] = useState<string | null>(null)
   const [draftName, setDraftName] = useState('')
+  const [sourceCategory, setSourceCategory] = useState<SourceCategory>('inputs')
   const longPressRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
   const sourceList = sources.length > 0
     ? sources
     : Object.entries(DEFAULT_SOURCES).map(([id, name]) => ({ id, name }))
+
+  const categorizedSources = useMemo(() => {
+    const grouped: Record<SourceCategory, SourceEntry[]> = {
+      inputs: [], network: [], media: [], other: [],
+    }
+    for (const source of sourceList) grouped[getSourceCategory(source.id)].push(source)
+    for (const category of Object.values(grouped)) {
+      category.sort((a, b) => getName(a.id).localeCompare(getName(b.id)))
+    }
+    return grouped
+  }, [sourceList])
+
+  const visibleSources = categorizedSources[sourceCategory]
 
   const getName = (code: string) => sourceNameMap?.[code] || DEFAULT_SOURCES[code] || code
   const getDefaultName = (code: string) => {
@@ -206,8 +245,27 @@ export default function SourceSelector({
         </p>
       )}
 
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
+        {SOURCE_CATEGORIES.map(category => (
+          <button
+            key={category.id}
+            onClick={() => setSourceCategory(category.id)}
+            className={`py-2.5 px-2 rounded-xl text-xs font-medium transition-all ${
+              sourceCategory === category.id
+                ? 'bg-denon-surface text-denon-gold border border-denon-gold/30'
+                : 'bg-denon-surface/70 text-denon-text hover:bg-denon-surface hover:scale-[1.02] active:scale-[0.98]'
+            }`}
+          >
+            {category.label}
+            <span className="ml-1 text-[10px] text-denon-muted">
+              {categorizedSources[category.id].length}
+            </span>
+          </button>
+        ))}
+      </div>
+
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-        {sourceList.map(s => {
+        {visibleSources.map(s => {
           const active = heosServiceCode
             ? s.id === heosServiceCode  // Highlight the specific HEOS service button
             : current === s.id
@@ -273,6 +331,10 @@ export default function SourceSelector({
           )
         })}
       </div>
+
+      {visibleSources.length === 0 && (
+        <p className="py-4 text-center text-xs text-denon-muted">No sources in this category</p>
+      )}
 
       <RadioBrowser
         open={radioBrowserOpen}

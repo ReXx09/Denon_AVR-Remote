@@ -248,8 +248,9 @@ async def websocket_endpoint(ws: WebSocket):
     _LOGGER.info("WebSocket client connected (%d total)", len(app_state.ws_clients))
     try:
         # Send current state immediately
-        if app_state.telnet:
-            await ws.send_text(json.dumps(app_state.build_status()))
+        # Always send an initial status, including while discovery or connection
+        # setup is still in progress, so clients never remain on the loading screen.
+        await ws.send_text(json.dumps(app_state.build_status()))
 
         # Per-client rate limiting state
         msg_times: list[float] = []
