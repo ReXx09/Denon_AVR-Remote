@@ -430,6 +430,25 @@ async def test_source_audio_profile_persist_and_delete(mock_app_state):
 
 
 @pytest.mark.asyncio
+async def test_tone_controls_send_receiver_commands(mock_app_state):
+    from main import app
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        resp = await ac.post("/api/v1/tone", json={
+            "enabled": False,
+            "bass": 54,
+            "treble": 47,
+        })
+
+    assert resp.status_code == 200
+    assert resp.json() == {"ok": True}
+    mock_app_state.telnet.send.assert_any_call("PSTONE CTRL OFF")
+    mock_app_state.telnet.send.assert_any_call("PSBAS 54")
+    mock_app_state.telnet.send.assert_any_call("PSTRE 47")
+
+
+@pytest.mark.asyncio
 async def test_source_name_persist_and_reset(mock_app_state):
     from main import app
 

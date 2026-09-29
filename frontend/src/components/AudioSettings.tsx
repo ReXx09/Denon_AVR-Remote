@@ -44,6 +44,7 @@ export default function AudioSettings({ state, post }: Props) {
     if (!source) return
     const profile = {
       volume: state.volume,
+      channel_volumes: state.channel_volumes,
       bass: state.bass,
       treble: state.treble,
       tone_enabled: state.tone_control,

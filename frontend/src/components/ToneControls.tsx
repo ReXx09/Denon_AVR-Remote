@@ -7,22 +7,13 @@ interface Props {
 }
 
 export default function ToneControls({ state, post }: Props) {
-  const toneOn = state?.tone_control
-  const [toneEnabled, setToneEnabled] = useState<boolean | undefined>(toneOn)
   const [bass, setBass] = useState<number>(state?.bass ?? 50)
   const [treble, setTreble] = useState<number>(state?.treble ?? 50)
 
   useEffect(() => {
-    if (toneOn != null) setToneEnabled(toneOn)
     if (state?.bass != null) setBass(state.bass)
     if (state?.treble != null) setTreble(state.treble)
-  }, [toneOn, state?.bass, state?.treble])
-
-  const toggleTone = async () => {
-    const next = !toneEnabled
-    const result = await post('/tone', { enabled: next })
-    if (result.ok) setToneEnabled(next)
-  }
+  }, [state?.bass, state?.treble])
 
   const dB = (val: number): string => {
     const d = val - 50
@@ -57,22 +48,9 @@ export default function ToneControls({ state, post }: Props) {
     <div className="card">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-xs font-medium text-denon-muted uppercase tracking-wider">Tone Controls</h2>
-        <button
-          type="button"
-          onClick={() => void toggleTone()}
-          aria-pressed={Boolean(toneEnabled)}
-          className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-all ${
-            toneEnabled
-              ? 'bg-denon-gold/20 text-denon-gold ring-1 ring-denon-gold/30'
-              : 'bg-denon-surface text-denon-muted hover:text-denon-text'
-          }`}
-        >
-          {toneEnabled ? 'On' : 'Off'}
-        </button>
       </div>
 
-      {toneEnabled && (
-        <div className="space-y-4 fade-in">
+      <div className="space-y-4 fade-in">
           <div>
             <div className="flex items-center justify-between mb-1">
               <span className="text-xs text-denon-muted">Bass</span>
@@ -97,12 +75,7 @@ export default function ToneControls({ state, post }: Props) {
             </div>
             <div className="flex justify-between text-[10px] text-denon-muted/60 mt-1 px-10"><span>−6 dB</span><span>0 dB</span><span>+6 dB</span></div>
           </div>
-        </div>
-      )}
-
-      {!toneEnabled && (
-        <p className="text-xs text-denon-muted/60">Enable tone controls to adjust bass and treble.</p>
-      )}
+      </div>
     </div>
   )
 }
