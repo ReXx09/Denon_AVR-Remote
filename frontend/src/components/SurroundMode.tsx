@@ -181,13 +181,13 @@ export default function SurroundMode({ state, sendCommand }: Props) {
     <>
       {/* Cycle Modes */}
       <div className="card">
-        <h2 className="text-sm font-medium text-denon-muted mb-3">Cycle Modes</h2>
-        <div className="grid grid-cols-4 gap-2">
+        <h2 className="text-xs font-medium text-denon-muted uppercase tracking-wider mb-2">Cycle Modes</h2>
+        <div className="grid grid-cols-4 gap-1.5">
           {CATEGORIES.map(cat => (
             <button
               key={cat.command}
               onClick={() => onCycleClick(cat)}
-              className={`py-2.5 px-3 rounded-xl text-xs font-medium transition-all ${
+              className={`py-2 px-2 rounded-lg text-xs font-medium transition-all ${
                 expandedCat === cat.code
                   ? 'bg-denon-surface text-denon-gold border border-denon-gold/30'
                   : 'bg-denon-surface/70 text-denon-text hover:bg-denon-surface hover:scale-[1.02] active:scale-[0.98]'
@@ -200,15 +200,15 @@ export default function SurroundMode({ state, sendCommand }: Props) {
 
         {/* Expanded cycle order */}
         {expandedCat && expandedModes.length > 0 && (
-          <div className="mt-3 pt-3 border-t border-denon-border/30">
-            <div className="space-y-1">
+          <div className="mt-2 pt-2 border-t border-denon-border/30">
+            <div className="flex flex-wrap gap-1.5">
               {expandedModes.map((mode, idx) => {
                 const playing = isPlaying(mode)
                 const isNext = idx === nextIdx
                 return (
                   <div
                     key={`${mode.category}${mode.id}`}
-                    className={`flex items-center gap-2 py-1.5 px-2.5 rounded-lg text-xs transition-all ${
+                    className={`flex items-center gap-1.5 py-1 px-2 rounded-md text-[11px] transition-all ${
                       playing
                         ? 'bg-denon-gold/15 text-denon-gold font-medium'
                         : isNext
@@ -232,7 +232,7 @@ export default function SurroundMode({ state, sendCommand }: Props) {
 
       {/* Available Sound Modes */}
       <div className="card">
-        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <h2 className="text-sm font-medium text-denon-muted">Available Sound Modes</h2>
             <button
@@ -254,7 +254,7 @@ export default function SurroundMode({ state, sendCommand }: Props) {
           )}
         </div>
         <ModeSignal mode={current} />
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
           {hasModeList ? (
             uniqueModes.map(mode => {
               const playing = isPlaying(mode)
@@ -279,7 +279,7 @@ export default function SurroundMode({ state, sendCommand }: Props) {
                     clearTimeout(hoverTimerRef.current)
                     setHoveredMode(null)
                   }}
-                  className={`group relative py-2.5 px-3 rounded-xl text-xs font-medium transition-all text-left overflow-hidden ${
+                  className={`group relative py-2 px-2.5 rounded-lg text-xs font-medium transition-all text-left overflow-hidden min-h-9 ${
                     playing
                       ? 'bg-gradient-to-br from-denon-gold/20 to-amber-500/10 text-denon-gold ring-1 ring-denon-gold/40'
                       : infoMode && hasInfo
@@ -321,7 +321,7 @@ export default function SurroundMode({ state, sendCommand }: Props) {
                     clearTimeout(hoverTimerRef.current)
                     setHoveredMode(null)
                   }}
-                  className={`group relative py-2.5 px-3 rounded-xl text-xs font-medium transition-all text-left overflow-hidden ${
+                  className={`group relative py-2 px-2.5 rounded-lg text-xs font-medium transition-all text-left overflow-hidden min-h-9 ${
                     playing
                       ? 'bg-gradient-to-br from-denon-gold/20 to-amber-500/10 text-denon-gold ring-1 ring-denon-gold/40'
                       : infoMode && hasInfo

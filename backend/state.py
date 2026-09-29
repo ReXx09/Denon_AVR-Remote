@@ -34,6 +34,7 @@ class AppState:
         self.data_dir = Path(os.environ.get("DENON_DASHBOARD_DATA_DIR", "/data"))
         self.source_name_overrides_path = self.data_dir / "source_names.json"
         self.source_profiles_path = self.data_dir / "audio_profiles.json"
+        self.source_favorites_path = self.data_dir / "source_favorites.json"
         self.ui_settings_path = self.data_dir / "ui_settings.json"
         self.night_mode_config_path = self.data_dir / "night_mode.json"
         self.radio_favorites_path = self.data_dir / "radio_favorites.json"
@@ -41,6 +42,7 @@ class AppState:
         self.night_mode_config: dict[str, Any] = self.default_night_mode_config()
         self.radio_favorites: list[dict[str, Any]] = []
         self.source_profiles: dict[str, dict[str, Any]] = {}
+        self.source_favorites: list[str] = []
         self._profile_source: str | None = None
         self.night_mode_auto_active: bool = False
         self.heos_available_services: set[str] = set()  # HEOS service names from receiver
@@ -157,6 +159,27 @@ class AppState:
         tmp = self.source_profiles_path.with_suffix(".json.tmp")
         tmp.write_text(json.dumps(self.source_profiles, indent=2, sort_keys=True))
         tmp.replace(self.source_profiles_path)
+
+    def load_source_favorites(self) -> None:
+        """Load the ordered list of favorite source codes."""
+        try:
+            if not self.source_favorites_path.exists():
+                self.source_favorites = []
+                return
+            data = json.loads(self.source_favorites_path.read_text())
+            self.source_favorites = list(dict.fromkeys(
+                code for code in data if isinstance(code, str)
+            )) if isinstance(data, list) else []
+        except Exception as exc:
+            _LOGGER.warning("Failed to load source favorites: %s", exc)
+            self.source_favorites = []
+
+    def save_source_favorites(self) -> None:
+        """Persist the ordered list of favorite source codes."""
+        self.source_favorites_path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = self.source_favorites_path.with_suffix(".json.tmp")
+        tmp.write_text(json.dumps(self.source_favorites, indent=2))
+        tmp.replace(self.source_favorites_path)
 
     async def apply_source_profile(self, source: str) -> None:
         """Apply the saved profile for a source, if one exists."""

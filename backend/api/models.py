@@ -103,6 +103,10 @@ class SourceNameRequest(BaseModel):
         return cleaned
 
 
+class SourceFavoriteRequest(BaseModel):
+    source: str = Field(..., pattern=r"^[A-Z0-9/]{1,10}$")
+
+
 class RadioFavoriteRequest(BaseModel):
     mid: str = Field(..., min_length=1, max_length=500, pattern=r"^[^\r\n]+$")
     name: str = Field(..., min_length=1, max_length=120)
@@ -238,6 +242,7 @@ class DeviceInfoResponse(BaseModel):
     sources: list[dict[str, str]] = []
     source_name_map: dict[str, str] = {}
     source_name_overrides: dict[str, str] = {}
+    source_favorites: list[str] = []
     channel_volumes: dict[str, int] = {}
     channel_names: dict[str, str] = {}
     receiver_ip: str | None = None

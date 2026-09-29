@@ -449,6 +449,23 @@ async def test_source_name_persist_and_reset(mock_app_state):
 
 
 @pytest.mark.asyncio
+async def test_source_favorites_persist_and_deduplicate(mock_app_state):
+    from main import app
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        resp = await ac.post("/api/v1/source-favorites", json={"source": "GAME1"})
+        assert resp.status_code == 200
+        resp = await ac.post("/api/v1/source-favorites", json={"source": "GAME1"})
+        assert resp.json()["source_favorites"] == ["GAME1"]
+        resp = await ac.get("/api/v1/device")
+        assert resp.json()["source_favorites"] == ["GAME1"]
+        resp = await ac.delete("/api/v1/source-favorites/GAME1")
+        assert resp.status_code == 200
+        assert resp.json()["source_favorites"] == []
+
+
+@pytest.mark.asyncio
 async def test_ui_theme_persisted_in_device_info(mock_app_state):
     from main import app
 

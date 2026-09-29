@@ -123,6 +123,7 @@ export interface DeviceInfo {
   sources?: SourceEntry[]
   source_name_map?: Record<string, string>
   source_name_overrides?: Record<string, string>
+  source_favorites?: string[]
   channel_volumes?: Record<string, number>
   channel_names?: Record<string, string>
   receiver_ip?: string | null

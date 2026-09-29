@@ -129,6 +129,7 @@ export default function App() {
     : FALLBACK_CHANNEL_NAMES
   const sourceNameMap = info?.source_name_map || {}
   const sourceNameOverrides = info?.source_name_overrides || {}
+  const sourceFavorites = info?.source_favorites || []
   const configuredSources = info?.sources || []
   const radioFavorites = info?.radio_favorites || []
   const uiEffects: Partial<UiEffects> = info?.ui_effects || {}
@@ -165,6 +166,18 @@ export default function App() {
         })
     if (res.ok) reloadDeviceInfo()
     else console.warn('Source rename failed', await res.text().catch(() => res.statusText))
+  }
+
+  const saveSourceFavorite = async (code: string, enabled: boolean): Promise<void> => {
+    const res = enabled
+      ? await fetch('/api/v1/source-favorites', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ source: code }),
+        })
+      : await fetch(`/api/v1/source-favorites/${encodeURIComponent(code)}`, { method: 'DELETE' })
+    if (res.ok) reloadDeviceInfo()
+    else console.warn('Source favorite update failed', await res.text().catch(() => res.statusText))
   }
 
   const mainSections: { id: Section; label: string }[] = [
@@ -258,6 +271,8 @@ export default function App() {
                   sources={configuredSources}
                   sourceNameMap={sourceNameMap}
                   sourceNameOverrides={sourceNameOverrides}
+                  sourceFavorites={sourceFavorites}
+                  onSourceFavoriteChange={saveSourceFavorite}
                   radioFavorites={radioFavorites}
                   onRenameSource={renameSource}
                   onRadioFavoriteChange={saveRadioFavorite}

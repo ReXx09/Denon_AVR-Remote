@@ -137,6 +137,8 @@ interface Props {
   sourceNameOverrides?: Record<string, string>
   radioFavorites?: RadioFavorite[]
   onRenameSource?: (code: string, name: string | null) => void
+  sourceFavorites?: string[]
+  onSourceFavoriteChange?: (code: string, enabled: boolean) => void
   onRadioFavoriteChange?: (favorite: RadioFavorite, enabled: boolean) => void
   zone?: Zone
 }
@@ -149,6 +151,8 @@ export default function SourceSelector({
   sourceNameOverrides = {},
   radioFavorites = [],
   onRenameSource,
+  sourceFavorites = [],
+  onSourceFavoriteChange,
   onRadioFavoriteChange,
   zone = 'main',
 }: Props) {
@@ -159,6 +163,7 @@ export default function SourceSelector({
   const [editingCode, setEditingCode] = useState<string | null>(null)
   const [draftName, setDraftName] = useState('')
   const [sourceCategory, setSourceCategory] = useState<SourceCategory>('inputs')
+  const [showAllSources, setShowAllSources] = useState(false)
   const longPressRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
   const sourceList = sources.length > 0
@@ -179,6 +184,13 @@ export default function SourceSelector({
   }, [sourceList])
 
   const visibleSources = categorizedSources[sourceCategory]
+  const favoriteSources = sourceFavorites
+    .map(id => sourceList.find(source => source.id === id))
+    .filter((source): source is SourceEntry => Boolean(source))
+
+  const toggleFavorite = (code: string) => {
+    onSourceFavoriteChange?.(code, !sourceFavorites.includes(code))
+  }
 
   const getDefaultName = (code: string) => {
     const discovered = sources.find(s => s.id === code)?.name
@@ -246,26 +258,67 @@ export default function SourceSelector({
         </p>
       )}
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
-        {SOURCE_CATEGORIES.map(category => (
-          <button
-            key={category.id}
-            onClick={() => setSourceCategory(category.id)}
-            className={`py-2.5 px-2 rounded-xl text-xs font-medium transition-all ${
-              sourceCategory === category.id
-                ? 'bg-denon-surface text-denon-gold border border-denon-gold/30'
-                : 'bg-denon-surface/70 text-denon-text hover:bg-denon-surface hover:scale-[1.02] active:scale-[0.98]'
-            }`}
-          >
-            {category.label}
-            <span className="ml-1 text-[10px] text-denon-muted">
-              {categorizedSources[category.id].length}
-            </span>
-          </button>
-        ))}
+      {favoriteSources.length > 0 && (
+        <div className="mb-3">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[10px] text-denon-muted uppercase tracking-wider">Favorites</span>
+            <span className="text-[10px] text-denon-muted">Source + profile</span>
+          </div>
+          <div className="flex gap-1.5 overflow-x-auto pb-1">
+            {favoriteSources.map(source => (
+              <button
+                key={source.id}
+                onClick={() => sendCommand(`${prefix}${source.id}`)}
+                className={`shrink-0 py-2 px-3 rounded-lg text-xs font-medium transition-all ${
+                  current === source.id
+                    ? 'bg-gradient-to-br from-denon-gold/20 to-amber-500/10 text-denon-gold ring-1 ring-denon-gold/40'
+                    : 'bg-denon-surface/70 text-denon-text hover:bg-denon-surface'
+                }`}
+                title="Select source and apply profile"
+              >
+                <span className="mr-1">{getIcon(source.id, getName(source.id))}</span>
+                {getName(source.id)}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="flex items-center gap-2 mb-2">
+        <select
+          value={sourceCategory}
+          onChange={(event) => setSourceCategory(event.target.value as SourceCategory)}
+          className="flex-1 bg-denon-surface text-denon-text text-xs rounded-lg px-3 py-2 border border-denon-border"
+          aria-label="Source category"
+        >
+          {SOURCE_CATEGORIES.map(category => (
+            <option key={category.id} value={category.id}>
+              {category.label} ({categorizedSources[category.id].length})
+            </option>
+          ))}
+        </select>
+        <select
+          value=""
+          onChange={(event) => {
+            if (event.target.value) sendCommand(`${prefix}${event.target.value}`)
+          }}
+          className="flex-1 bg-denon-surface text-denon-text text-xs rounded-lg px-3 py-2 border border-denon-border"
+          aria-label="Select source"
+        >
+          <option value="">Select source...</option>
+          {visibleSources.map(source => <option key={source.id} value={source.id}>{getName(source.id)}</option>)}
+        </select>
+        <button
+          onClick={() => setShowAllSources(value => !value)}
+          className="shrink-0 px-2.5 py-2 rounded-lg bg-denon-surface text-denon-muted hover:text-denon-text text-xs"
+          aria-expanded={showAllSources}
+          title="Show all source buttons"
+        >
+          {showAllSources ? 'Less' : 'All'}
+        </button>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+      {showAllSources && <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
         {visibleSources.map(s => {
           const active = heosServiceCode
             ? s.id === heosServiceCode  // Highlight the specific HEOS service button
@@ -274,8 +327,8 @@ export default function SourceSelector({
           const editing = editingCode === s.id
           const canReset = Boolean(sourceNameOverrides?.[s.id])
           return (
+            <div key={s.id} className="flex gap-1.5 min-w-0">
             <button
-              key={s.id}
               onClick={() => editMode ? beginEdit(s.id) : sendCommand(`${prefix}${s.id}`)}
               onContextMenu={(e) => { e.preventDefault(); resetName(s.id) }}
               onPointerDown={() => startLongPress(s.id)}
@@ -329,9 +382,20 @@ export default function SourceSelector({
                 </span>
               )}
             </button>
+            {!editMode && (
+              <button
+                onClick={() => toggleFavorite(s.id)}
+                className={`w-8 shrink-0 rounded-lg text-sm ${sourceFavorites.includes(s.id) ? 'bg-denon-gold/20 text-denon-gold' : 'bg-denon-surface/70 text-denon-muted hover:text-denon-gold'}`}
+                title={sourceFavorites.includes(s.id) ? 'Remove favorite' : 'Add favorite'}
+                aria-label={sourceFavorites.includes(s.id) ? `Remove ${getName(s.id)} from favorites` : `Add ${getName(s.id)} to favorites`}
+              >
+                {sourceFavorites.includes(s.id) ? '★' : '☆'}
+              </button>
+            )}
+            </div>
           )
         })}
-      </div>
+      </div>}
 
       {visibleSources.length === 0 && (
         <p className="py-4 text-center text-xs text-denon-muted">No sources in this category</p>

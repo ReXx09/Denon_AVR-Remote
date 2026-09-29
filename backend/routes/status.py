@@ -11,6 +11,7 @@ from api.models import (
     CommandRequest,
     DeviceInfoResponse,
     HealthResponse,
+    SourceFavoriteRequest,
     SourceNameRequest,
     StatusResponse,
     TimeSettingsResponse,
@@ -180,6 +181,7 @@ async def device_info(state: AppState = Depends(get_app_state)):
             **state.source_name_overrides,
         },
         source_name_overrides=state.source_name_overrides,
+        source_favorites=state.source_favorites,
         channel_volumes=state.telnet.state.get("channel_volumes", {}) if state.telnet else {},
         channel_names=active_channels,
         receiver_ip=settings.denon_host,
@@ -218,6 +220,23 @@ async def reset_source_name(source_code: str, state: AppState = Depends(get_app_
     state.reset_source_name_override(code)
     await state.broadcast_state()
     return {"ok": True, "source": code, "name": state.resolve_source_name(code)}
+
+
+@router.post("/source-favorites")
+async def add_source_favorite(req: SourceFavoriteRequest, state: AppState = Depends(get_app_state)):
+    code = req.source.strip().upper()
+    if code not in state.source_favorites:
+        state.source_favorites.append(code)
+        state.save_source_favorites()
+    return {"ok": True, "source_favorites": state.source_favorites}
+
+
+@router.delete("/source-favorites/{source_code:path}")
+async def remove_source_favorite(source_code: str, state: AppState = Depends(get_app_state)):
+    code = source_code.strip().upper()
+    state.source_favorites = [source for source in state.source_favorites if source != code]
+    state.save_source_favorites()
+    return {"ok": True, "source_favorites": state.source_favorites}
 
 
 @router.post("/ui-settings")
