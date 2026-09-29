@@ -15,6 +15,7 @@ import ChannelLevels from './components/ChannelLevels'
 import ToneControls from './components/ToneControls'
 import SubwooferLevel from './components/SubwooferLevel'
 import AudioSettings from './components/AudioSettings'
+import AudioDiagnostics from './components/AudioDiagnostics'
 import MediaControls from './components/MediaControls'
 import Zone2Controls from './components/Zone2Controls'
 import Zone3Controls from './components/Zone3Controls'
@@ -280,6 +281,7 @@ export default function App() {
 
             {activeSection === 'audio' && (
               <>
+                <AudioDiagnostics state={state} />
                 <ToneControls state={state} post={post} />
                 <MemoAudioSettings state={state} post={post} />
               </>
