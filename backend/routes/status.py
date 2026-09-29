@@ -18,7 +18,7 @@ from api.models import (
     UiSettingsRequest,
 )
 from config import settings
-from denon.const import CHANNEL_NAMES, DEFAULT_SOURCES, HEOS_SOURCES
+from denon.const import AVC_X4800H_SOURCES, CHANNEL_NAMES, DEFAULT_SOURCES, HEOS_SOURCES
 from denon.discovery import discover_receivers
 from state import AppState
 from dependencies import get_app_state
@@ -111,7 +111,7 @@ async def device_info(state: AppState = Depends(get_app_state)):
     # Some AVR firmware versions do not return physical inputs from SSFUN ?.
     # Keep the standard Denon input set usable until the receiver reports its
     # source list; SSSOD DEL below still removes inputs explicitly hidden there.
-    for code, name in DEFAULT_SOURCES.items():
+    for code, name in AVC_X4800H_SOURCES.items():
         if code not in seen:
             sources.append({
                 "id": code,

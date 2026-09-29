@@ -104,6 +104,19 @@ DEFAULT_SOURCES = {
     "FVP": "Favorites Play",
 }
 
+# Physical source slots used by the AVC-X4800H configuration.
+AVC_X4800H_SOURCES = {
+    "CD": "CD",
+    "TV": "TV Audio",
+    "SAT/CBL": "SAT/Cable",
+    "MPLAY": "Media Player",
+    "BD": "Blu-ray",
+    "GAME": "Game",
+    "GAME2": "Game 2",
+    "AUX1": "AUX1",
+    "AUX2": "AUX2",
+}
+
 # HEOS / network sources that SSFUN ? does not report.
 # Included automatically unless disabled via DENON_DASHBOARD_HEOS_SOURCES=false.
 HEOS_SOURCES = {
