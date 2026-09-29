@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import type { ReceiverState, SendCommandFn, PostFn, Zone } from '../types'
+import RadioBrowser from './RadioBrowser'
+import type { ReceiverState, SendCommandFn, PostFn, Zone, RadioFavorite } from '../types'
 
 const MEDIA_SOURCES = ['NET', 'MPLAY', 'BT', 'USB', 'USB/IPOD', 'SPOTIFY', 'PANDORA', 'SIRIUSXM', 'IRADIO', 'SERVER', 'FAVORITES']
 const VALID_ACTIONS = new Set(['play', 'pause', 'stop', 'next', 'previous'])
@@ -18,6 +19,8 @@ interface Props {
   sendCommand: SendCommandFn
   post: PostFn
   zone?: Zone
+  radioFavorites?: RadioFavorite[]
+  onRadioFavoriteChange?: (favorite: RadioFavorite, enabled: boolean) => void
 }
 
 interface QueueItem {
@@ -28,7 +31,7 @@ interface QueueItem {
   qid?: number
 }
 
-export default function MediaControls({ state, zone = 'main' }: Props) {
+export default function MediaControls({ state, zone = 'main', radioFavorites = [], onRadioFavoriteChange }: Props) {
   const source = zone === 'main' ? state?.source : zone === 'zone2' ? state?.z2_source : state?.z3_source
   const mediaCapable = source != null && MEDIA_SOURCES.includes(source)
 
@@ -39,12 +42,26 @@ export default function MediaControls({ state, zone = 'main' }: Props) {
   const [queueOpen, setQueueOpen] = useState(false)
   const [queueLoading, setQueueLoading] = useState(false)
   const [queueError, setQueueError] = useState(false)
+  const [radioOpen, setRadioOpen] = useState(false)
+  const [optimisticPlayState, setOptimisticPlayState] = useState<string | null>(null)
+
+  useEffect(() => {
+    setOptimisticPlayState(null)
+  }, [playState])
 
   const doMedia = async (action: string) => {
     if (!VALID_ACTIONS.has(action)) return
+    if (action === 'play' || action === 'pause') {
+      setOptimisticPlayState(action)
+    }
     try {
-      await fetch(`/api/v1/media/${action}`, { method: 'POST' })
-    } catch { /* ignore */ }
+      const response = await fetch(`/api/v1/media/${action}`, { method: 'POST' })
+      if (!response.ok && (action === 'play' || action === 'pause')) {
+        setOptimisticPlayState(null)
+      }
+    } catch {
+      if (action === 'play' || action === 'pause') setOptimisticPlayState(null)
+    }
   }
 
   const loadQueue = async () => {
@@ -68,7 +85,7 @@ export default function MediaControls({ state, zone = 'main' }: Props) {
 
   if (!mediaCapable) return null
 
-  const isPlaying = playState === 'play'
+  const isPlaying = (optimisticPlayState ?? playState) === 'play'
   const song = nowPlaying?.song
   const artist = nowPlaying?.artist
   const station = nowPlaying?.station
@@ -81,7 +98,17 @@ export default function MediaControls({ state, zone = 'main' }: Props) {
 
   return (
     <div className="card">
-      <h2 className="text-xs font-medium text-denon-muted uppercase tracking-wider mb-3">Now Playing</h2>
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-xs font-medium text-denon-muted uppercase tracking-wider">Now Playing</h2>
+        {onRadioFavoriteChange && (
+          <button
+            onClick={() => setRadioOpen(true)}
+            className="text-xs text-denon-gold hover:text-denon-text transition-colors"
+          >
+            Radio
+          </button>
+        )}
+      </div>
 
       {/* Now Playing Info */}
       {(title || subtitle) && (
@@ -202,6 +229,15 @@ export default function MediaControls({ state, zone = 'main' }: Props) {
           </div>
         )}
       </div>
+
+      {onRadioFavoriteChange && (
+        <RadioBrowser
+          open={radioOpen}
+          onClose={() => setRadioOpen(false)}
+          favorites={radioFavorites}
+          onFavoriteChange={onRadioFavoriteChange}
+        />
+      )}
     </div>
   )
 }

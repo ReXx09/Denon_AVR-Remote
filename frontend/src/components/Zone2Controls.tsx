@@ -109,7 +109,14 @@ export default function Zone2Controls({ state, sendCommand, post, sources, sourc
       </div>
 
       {/* Media */}
-      <MediaControls state={state} sendCommand={sendCommand} post={post} zone="zone2" />
+      <MediaControls
+        state={state}
+        sendCommand={sendCommand}
+        post={post}
+        zone="zone2"
+        radioFavorites={radioFavorites}
+        onRadioFavoriteChange={onRadioFavoriteChange}
+      />
 
       {/* Source */}
       <SourceSelector

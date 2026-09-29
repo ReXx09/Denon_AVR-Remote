@@ -264,7 +264,13 @@ export default function App() {
               <>
                 <MemoPowerControl state={state} sendCommand={sendCommand} zone="main" />
                 <MemoVolumeControl state={state} sendCommand={sendCommand} post={post} />
-                <MemoMediaControls state={state} sendCommand={sendCommand} post={post} />
+                <MemoMediaControls
+                  state={state}
+                  sendCommand={sendCommand}
+                  post={post}
+                  radioFavorites={radioFavorites}
+                  onRadioFavoriteChange={saveRadioFavorite}
+                />
                 <MemoSourceSelector
                   state={state}
                   sendCommand={sendCommand}
