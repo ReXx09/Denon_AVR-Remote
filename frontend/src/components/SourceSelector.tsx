@@ -173,11 +173,16 @@ export default function SourceSelector({
   const [showAllSources, setShowAllSources] = useState(false)
   const longPressRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
-  const sourceList = sources.length > 0
+  const availableSources = sources.length > 0
     ? sources
     : Object.entries(DEFAULT_SOURCES).map(([id, name]) => ({ id, name }))
 
-  const getName = (code: string) => sourceNameMap?.[code] || DEFAULT_SOURCES[code] || code
+  const getName = (code: string) => sourceNameMap?.[code] || availableSources.find(source => source.id === code)?.name || DEFAULT_SOURCES[code] || code
+  const game1Name = getName('GAME1')
+  const hasNamedGame1 = availableSources.some(source =>
+    source.id === 'GAME1' && game1Name.toLowerCase() !== 'game 1' && game1Name.toLowerCase() !== 'game1'
+  )
+  const sourceList = availableSources.filter(source => !(hasNamedGame1 && source.id === 'GAME'))
 
   const categorizedSources = useMemo(() => {
     const grouped: Record<SourceCategory, SourceEntry[]> = {
@@ -277,7 +282,7 @@ export default function SourceSelector({
             <span className="text-[10px] text-denon-muted uppercase tracking-wider">Favorites</span>
             <span className="text-[10px] text-denon-muted">Source + profile</span>
           </div>
-          <div className="flex gap-1.5 overflow-x-auto pb-1">
+          <div className="flex flex-wrap gap-1.5 py-1">
             {favoriteSources.map(source => (
               <button
                 key={source.id}
