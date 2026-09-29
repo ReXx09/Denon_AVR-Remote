@@ -105,6 +105,10 @@ class Zone2VolumeRequest(BaseModel):
     level: int = Field(..., ge=0, le=98, description="Zone 2 volume 0–98")
 
 
+class Zone3VolumeRequest(BaseModel):
+    level: int = Field(..., ge=0, le=98, description="Zone 3 volume 0–98")
+
+
 class DynamicEQRequest(BaseModel):
     enabled: bool
 
@@ -115,6 +119,15 @@ class DynamicVolumeRequest(BaseModel):
 
 class MultEQRequest(BaseModel):
     mode: Literal["AUDYSSEY", "BYP.LR", "FLAT", "MANUAL", "OFF"]
+
+
+class DialogRequest(BaseModel):
+    enabled: bool | None = None
+    level: int | None = Field(None, ge=0, le=12, description="Dialog level 0–12")
+
+
+class ReferenceLevelRequest(BaseModel):
+    offset: Literal[0, 5, 10, 15]
 
 
 class SleepTimerRequest(BaseModel):
@@ -163,6 +176,12 @@ class StatusResponse(BaseModel):
     z2_sleep_timer: int | None = None
     z2_source: str | None = None
     z2_source_name: str | None = None
+    z3_power: bool | None = None
+    z3_volume: int | None = None
+    z3_muted: bool | None = None
+    z3_sleep_timer: int | None = None
+    z3_source: str | None = None
+    z3_source_name: str | None = None
     speaker_calibration: dict[str, float] = {}
     now_playing: dict[str, Any] | None = None
     play_state: str | None = None
@@ -201,6 +220,7 @@ class DeviceInfoResponse(BaseModel):
     device_name: str = "Denon AVR"
     zone1_name: str = "Main Zone"
     zone2_name: str = "Zone 2"
+    zone3_name: str = "Zone 3"
     sources: list[dict[str, str]] = []
     source_name_map: dict[str, str] = {}
     source_name_overrides: dict[str, str] = {}

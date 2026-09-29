@@ -39,6 +39,7 @@ export function useKeyboardShortcuts({ state, post, sendCommand, zone, setZone }
           e.preventDefault()
           emitHint(e.shiftKey && zone === 'main' ? 'Volume +0.5' : 'Volume Up')
           if (zone === 'zone2') sendCommand('Z2UP')
+          else if (zone === 'zone3') sendCommand('Z3UP')
           else if (e.shiftKey) sendCommand(volumeToHalfStepCommand(state?.volume, 0.5))
           else sendCommand('MVUP')
           break
@@ -46,6 +47,7 @@ export function useKeyboardShortcuts({ state, post, sendCommand, zone, setZone }
           e.preventDefault()
           emitHint(e.shiftKey && zone === 'main' ? 'Volume -0.5' : 'Volume Down')
           if (zone === 'zone2') sendCommand('Z2DOWN')
+          else if (zone === 'zone3') sendCommand('Z3DOWN')
           else if (e.shiftKey) sendCommand(volumeToHalfStepCommand(state?.volume, -0.5))
           else sendCommand('MVDOWN')
           break
@@ -54,6 +56,7 @@ export function useKeyboardShortcuts({ state, post, sendCommand, zone, setZone }
           e.preventDefault()
           emitHint('Mute Toggle')
           if (zone === 'zone2') sendCommand(state?.z2_muted ? 'Z2MUOFF' : 'Z2MUON')
+          else if (zone === 'zone3') sendCommand(state?.z3_muted ? 'Z3MUOFF' : 'Z3MUON')
           else sendCommand(state?.muted ? 'MUOFF' : 'MUON')
           break
         case 'p':
@@ -61,13 +64,14 @@ export function useKeyboardShortcuts({ state, post, sendCommand, zone, setZone }
           e.preventDefault()
           emitHint('Power Toggle')
           if (zone === 'zone2') sendCommand(state?.z2_power ? 'Z2OFF' : 'Z2ON')
+          else if (zone === 'zone3') sendCommand(state?.z3_power ? 'Z3OFF' : 'Z3ON')
           else sendCommand(state?.power ? 'ZMOFF' : 'PWON')
           break
         case 'z':
         case 'Z':
           e.preventDefault()
           emitHint('Zone Toggle')
-          setZone(prev => prev === 'main' ? 'zone2' : 'main')
+          setZone(prev => prev === 'main' ? 'zone2' : prev === 'zone2' ? 'zone3' : 'main')
           break
         default:
           break

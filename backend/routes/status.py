@@ -128,7 +128,7 @@ async def device_info(state: AppState = Depends(get_app_state)):
 
     # Also include current source if not in either map
     if state.telnet:
-        for src_field in ("source", "z2_source"):
+        for src_field in ("source", "z2_source", "z3_source"):
             src = state.telnet.state.get(src_field)
             if src and src not in seen:
                 sources.append(
@@ -162,6 +162,7 @@ async def device_info(state: AppState = Depends(get_app_state)):
         device_name=device_name,
         zone1_name=settings.denon_zone1_name,
         zone2_name=settings.denon_zone2_name,
+        zone3_name=settings.denon_zone3_name,
         sources=sources,
         source_name_map={
             **DEFAULT_SOURCES,

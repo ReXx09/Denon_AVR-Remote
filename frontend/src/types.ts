@@ -3,7 +3,7 @@
 // DeviceInfo mirrors DeviceInfoResponse (GET /api/v1/device). Keep both in sync
 // with backend/api/models.py.
 
-export type Zone = 'main' | 'zone2'
+export type Zone = 'main' | 'zone2' | 'zone3'
 
 export type ThemeName =
   | 'gold' | 'blue' | 'red' | 'green'
@@ -73,6 +73,12 @@ export interface ReceiverState {
   z2_sleep_timer?: number
   z2_source?: string
   z2_source_name?: string
+  z3_power?: boolean
+  z3_volume?: number
+  z3_muted?: boolean
+    z3_sleep_timer?: number
+  z3_source?: string
+  z3_source_name?: string
   now_playing?: NowPlaying
   play_state?: 'play' | 'pause' | 'stop'
   stream_quality?: string
@@ -113,6 +119,7 @@ export interface DeviceInfo {
   device_name?: string
   zone1_name?: string
   zone2_name?: string
+  zone3_name?: string
   sources?: SourceEntry[]
   source_name_map?: Record<string, string>
   source_name_overrides?: Record<string, string>

@@ -17,6 +17,7 @@ import SubwooferLevel from './components/SubwooferLevel'
 import AudioSettings from './components/AudioSettings'
 import MediaControls from './components/MediaControls'
 import Zone2Controls from './components/Zone2Controls'
+import Zone3Controls from './components/Zone3Controls'
 import CacheReset from './components/CacheReset'
 import AmbientBackground from './experience/AmbientBackground'
 import SeasonalEffects from './experience/SeasonalEffects'
@@ -121,6 +122,7 @@ export default function App() {
   const deviceName = info?.device_name || 'Denon AVR'
   const zoneName = info?.zone1_name || 'Main Zone'
   const z2Name = info?.zone2_name || 'Zone 2'
+  const z3Name = info?.zone3_name || 'Zone 3'
   const channelNames = (info?.channel_names && Object.keys(info.channel_names).length > 0)
     ? info.channel_names
     : FALLBACK_CHANNEL_NAMES
@@ -207,6 +209,16 @@ export default function App() {
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
             {zoneName}
           </span>
+        </button>
+        <button
+          onClick={() => setZone('zone3')}
+          className={`flex-1 py-3 px-4 rounded-xl text-sm font-semibold transition-all duration-200 ${
+            zone === 'zone3'
+              ? 'bg-gradient-to-r from-denon-gold to-amber-500 text-denon-dark shadow-lg shadow-denon-gold/25'
+              : 'text-denon-muted hover:text-denon-text'
+          }`}
+        >
+          {z3Name}
         </button>
         <button
           onClick={() => setZone('zone2')}
@@ -303,6 +315,22 @@ export default function App() {
           />
         </div>
       )}
+
+      {zone === 'zone3' && (
+        <div className="fade-in">
+          <Zone3Controls
+            state={state}
+            sendCommand={sendCommand}
+            post={post}
+            sources={configuredSources}
+            sourceNameMap={sourceNameMap}
+            sourceNameOverrides={sourceNameOverrides}
+            radioFavorites={radioFavorites}
+            onRenameSource={renameSource}
+            onRadioFavoriteChange={saveRadioFavorite}
+          />
+        </div>
+      )}
     </div>
 
     {/* Mobile bottom navigation — thumb-reachable zone + section tabs */}
@@ -332,6 +360,16 @@ export default function App() {
             }`}
           >
             {z2Name}
+          </button>
+          <button
+            onClick={() => setZone('zone3')}
+            className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all ${
+              zone === 'zone3'
+                ? 'bg-gradient-to-r from-denon-gold to-amber-500 text-denon-dark'
+                : 'text-denon-muted hover:text-denon-text'
+            }`}
+          >
+            {z3Name}
           </button>
         </div>
         {/* Section tabs (main zone only) */}

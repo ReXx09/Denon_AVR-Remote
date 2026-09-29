@@ -80,4 +80,9 @@ def mock_state() -> dict[str, Any]:
         "z2_volume": None,
         "z2_muted": None,
         "z2_source": None,
+        "z3_power": False,
+        "z3_volume": None,
+        "z3_muted": None,
+            "z3_sleep_timer": None,
+        "z3_source": None,
     }

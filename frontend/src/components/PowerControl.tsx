@@ -7,11 +7,12 @@ interface Props {
 }
 
 export default function PowerControl({ state, sendCommand, zone = 'main' }: Props) {
-  const power = zone === 'main' ? state?.power : state?.z2_power
+  const power = zone === 'main' ? state?.power : zone === 'zone2' ? state?.z2_power : state?.z3_power
 
   // Use ZMON/ZMOFF for main zone only (PWON turns on both zones)
-  const onCmd = zone === 'main' ? 'ZMON' : 'Z2ON'
-  const offCmd = zone === 'main' ? 'ZMOFF' : 'Z2OFF'
+  const onCmd = zone === 'main' ? 'ZMON' : zone === 'zone2' ? 'Z2ON' : 'Z3ON'
+  const offCmd = zone === 'main' ? 'ZMOFF' : zone === 'zone2' ? 'Z2OFF' : 'Z3OFF'
+  const zoneLabel = zone === 'main' ? 'main zone' : zone === 'zone2' ? 'Zone 2' : 'Zone 3'
 
   return (
     <div className="card flex items-center justify-between">
@@ -23,7 +24,7 @@ export default function PowerControl({ state, sendCommand, zone = 'main' }: Prop
       </div>
       <button
         onClick={() => sendCommand(power ? offCmd : onCmd)}
-        aria-label={power ? `Turn ${zone === 'main' ? 'main zone' : 'Zone 2'} off` : `Turn ${zone === 'main' ? 'main zone' : 'Zone 2'} on`}
+        aria-label={power ? `Turn ${zoneLabel} off` : `Turn ${zoneLabel} on`}
         className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-200 ${
           power
             ? 'bg-gradient-to-br from-denon-gold to-amber-600 text-denon-dark shadow-lg shadow-denon-gold/30'

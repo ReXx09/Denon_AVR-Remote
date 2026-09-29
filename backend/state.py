@@ -322,6 +322,7 @@ class AppState:
         state = self.telnet.state if self.telnet else {}
         src = state.get("source")
         z2src = state.get("z2_source")
+        z3src = state.get("z3_source")
         # When source is NET, identify the actual streaming service
         source_name = self.resolve_source_name(src)
         heos_source = None
@@ -367,6 +368,12 @@ class AppState:
             "z2_sleep_timer": state.get("z2_sleep_timer"),
             "z2_source": z2src,
             "z2_source_name": self.resolve_source_name(z2src),
+            "z3_power": state.get("z3_power"),
+            "z3_volume": state.get("z3_volume"),
+            "z3_muted": state.get("z3_muted"),
+                        "z3_sleep_timer": state.get("z3_sleep_timer"),
+            "z3_source": z3src,
+            "z3_source_name": self.resolve_source_name(z3src),
             "now_playing": self.media_state.get("now_playing"),
             "play_state": self.media_state.get("play_state"),
             "stream_quality": self._detect_stream_quality(),

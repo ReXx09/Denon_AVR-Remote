@@ -5,10 +5,12 @@ from fastapi import APIRouter, HTTPException, Depends
 
 from api.models import (
     ChannelVolumeRequest,
+    DialogRequest,
     DynamicEQRequest,
     DynamicVolumeRequest,
     EcoModeRequest,
     MultEQRequest,
+    ReferenceLevelRequest,
     NightModeConfigRequest,
     NightModeRequest,
     SleepTimerRequest,
@@ -80,6 +82,23 @@ async def set_dynamic_volume(req: DynamicVolumeRequest, state: AppState = Depend
 @router.post("/multeq")
 async def set_multeq(req: MultEQRequest, state: AppState = Depends(get_app_state)):
     return await send_command(state, f"PSMULTEQ:{req.mode}")
+
+
+@router.post("/dialog")
+async def set_dialog(req: DialogRequest, state: AppState = Depends(get_app_state)):
+    results = []
+    if req.enabled is not None:
+        results.append(await send_raw(state, f"PSDIL {'ON' if req.enabled else 'OFF'}"))
+    if req.level is not None:
+        results.append(await send_raw(state, f"PSDIL {req.level:02d}"))
+    if not results:
+        raise HTTPException(400, "At least one dialog setting is required")
+    return {"ok": all(results)}
+
+
+@router.post("/reference-level")
+async def set_reference_level(req: ReferenceLevelRequest, state: AppState = Depends(get_app_state)):
+    return await send_command(state, f"PSREFLEV {req.offset}")
 
 
 @router.post("/sleep")

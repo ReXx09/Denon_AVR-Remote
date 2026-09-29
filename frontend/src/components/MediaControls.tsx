@@ -20,7 +20,7 @@ interface Props {
 }
 
 export default function MediaControls({ state, zone = 'main' }: Props) {
-  const source = zone === 'main' ? state?.source : state?.z2_source
+  const source = zone === 'main' ? state?.source : zone === 'zone2' ? state?.z2_source : state?.z3_source
   const mediaCapable = source != null && MEDIA_SOURCES.includes(source)
 
   // Now-playing data comes from WebSocket state (backend polls HEOS once for all clients)

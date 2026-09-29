@@ -18,7 +18,7 @@ from config import settings
 from denon.const import COMMAND_PATTERN
 from denon.discovery import discover_receivers
 from night_mode import reconcile_night_mode_schedule
-from routes import power, volume, audio, zone2, media, status
+from routes import power, volume, audio, zone2, zone3, media, status
 from state import app_state
 
 # ---- Logging ----
@@ -210,6 +210,7 @@ app.include_router(power.router)
 app.include_router(volume.router)
 app.include_router(audio.router)
 app.include_router(zone2.router)
+app.include_router(zone3.router)
 app.include_router(media.router)
 app.include_router(status.router)
 

@@ -55,6 +55,11 @@ class MockDenonClient(DenonTelnetClient):
             "z2_muted": False,
             "z2_source": "TV",
             "z2_sleep_timer": None,
+            "z3_power": False,
+            "z3_volume": 30,
+            "z3_muted": False,
+                        "z3_sleep_timer": None,
+            "z3_source": "TV",
             "surround_mode_list": [
                 {"category": "MOV", "category_label": "Movie",      "id": "01", "active": False, "display_name": "Dolby Digital",  "command": "DOLBY DIGITAL"},
                 {"category": "MOV", "category_label": "Movie",      "id": "02", "active": True,  "display_name": "Dolby Atmos",    "command": "DOLBY ATMOS"},
@@ -165,6 +170,29 @@ class MockDenonClient(DenonTelnetClient):
             return [f"Z2{new_vol:02d}"]
         if cmd.startswith("Z2"):
             return [cmd]  # Z2ON, Z2OFF, Z2MUON, Z2MUOFF, Z2<vol>, Z2<source>
+
+        # Zone 3
+        if cmd == "Z3?":
+            result = ["Z3ON" if s["z3_power"] else "Z3OFF"]
+            if s["z3_volume"] is not None:
+                result.append(f"Z3{s['z3_volume']:02d}")
+            if s["z3_source"]:
+                result.append(f"Z3{s['z3_source']}")
+            return result
+        if cmd == "Z3MU?":
+            return ["Z3MUON" if s["z3_muted"] else "Z3MUOFF"]
+        if cmd == "Z3SLP?":
+            if s.get("z3_sleep_timer") is None:
+                return ["Z3SLPOFF"]
+            return [f"Z3SLP{s['z3_sleep_timer']:03d}"]
+        if cmd == "Z3UP":
+            new_vol = min(98, (s["z3_volume"] or 30) + 1)
+            return [f"Z3{new_vol:02d}"]
+        if cmd == "Z3DOWN":
+            new_vol = max(0, (s["z3_volume"] or 30) - 1)
+            return [f"Z3{new_vol:02d}"]
+        if cmd.startswith("Z3"):
+            return [cmd]
 
         # Tone
         if cmd == "PSTONE CTRL ?":

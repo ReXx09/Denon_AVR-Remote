@@ -186,5 +186,7 @@ QUERY_COMMANDS = [
     "PSMULTEQ: ?", "PSDYNEQ ?", "PSDYNVOL ?",
     "PSREFLEV ?",
     "Z2?", "Z2MU?", "Z2SLP?",
+    "Z3?", "Z3MU?",
+        "Z3SLP?",
     "SLP?", "ECO?",
 ]

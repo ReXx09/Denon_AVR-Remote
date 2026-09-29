@@ -127,8 +127,8 @@ export default function SourceSelector({
   onRadioFavoriteChange,
   zone = 'main',
 }: Props) {
-  const current = zone === 'main' ? state?.source : state?.z2_source
-  const prefix = zone === 'main' ? 'SI' : 'Z2'
+  const current = zone === 'main' ? state?.source : zone === 'zone2' ? state?.z2_source : state?.z3_source
+  const prefix = zone === 'main' ? 'SI' : zone === 'zone2' ? 'Z2' : 'Z3'
   const [radioBrowserOpen, setRadioBrowserOpen] = useState(false)
   const [editMode, setEditMode] = useState(false)
   const [editingCode, setEditingCode] = useState<string | null>(null)
@@ -175,7 +175,7 @@ export default function SourceSelector({
   const cancelLongPress = () => clearTimeout(longPressRef.current)
 
   // Backend resolves the actual HEOS service (Spotify, TuneIn, etc.) when source=NET
-  const backendDisplayName = zone === 'main' ? state?.source_name : state?.z2_source_name
+  const backendDisplayName = zone === 'main' ? state?.source_name : zone === 'zone2' ? state?.z2_source_name : state?.z3_source_name
   const currentDisplayName = (current ? sourceNameOverrides?.[current] : undefined) || backendDisplayName || (current ? getName(current) : '')
   const heosServiceCode = zone === 'main' ? state?.heos_source : null
 

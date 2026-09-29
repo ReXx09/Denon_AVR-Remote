@@ -11,6 +11,9 @@ export default function AudioSettings({ state, post }: Props) {
   const multeq = state?.multeq
   const sleepTimer = state?.sleep_timer
   const ecoMode = state?.eco_mode
+  const dialogEnabled = state?.dialog_level_enabled
+  const dialogLevel = state?.dialog_level ?? 0
+  const referenceLevel = state?.ref_level_offset ?? 0
 
   const dynVolModes = ['OFF', 'LIT', 'MED', 'HEV']
   const dynVolLabels: Record<string, string> = { OFF: 'Off', LIT: 'Light', MED: 'Medium', HEV: 'Heavy' }
@@ -21,6 +24,47 @@ export default function AudioSettings({ state, post }: Props) {
   return (
     <div className="card space-y-5">
       <h2 className="text-sm font-medium text-denon-muted">Audio Settings</h2>
+
+      {/* Dialog Enhancer */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-denon-muted">Dialog Enhancer</span>
+          <button
+            onClick={() => post('/dialog', { enabled: !dialogEnabled })}
+            className={`text-xs px-3 py-1.5 rounded-lg transition-all ${dialogEnabled ? 'bg-denon-gold/20 text-denon-gold' : 'bg-denon-surface text-denon-muted'}`}
+          >
+            {dialogEnabled ? 'On' : 'Off'}
+          </button>
+        </div>
+        <div>
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-xs text-denon-muted">Dialog Level</span>
+            <span className="text-xs tabular-nums text-denon-text">{dialogLevel}</span>
+          </div>
+          <input
+            type="range" min={0} max={12} step={1} value={dialogLevel}
+            onChange={(e) => post('/dialog', { level: parseInt(e.target.value, 10) })}
+            className="w-full"
+            disabled={!dialogEnabled}
+          />
+        </div>
+      </div>
+
+      {/* Reference Level Offset */}
+      <div>
+        <span className="text-xs text-denon-muted block mb-2">Reference Level Offset</span>
+        <div className="flex gap-1.5">
+          {[0, 5, 10, 15].map(offset => (
+            <button
+              key={offset}
+              onClick={() => post('/reference-level', { offset })}
+              className={`text-xs px-3 py-1.5 rounded-lg transition-all flex-1 ${referenceLevel === offset ? 'bg-denon-gold text-denon-dark' : 'bg-denon-surface text-denon-muted hover:bg-denon-border'}`}
+            >
+              {offset} dB
+            </button>
+          ))}
+        </div>
+      </div>
 
       {/* MultEQ */}
       <div>

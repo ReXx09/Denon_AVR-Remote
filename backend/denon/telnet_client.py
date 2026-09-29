@@ -98,6 +98,12 @@ class DenonTelnetClient:
             "z2_muted": None,
             "z2_sleep_timer": None,
             "z2_source": None,
+            # Zone 3
+            "z3_power": None,
+            "z3_volume": None,
+            "z3_muted": None,
+                        "z3_sleep_timer": None,
+            "z3_source": None,
         }
 
         # OPSMLALL accumulation buffer
@@ -305,6 +311,12 @@ class DenonTelnetClient:
                     r"^Z2(ON|OFF|MUON|MUOFF|SLP[A-Z0-9]+|\d{2,3}|[A-Z][A-Z0-9/]{1,11})$"
                 ),
                 self._handle_zone2,
+            ),
+            (
+                re.compile(
+                    r"^Z3(ON|OFF|MUON|MUOFF|SLP[A-Z0-9]+|\d{2,3}|[A-Z][A-Z0-9/]{1,11})$"
+                ),
+                self._handle_zone3,
             ),
         ]
 
@@ -558,6 +570,33 @@ class DenonTelnetClient:
             self.state["z2_source"] = val
             return True
         return False
+
+    def _handle_zone3(self, match: re.Match) -> bool:
+        val = match.group(1)
+        if val == "ON":
+            self.state["z3_power"] = True
+        elif val == "OFF":
+            self.state["z3_power"] = False
+        elif val == "MUON":
+            self.state["z3_muted"] = True
+        elif val == "MUOFF":
+            self.state["z3_muted"] = False
+        elif val.startswith("SLP"):
+            sleep_value = val[3:].strip()
+            if sleep_value == "OFF":
+                self.state["z3_sleep_timer"] = None
+            else:
+                try:
+                    self.state["z3_sleep_timer"] = int(sleep_value)
+                except ValueError:
+                    return False
+        elif val.isdigit():
+            self.state["z3_volume"] = int(val)
+        elif val:
+            self.state["z3_source"] = val
+        else:
+            return False
+        return True
 
     def _parse_volume(self, s: str) -> float | None:
         s = s.strip()

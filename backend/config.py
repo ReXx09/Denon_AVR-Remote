@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     denon_device_name: str = "Denon AVR"
     denon_zone1_name: str = "Main Zone"
     denon_zone2_name: str = "Zone 2"
+    denon_zone3_name: str = "Zone 3"
 
     # Custom source names as JSON: {"GAME":"Game Console","BD":"Blu-ray"}
     denon_source_names: str = "{}"

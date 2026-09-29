@@ -330,6 +330,49 @@ async def test_z2_power_on(mock_app_state):
     mock_app_state.telnet.send.assert_called_with("Z2ON")
 
 
+@pytest.mark.asyncio
+async def test_z3_volume(mock_app_state):
+    from main import app
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        resp = await ac.post("/api/v1/zone3/volume", json={"level": 42})
+    assert resp.status_code == 200
+    mock_app_state.telnet.send.assert_called_with("Z342")
+
+
+@pytest.mark.asyncio
+async def test_dialog_level(mock_app_state):
+    from main import app
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        resp = await ac.post("/api/v1/dialog", json={"level": 6})
+    assert resp.status_code == 200
+    mock_app_state.telnet.send.assert_called_with("PSDIL 06")
+
+
+@pytest.mark.asyncio
+async def test_reference_level_offset(mock_app_state):
+    from main import app
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        resp = await ac.post("/api/v1/reference-level", json={"offset": 10})
+    assert resp.status_code == 200
+    mock_app_state.telnet.send.assert_called_with("PSREFLEV 10")
+
+
+@pytest.mark.asyncio
+async def test_z3_sleep_timer(mock_app_state):
+    from main import app
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        resp = await ac.post("/api/v1/zone3/sleep", json={"minutes": 30})
+    assert resp.status_code == 200
+    mock_app_state.telnet.send.assert_called_with("Z3SLP030")
+
 # ── Device Info ────────────────────────────────────────────────────────────────
 
 @pytest.mark.asyncio
@@ -342,6 +385,7 @@ async def test_device_info(mock_app_state):
     assert resp.status_code == 200
     data = resp.json()
     assert data["device_name"] == "Denon AVR"
+    assert data["zone3_name"] == "Zone 3"
     assert "channel_names" in data
     assert data["source_name_map"]["GAME"] == "Game Console"
 

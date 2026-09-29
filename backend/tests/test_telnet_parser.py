@@ -251,6 +251,33 @@ async def test_parse_z2_source(telnet_client):
     await telnet_client._parse("Z2NET")
     assert telnet_client.state["z2_source"] == "NET"
 
+@pytest.mark.asyncio
+async def test_parse_z3_sleep_timer(telnet_client):
+    await telnet_client._parse("Z3SLP030")
+    assert telnet_client.state["z3_sleep_timer"] == 30
+
+
+# ── Zone 3 ─────────────────────────────────────────────────────────────────────
+
+@pytest.mark.asyncio
+async def test_parse_z3_power_on(telnet_client):
+    await telnet_client._parse("Z3ON")
+    assert telnet_client.state["z3_power"] is True
+
+
+@pytest.mark.asyncio
+async def test_parse_z3_volume_and_mute(telnet_client):
+    await telnet_client._parse("Z345")
+    await telnet_client._parse("Z3MUON")
+    assert telnet_client.state["z3_volume"] == 45
+    assert telnet_client.state["z3_muted"] is True
+
+
+@pytest.mark.asyncio
+async def test_parse_z3_source(telnet_client):
+    await telnet_client._parse("Z3NET")
+    assert telnet_client.state["z3_source"] == "NET"
+
 
 # ── Sound Decoder ─────────────────────────────────────────────────────────────
 
