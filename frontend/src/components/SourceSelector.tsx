@@ -307,7 +307,7 @@ export default function SourceSelector({
           <select
             value={sourceCategory}
             onChange={(event) => setSourceCategory(event.target.value as SourceCategory)}
-            className="w-full appearance-none bg-denon-surface text-denon-text text-xs rounded-lg px-3 py-2 pr-8 border border-denon-border"
+            className="w-full appearance-none bg-denon-surface text-denon-text text-xs rounded-lg px-3 py-2 pr-8 border border-denon-border transition-colors hover:bg-denon-border/60 hover:border-denon-gold/50 focus:outline-none focus:border-denon-gold focus:ring-1 focus:ring-denon-gold/40"
             aria-label="Source category"
           >
             {SOURCE_CATEGORIES.map(category => (
@@ -324,7 +324,7 @@ export default function SourceSelector({
             onChange={(event) => {
               if (event.target.value) sendCommand(`${prefix}${event.target.value}`)
             }}
-            className="w-full appearance-none bg-denon-surface text-denon-text text-xs rounded-lg px-3 py-2 pr-8 border border-denon-border"
+            className="w-full appearance-none bg-denon-surface text-denon-text text-xs rounded-lg px-3 py-2 pr-8 border border-denon-border transition-colors hover:bg-denon-border/60 hover:border-denon-gold/50 focus:outline-none focus:border-denon-gold focus:ring-1 focus:ring-denon-gold/40"
             aria-label="Select source"
           >
             <option value="">Select source...</option>
