@@ -22,6 +22,38 @@ SPEAKER_INDEX_MAP = {
 }
 
 
+async def set_digital_input_level(host: str, level_db: int) -> bool:
+    """Set the Denon digital input level through its web UI endpoint.
+
+    The X4800H web UI encodes 0 dB as 1, so the observed +5 dB request uses
+    ``<DigitalInputs>6</DigitalInputs>``.
+    """
+    if not host or host == "0.0.0.0":
+        return False
+    try:
+        addr = ipaddress.ip_address(host)
+        if not addr.is_private or addr.is_loopback or addr.is_link_local:
+            _LOGGER.warning("Input-level request blocked for non-private IP: %s", host)
+            return False
+        value = level_db + 1
+        data = f"<DigitalInputs>{value}</DigitalInputs>"
+        url = f"http://{addr}:11080/ajax/inputs/set_config"
+        async with httpx.AsyncClient(verify=False) as client:
+            response = await client.get(
+                url,
+                params={"type": 5, "data": data},
+                headers={"User-Agent": "DenonDashboard/1.0"},
+                timeout=5.0,
+            )
+        if response.is_success:
+            _LOGGER.info("Set digital input level to %s dB on %s", level_db, addr)
+            return True
+        _LOGGER.warning("Digital input level request failed: HTTP %s", response.status_code)
+    except Exception as exc:
+        _LOGGER.warning("Could not set digital input level (HTTP): %s", exc)
+    return False
+
+
 async def fetch_speaker_calibration(host: str) -> dict[str, float]:
     """Fetch Audyssey speaker calibration from receiver HTTP API (best-effort).
 

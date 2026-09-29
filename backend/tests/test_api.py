@@ -447,14 +447,30 @@ async def test_source_audio_profile_accepts_slash_source_codes(mock_app_state):
 async def test_source_audio_profile_can_be_applied(mock_app_state):
     from main import app
 
-    mock_app_state.source_profiles = {"GAME1": {"subwoofer_level": 38}}
+    mock_app_state.source_profiles = {"GAME1": {"subwoofer_level": 38, "treble": 46}}
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         resp = await ac.post("/api/v1/source-profiles/GAME1/apply")
 
     assert resp.status_code == 200
     mock_app_state.telnet.send.assert_called_with("PSSWL 38")
+    mock_app_state.telnet.send.assert_any_call("PSTONE CTRL ON")
+    mock_app_state.telnet.send.assert_any_call("PSTRE 46")
     mock_app_state.telnet.refresh.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_source_audio_profile_applies_digital_input_level(mock_app_state):
+    from main import app
+
+    mock_app_state.source_profiles = {"GAME1": {"digital_input_level": 5}}
+    with patch("calibration.set_digital_input_level", new=AsyncMock(return_value=True)) as set_level:
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as ac:
+            resp = await ac.post("/api/v1/source-profiles/GAME1/apply")
+
+    assert resp.status_code == 200
+    set_level.assert_awaited_once_with("192.168.1.100", 5)
 
 
 @pytest.mark.asyncio
