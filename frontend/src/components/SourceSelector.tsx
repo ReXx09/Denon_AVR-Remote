@@ -100,7 +100,7 @@ function getIcon(code: string, name?: string): React.ReactNode {
 const DEFAULT_SOURCES: Record<string, string> = {
   PHONO: 'Phono', CD: 'CD', TUNER: 'Tuner', DVD: 'DVD', BD: 'Blu-ray',
   TV: 'TV Audio', 'SAT/CBL': 'SAT/Cable', MPLAY: 'Media Player',
-  GAME: 'Game', GAME2: 'Game 2', NET: 'Online Music', BT: 'Bluetooth',
+  GAME: 'Game', GAME1: 'Game 1', GAME2: 'Game 2', NET: 'Online Music', BT: 'Bluetooth',
   AUX1: 'AUX1', AUX2: 'AUX2',
 }
 
@@ -115,7 +115,7 @@ const SOURCE_CATEGORIES: { id: SourceCategory; label: string }[] = [
 
 const INPUT_SOURCES = new Set([
   // AVC-X4800H physical source slots exposed by the receiver configuration.
-  'CD', 'TV', 'SAT/CBL', 'MPLAY', 'BD', 'GAME', 'GAME2', 'AUX1', 'AUX2',
+  'CD', 'TV', 'SAT/CBL', 'MPLAY', 'BD', 'GAME', 'GAME1', 'GAME2', 'AUX1', 'AUX2',
 ])
 const NETWORK_SOURCES = new Set([
   'NET', 'BT', 'SPOTIFY', 'PANDORA', 'SIRIUSXM', 'HDRADIO', 'IRADIO',

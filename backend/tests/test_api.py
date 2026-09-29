@@ -404,6 +404,7 @@ async def test_device_info(mock_app_state):
     assert data["zone3_name"] == "Zone 3"
     assert "channel_names" in data
     assert any(source["id"] == "GAME" for source in data["sources"])
+    assert any(source["id"] == "GAME1" for source in data["sources"])
     assert data["source_name_map"]["GAME"] == "Game Console"
 
 

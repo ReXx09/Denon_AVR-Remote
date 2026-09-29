@@ -112,6 +112,7 @@ AVC_X4800H_SOURCES = {
     "MPLAY": "Media Player",
     "BD": "Blu-ray",
     "GAME": "Game",
+    "GAME1": "Game 1",
     "GAME2": "Game 2",
     "AUX1": "AUX1",
     "AUX2": "AUX2",
