@@ -43,7 +43,7 @@ export default function VolumeControl({ state, sendCommand, post }: Props) {
         <div className="flex items-center gap-1.5">
           <button
             onClick={() => sendCommand('MVDOWN')}
-            className="btn-ghost w-10 h-10 flex items-center justify-center text-lg font-bold rounded-xl"
+            className="btn-ghost flex w-10 h-10 items-center justify-center text-lg font-bold rounded-xl"
           >−</button>
           <button
             onClick={() => sendCommand(muted ? 'MUOFF' : 'MUON')}
@@ -64,7 +64,7 @@ export default function VolumeControl({ state, sendCommand, post }: Props) {
           </button>
           <button
             onClick={() => sendCommand('MVUP')}
-            className="btn-ghost w-10 h-10 flex items-center justify-center text-lg font-bold rounded-xl"
+            className="btn-ghost flex w-10 h-10 items-center justify-center text-lg font-bold rounded-xl"
           >+</button>
         </div>
       </div>

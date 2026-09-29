@@ -92,7 +92,7 @@ export default function ChannelLevels({ channels, channelNames, post, calibratio
                 <button
                   type="button"
                   onClick={() => adjustLevel(ch, val, -1)}
-                  className="btn-ghost h-8 w-8 shrink-0 rounded-lg text-base font-bold"
+                  className="btn-ghost flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-base font-bold"
                   aria-label={`Decrease ${name}`}
                 >−</button>
                 <input
@@ -106,9 +106,14 @@ export default function ChannelLevels({ channels, channelNames, post, calibratio
                 <button
                   type="button"
                   onClick={() => adjustLevel(ch, val, 1)}
-                  className="btn-ghost h-8 w-8 shrink-0 rounded-lg text-base font-bold"
+                  className="btn-ghost flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-base font-bold"
                   aria-label={`Increase ${name}`}
                 >+</button>
+              </div>
+              <div className="flex justify-between text-[10px] text-denon-muted/60 mt-1 px-10">
+                <span>−12 dB</span>
+                <span>0 dB</span>
+                <span>+12 dB</span>
               </div>
             </div>
           )

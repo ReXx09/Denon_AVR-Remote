@@ -42,7 +42,7 @@ export default function SubwooferLevel({ state, post }: Props) {
         <button
           type="button"
           onClick={() => adjustLevel(-1)}
-          className="btn-ghost h-8 w-8 shrink-0 rounded-lg text-base font-bold"
+          className="btn-ghost flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-base font-bold"
           aria-label="Decrease subwoofer level"
         >−</button>
         <input
@@ -54,7 +54,7 @@ export default function SubwooferLevel({ state, post }: Props) {
         <button
           type="button"
           onClick={() => adjustLevel(1)}
-          className="btn-ghost h-8 w-8 shrink-0 rounded-lg text-base font-bold"
+          className="btn-ghost flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-base font-bold"
           aria-label="Increase subwoofer level"
         >+</button>
       </div>
