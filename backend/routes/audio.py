@@ -44,17 +44,28 @@ async def get_source_profiles(state: AppState = Depends(get_app_state)):
 @router.put("/source-profiles/{source:path}")
 async def save_source_profile(source: str, req: SourceAudioProfile, state: AppState = Depends(get_app_state)):
     code = source.strip().upper()
-    if not re.fullmatch(r"[A-Z0-9/]{1,10}", code):
+    if not re.fullmatch(r"[A-Z0-9][A-Z0-9/_-]{0,19}", code):
         raise HTTPException(400, "Invalid source code")
     state.source_profiles[code] = req.model_dump(exclude_none=True)
     state.save_source_profiles()
     return {"ok": True, "source": code, "profile": state.source_profiles[code]}
 
 
+@router.post("/source-profiles/{source:path}/apply")
+async def apply_source_profile(source: str, state: AppState = Depends(get_app_state)):
+    code = source.strip().upper()
+    if not re.fullmatch(r"[A-Z0-9][A-Z0-9/_-]{0,19}", code):
+        raise HTTPException(400, "Invalid source code")
+    if code not in state.source_profiles:
+        raise HTTPException(404, "No saved profile for this source")
+    await state.apply_source_profile(code)
+    return {"ok": True, "source": code}
+
+
 @router.delete("/source-profiles/{source:path}")
 async def delete_source_profile(source: str, state: AppState = Depends(get_app_state)):
     code = source.strip().upper()
-    if not re.fullmatch(r"[A-Z0-9/]{1,10}", code):
+    if not re.fullmatch(r"[A-Z0-9][A-Z0-9/_-]{0,19}", code):
         raise HTTPException(400, "Invalid source code")
     state.source_profiles.pop(code, None)
     state.save_source_profiles()

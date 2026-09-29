@@ -430,6 +430,33 @@ async def test_source_audio_profile_persist_and_delete(mock_app_state):
 
 
 @pytest.mark.asyncio
+async def test_source_audio_profile_accepts_slash_source_codes(mock_app_state):
+    from main import app
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        for source in ("SAT/CBL", "USB/IPOD"):
+            resp = await ac.put(f"/api/v1/source-profiles/{source}", json={"bass": 52})
+            assert resp.status_code == 200
+            assert resp.json()["source"] == source
+
+    assert set(mock_app_state.source_profiles) == {"SAT/CBL", "USB/IPOD"}
+
+
+@pytest.mark.asyncio
+async def test_source_audio_profile_can_be_applied(mock_app_state):
+    from main import app
+
+    mock_app_state.source_profiles = {"GAME1": {"subwoofer_level": 38}}
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        resp = await ac.post("/api/v1/source-profiles/GAME1/apply")
+
+    assert resp.status_code == 200
+    mock_app_state.telnet.send.assert_called_with("PSSWL 38")
+
+
+@pytest.mark.asyncio
 async def test_tone_controls_send_receiver_commands(mock_app_state):
     from main import app
 

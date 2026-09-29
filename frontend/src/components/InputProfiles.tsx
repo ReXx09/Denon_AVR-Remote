@@ -68,12 +68,35 @@ export default function InputProfiles({ sources, state, channelNames }: Props) {
   const inputLevel = (kind: 'analog_input_level' | 'digital_input_level') => profile[kind] ?? 0
 
   const saveProfile = async () => {
-    const response = await fetch(`/api/v1/source-profiles/${encodeURIComponent(selectedSource)}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(profile),
-    })
-    setMessage(response.ok ? 'Profile saved' : 'Profile could not be saved')
+    try {
+      const response = await fetch(`/api/v1/source-profiles/${encodeURIComponent(selectedSource)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(profile),
+      })
+      if (!response.ok) {
+        const error = await response.json().catch(() => null) as { detail?: string } | null
+        throw new Error(error?.detail || `HTTP ${response.status}`)
+      }
+      const data = await response.json() as { profile?: SourceProfile }
+      if (data.profile) setProfiles(current => ({ ...current, [selectedSource]: data.profile! }))
+      setMessage('Profile saved')
+    } catch (error) {
+      setMessage(`Profile could not be saved: ${error instanceof Error ? error.message : 'network error'}`)
+    }
+  }
+
+  const applyProfile = async () => {
+    try {
+      const response = await fetch(`/api/v1/source-profiles/${encodeURIComponent(selectedSource)}/apply`, { method: 'POST' })
+      if (!response.ok) {
+        const error = await response.json().catch(() => null) as { detail?: string } | null
+        throw new Error(error?.detail || `HTTP ${response.status}`)
+      }
+      setMessage('Profile applied to AVR')
+    } catch (error) {
+      setMessage(`Profile could not be applied: ${error instanceof Error ? error.message : 'network error'}`)
+    }
   }
 
   return (
@@ -155,7 +178,10 @@ export default function InputProfiles({ sources, state, channelNames }: Props) {
 
         <div className="flex items-center justify-between border-t border-denon-border/50 pt-3">
           <span className="text-[10px] text-denon-muted">{message || 'Changes are local until saved'}</span>
-          <button type="button" onClick={() => void saveProfile()} className="btn-primary text-xs px-4 py-2">Save profile</button>
+          <div className="flex gap-2">
+            <button type="button" onClick={() => void applyProfile()} disabled={!savedProfile} className="btn-ghost text-xs px-3 py-2 disabled:opacity-40">Apply to AVR</button>
+            <button type="button" onClick={() => void saveProfile()} className="btn-primary text-xs px-4 py-2">Save profile</button>
+          </div>
         </div>
       </div>
     </div>
