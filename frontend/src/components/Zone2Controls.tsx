@@ -56,7 +56,7 @@ export default function Zone2Controls({ state, sendCommand, post, sources, sourc
             <p className="text-2xl font-bold tabular-nums">{localVol ?? '—'}</p>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={() => sendCommand('Z2DOWN')} className="btn-ghost w-10 h-10 flex items-center justify-center text-lg font-bold">−</button>
+            <button onClick={() => void post('/zone2/volume/down')} className="btn-ghost w-10 h-10 flex items-center justify-center text-lg font-bold">−</button>
             <button
               onClick={() => sendCommand(muted ? 'Z2MUOFF' : 'Z2MUON')}
               className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all ${
@@ -74,7 +74,7 @@ export default function Zone2Controls({ state, sendCommand, post, sources, sourc
                 )}
               </svg>
             </button>
-            <button onClick={() => sendCommand('Z2UP')} className="btn-ghost w-10 h-10 flex items-center justify-center text-lg font-bold">+</button>
+            <button onClick={() => void post('/zone2/volume/up')} className="btn-ghost w-10 h-10 flex items-center justify-center text-lg font-bold">+</button>
           </div>
         </div>
         <input

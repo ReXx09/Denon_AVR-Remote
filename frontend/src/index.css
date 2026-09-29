@@ -18,6 +18,21 @@
   }
 }
 
+/* Safari's browser toolbar can cover fixed bottom controls in non-standalone mode. */
+.mobile-bottom-nav {
+  bottom: 0;
+}
+@supports (-webkit-touch-callout: none) {
+  .mobile-bottom-nav {
+    bottom: 3.25rem;
+  }
+}
+@media (display-mode: standalone) {
+  .mobile-bottom-nav {
+    bottom: 0;
+  }
+}
+
 @layer components {
   .card {
     @apply bg-denon-card/80 backdrop-blur-sm rounded-2xl border border-denon-border/50 p-5

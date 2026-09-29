@@ -362,7 +362,7 @@ export default function App() {
 
     {/* Mobile bottom navigation — thumb-reachable zone + section tabs */}
     <nav
-      className="sm:hidden fixed bottom-0 inset-x-0 z-40 bg-denon-card/95 backdrop-blur-xl border-t border-denon-border/60"
+      className="mobile-bottom-nav sm:hidden fixed inset-x-0 z-40 bg-denon-card/95 backdrop-blur-xl border-t border-denon-border/60"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       <div className="max-w-2xl mx-auto px-3 pt-2 pb-2 space-y-2">
