@@ -184,6 +184,7 @@ export default function SourceSelector({
   }, [sourceList])
 
   const visibleSources = categorizedSources[sourceCategory]
+  const selectedSource = current && visibleSources.some(source => source.id === current) ? current : ''
   const favoriteSources = sourceFavorites
     .map(id => sourceList.find(source => source.id === id))
     .filter((source): source is SourceEntry => Boolean(source))
@@ -298,7 +299,7 @@ export default function SourceSelector({
           ))}
         </select>
         <select
-          value=""
+          value={selectedSource}
           onChange={(event) => {
             if (event.target.value) sendCommand(`${prefix}${event.target.value}`)
           }}
@@ -327,14 +328,14 @@ export default function SourceSelector({
           const editing = editingCode === s.id
           const canReset = Boolean(sourceNameOverrides?.[s.id])
           return (
-            <div key={s.id} className="flex gap-1.5 min-w-0">
+            <div key={s.id} className="flex h-16 min-w-0 gap-1.5">
             <button
               onClick={() => editMode ? beginEdit(s.id) : sendCommand(`${prefix}${s.id}`)}
               onContextMenu={(e) => { e.preventDefault(); resetName(s.id) }}
               onPointerDown={() => startLongPress(s.id)}
               onPointerUp={cancelLongPress}
               onPointerLeave={cancelLongPress}
-              className={`group relative py-3 px-3 rounded-xl text-sm font-medium transition-all duration-150 text-left overflow-hidden ${
+              className={`group relative min-w-0 flex-1 h-16 py-2 px-3 rounded-xl text-sm font-medium transition-all duration-150 text-left overflow-hidden ${
                 active
                   ? 'bg-gradient-to-br from-denon-gold/20 to-amber-500/10 text-denon-gold ring-1 ring-denon-gold/40'
                   : 'bg-denon-surface/70 text-denon-text hover:bg-denon-surface hover:scale-[1.02] active:scale-[0.98]'
@@ -356,7 +357,7 @@ export default function SourceSelector({
                   className="w-[calc(100%-1.5rem)] bg-denon-dark border border-denon-gold/50 rounded-lg text-xs px-2 py-1 text-denon-text"
                 />
               ) : (
-                <span className="text-xs pr-10">
+                <span className="line-clamp-2 text-xs pr-10">
                   {displayName}{editMode && <span className="text-denon-muted ml-1">✎</span>}
                 </span>
               )}
@@ -385,7 +386,7 @@ export default function SourceSelector({
             {!editMode && (
               <button
                 onClick={() => toggleFavorite(s.id)}
-                className={`w-8 shrink-0 rounded-lg text-sm ${sourceFavorites.includes(s.id) ? 'bg-denon-gold/20 text-denon-gold' : 'bg-denon-surface/70 text-denon-muted hover:text-denon-gold'}`}
+                className={`w-8 h-16 shrink-0 rounded-lg text-sm ${sourceFavorites.includes(s.id) ? 'bg-denon-gold/20 text-denon-gold' : 'bg-denon-surface/70 text-denon-muted hover:text-denon-gold'}`}
                 title={sourceFavorites.includes(s.id) ? 'Remove favorite' : 'Add favorite'}
                 aria-label={sourceFavorites.includes(s.id) ? `Remove ${getName(s.id)} from favorites` : `Add ${getName(s.id)} to favorites`}
               >
