@@ -74,6 +74,8 @@ export default function VolumeControl({ state, sendCommand, post }: Props) {
         min={0} max={Math.min(volumeMax, 98)} step={0.5}
         value={displayVol ?? 0}
         onChange={handleChange}
+        onPointerUp={() => setDragging(false)}
+        onPointerCancel={() => setDragging(false)}
         className="w-full"
       />
       <div className="flex justify-between text-[10px] text-denon-muted/50 mt-1.5 px-0.5">

@@ -165,6 +165,7 @@ export default function SourceSelector({
 }: Props) {
   const current = zone === 'main' ? state?.source : zone === 'zone2' ? state?.z2_source : state?.z3_source
   const prefix = zone === 'main' ? 'SI' : zone === 'zone2' ? 'Z2' : 'Z3'
+  const getSourceCommand = (sourceCode: string) => `${prefix}${sourceCode === 'IRADIO' ? 'NET' : sourceCode}`
   const [radioBrowserOpen, setRadioBrowserOpen] = useState(false)
   const [editMode, setEditMode] = useState(false)
   const [editingCode, setEditingCode] = useState<string | null>(null)
@@ -286,7 +287,7 @@ export default function SourceSelector({
             {favoriteSources.map(source => (
               <button
                 key={source.id}
-                onClick={() => sendCommand(`${prefix}${source.id}`)}
+                onClick={() => sendCommand(getSourceCommand(source.id))}
                 className={`shrink-0 min-w-[150px] py-2.5 px-4 rounded-lg text-xs font-medium transition-all ${
                   current === source.id
                     ? 'bg-gradient-to-br from-denon-gold/20 to-amber-500/10 text-denon-gold ring-1 ring-denon-gold/40'
@@ -322,7 +323,7 @@ export default function SourceSelector({
           <select
             value={selectedSource}
             onChange={(event) => {
-              if (event.target.value) sendCommand(`${prefix}${event.target.value}`)
+              if (event.target.value) sendCommand(getSourceCommand(event.target.value))
             }}
             className="w-full appearance-none bg-denon-surface text-denon-text text-xs rounded-lg px-3 py-2 pr-8 border border-denon-border transition-colors hover:bg-denon-border/60 hover:border-denon-gold/50 focus:outline-none focus:border-denon-gold focus:ring-1 focus:ring-denon-gold/40"
             aria-label="Select source"
@@ -353,7 +354,7 @@ export default function SourceSelector({
           return (
             <div key={s.id} className="flex h-14 min-w-0 gap-1.5">
             <button
-              onClick={() => editMode ? beginEdit(s.id) : sendCommand(`${prefix}${s.id}`)}
+              onClick={() => editMode ? beginEdit(s.id) : sendCommand(getSourceCommand(s.id))}
               onContextMenu={(e) => { e.preventDefault(); resetName(s.id) }}
               onPointerDown={() => startLongPress(s.id)}
               onPointerUp={cancelLongPress}

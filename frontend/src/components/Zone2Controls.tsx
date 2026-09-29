@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import PowerControl from './PowerControl'
 import MediaControls from './MediaControls'
 import SourceSelector from './SourceSelector'
@@ -24,7 +24,6 @@ export default function Zone2Controls({ state, sendCommand, post, sources, sourc
 
   const [localVol, setLocalVol] = useState<number>(volume ?? 0)
   const [selectedSleep, setSelectedSleep] = useState<'OFF' | number>(sleepTimer ?? 'OFF')
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     if (volume != null) setLocalVol(volume)
@@ -37,8 +36,7 @@ export default function Zone2Controls({ state, sendCommand, post, sources, sourc
   const handleVolChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const v = parseInt(e.target.value)
     setLocalVol(v)
-    if (debounceRef.current) clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => post('/zone2/volume', { level: v }), 150)
+    void post('/zone2/volume', { level: v })
   }, [post])
 
   const setSleep = useCallback(() => {
