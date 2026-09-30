@@ -122,12 +122,14 @@ const SOURCE_CATEGORIES: { id: SourceCategory; label: string }[] = [
 
 const INPUT_SOURCES = new Set([
   // AVC-X4800H physical source slots exposed by the receiver configuration.
-  'CD', 'TV', 'SAT/CBL', 'MPLAY', 'BD', 'GAME', 'GAME1', 'GAME2', 'AUX1', 'AUX2',
+  'CD', 'TUNER', 'DVD', 'TV', 'SAT/CBL', 'MPLAY', 'BD', 'GAME', 'GAME1', 'GAME2', 'AUX1', 'AUX2',
 ])
 const NETWORK_SOURCES = new Set([
   'NET', 'BT', 'SPOTIFY', 'PANDORA', 'SIRIUSXM', 'HDRADIO', 'IRADIO',
 ])
 const MEDIA_SOURCES = new Set(['SERVER', 'FAVORITES', 'USB', 'USB/IPOD'])
+
+const HORIZONTAL_INPUTS = ['CD', 'TUNER', 'DVD', 'BD', 'TV', 'SAT/CBL', 'MPLAY', 'GAME', 'AUX1', 'AUX2']
 
 function getSourceCategory(id: string): SourceCategory {
   if (INPUT_SOURCES.has(id)) return 'inputs'
@@ -166,6 +168,7 @@ export default function SourceSelector({
   const current = zone === 'main' ? state?.source : zone === 'zone2' ? state?.z2_source : state?.z3_source
   const prefix = zone === 'main' ? 'SI' : zone === 'zone2' ? 'Z2' : 'Z3'
   const getSourceCommand = (sourceCode: string) => `${prefix}${sourceCode === 'IRADIO' ? 'NET' : sourceCode}`
+  const heosServiceCode = zone === 'main' ? state?.heos_source : null
   const [radioBrowserOpen, setRadioBrowserOpen] = useState(false)
   const [editMode, setEditMode] = useState(false)
   const [editingCode, setEditingCode] = useState<string | null>(null)
@@ -203,6 +206,11 @@ export default function SourceSelector({
 
   const visibleSources = categorizedSources[sourceCategory]
   const selectedSource = current && sourceList.some(source => source.id === current) ? current : ''
+  const horizontalInputs = HORIZONTAL_INPUTS
+    .map(id => sourceList.find(source => source.id === id) || (id === 'GAME' ? sourceList.find(source => source.id === 'GAME1') : undefined))
+    .filter((source): source is SourceEntry => Boolean(source))
+  const networkActive = current === 'NET' || current === 'BT' || current === 'IRADIO' || Boolean(heosServiceCode)
+  const networkTarget = current === 'BT' ? 'NET' : networkActive ? 'BT' : 'NET'
   const favoriteSources = sourceFavorites
     .map(id => sourceList.find(source => source.id === id))
     .filter((source): source is SourceEntry => Boolean(source))
@@ -248,8 +256,6 @@ export default function SourceSelector({
   // Backend resolves the actual HEOS service (Spotify, TuneIn, etc.) when source=NET
   const backendDisplayName = zone === 'main' ? state?.source_name : zone === 'zone2' ? state?.z2_source_name : state?.z3_source_name
   const currentDisplayName = (current ? sourceNameOverrides?.[current] : undefined) || backendDisplayName || (current ? getName(current) : '')
-  const heosServiceCode = zone === 'main' ? state?.heos_source : null
-
   return (
     <div className="card">
       <div className="flex items-center justify-between mb-3">
@@ -281,6 +287,42 @@ export default function SourceSelector({
           Click a source to rename. Use Reset to restore the receiver/default name.
         </p>
       )}
+
+      <div className="mb-4 overflow-x-auto rounded-xl bg-denon-surface/40 p-1.5">
+        <div className="flex min-w-max gap-1.5">
+          {horizontalInputs.map(source => {
+            const active = current === source.id || (source.id === 'GAME' && current === 'GAME1')
+            return (
+              <button
+                key={source.id}
+                type="button"
+                onClick={() => sendCommand(getSourceCommand(source.id))}
+                className={`h-14 min-w-[88px] shrink-0 rounded-lg px-3 text-xs font-medium transition-all ${
+                  active
+                    ? 'bg-gradient-to-br from-denon-gold/20 to-amber-500/10 text-denon-gold ring-1 ring-denon-gold/40'
+                    : 'bg-denon-card text-denon-muted hover:bg-denon-border/70 hover:text-denon-text'
+                }`}
+              >
+                <span className="block text-base leading-5">{getIcon(source.id, getName(source.id))}</span>
+                <span className="block max-w-[100px] truncate">{getName(source.id)}</span>
+              </button>
+            )
+          })}
+          <button
+            type="button"
+            onClick={() => sendCommand(getSourceCommand(networkTarget))}
+            className={`h-14 min-w-[112px] shrink-0 rounded-lg px-3 text-xs font-medium transition-all ${
+              networkActive
+                ? 'bg-gradient-to-br from-denon-gold/20 to-amber-500/10 text-denon-gold ring-1 ring-denon-gold/40'
+                : 'bg-denon-card text-denon-muted hover:bg-denon-border/70 hover:text-denon-text'
+            }`}
+            title={`Switch to ${networkTarget === 'BT' ? 'Bluetooth' : 'Network'}`}
+          >
+            <span className="block text-base leading-5">{networkTarget === 'BT' ? '🔵' : '🌐'}</span>
+            <span className="block truncate">Network/BT</span>
+          </button>
+        </div>
+      </div>
 
       {favoriteSources.length > 0 && (
         <div className="mb-3">
