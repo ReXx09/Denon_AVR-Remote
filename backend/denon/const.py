@@ -80,7 +80,7 @@ DEFAULT_SOURCES = {
     "MPLAY": "Media Player",
     "GAME": "Game",
     "HDRADIO": "HD Radio",
-    "NET": "Online Music",
+    "NET": "HEOS",
     "PANDORA": "Pandora",
     "SIRIUSXM": "SiriusXM",
     "SPOTIFY": "Spotify",
@@ -121,7 +121,7 @@ AVC_X4800H_SOURCES = {
 # HEOS / network sources that SSFUN ? does not report.
 # Included automatically unless disabled via DENON_DASHBOARD_HEOS_SOURCES=false.
 HEOS_SOURCES = {
-    "NET": "Online Music",
+    "NET": "HEOS",
     "BT": "Bluetooth",
     "IRADIO": "Internet Radio",
     "SPOTIFY": "Spotify",

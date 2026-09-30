@@ -23,6 +23,8 @@ interface Props {
   zone?: Zone
   radioFavorites?: RadioFavorite[]
   onRadioFavoriteChange?: (favorite: RadioFavorite, enabled: boolean) => void
+  sourceFavorites?: string[]
+  onSourceFavoriteChange?: (source: string, enabled: boolean) => void
 }
 
 interface QueueItem {
@@ -33,7 +35,14 @@ interface QueueItem {
   qid?: number
 }
 
-export default function MediaControls({ state, zone = 'main', radioFavorites = [], onRadioFavoriteChange }: Props) {
+export default function MediaControls({
+  state,
+  zone = 'main',
+  radioFavorites = [],
+  onRadioFavoriteChange,
+  sourceFavorites = [],
+  onSourceFavoriteChange,
+}: Props) {
   const source = zone === 'main' ? state?.source : zone === 'zone2' ? state?.z2_source : state?.z3_source
   const sourceName = zone === 'main'
     ? state?.source_name
@@ -118,13 +127,28 @@ export default function MediaControls({ state, zone = 'main', radioFavorites = [
   // For radio/stations: show station name when no song title is available
   const title = song || station
   const subtitle = artist || (song && station ? station : null)
+  const sourceIsFavorite = Boolean(source && sourceFavorites.includes(source))
 
   return (
     <div className="card">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-xs font-medium text-denon-muted uppercase tracking-wider">Now Playing</h2>
+        <div className="flex items-center gap-2">
+          <h2 className="text-xs font-medium text-denon-muted uppercase tracking-wider">Now Playing</h2>
+          {source && onSourceFavoriteChange && (
+            <button
+              type="button"
+              onClick={() => onSourceFavoriteChange(source, !sourceIsFavorite)}
+              className={`text-base leading-none transition-colors ${sourceIsFavorite ? 'text-denon-gold' : 'text-denon-muted hover:text-denon-gold'}`}
+              title={sourceIsFavorite ? 'Remove source favorite' : 'Add source favorite'}
+              aria-label={sourceIsFavorite ? 'Remove source favorite' : 'Add source favorite'}
+            >
+              {sourceIsFavorite ? '★' : '☆'}
+            </button>
+          )}
+        </div>
         {onRadioFavoriteChange && (
           <button
+            type="button"
             onClick={() => setRadioOpen(true)}
             className="text-xs text-denon-gold hover:text-denon-text transition-colors"
           >

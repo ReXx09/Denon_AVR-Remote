@@ -100,7 +100,7 @@ function getIcon(code: string, name?: string): React.ReactNode {
 const DEFAULT_SOURCES: Record<string, string> = {
   PHONO: 'Phono', CD: 'CD', TUNER: 'Tuner', DVD: 'DVD', BD: 'Blu-ray',
   TV: 'TV Audio', 'SAT/CBL': 'SAT/Cable', MPLAY: 'Media Player',
-  GAME: 'Game', GAME1: 'Game 1', GAME2: 'Game 2', NET: 'Online Music', BT: 'Bluetooth',
+  GAME: 'Game', GAME1: 'Game 1', GAME2: 'Game 2', NET: 'HEOS', BT: 'Bluetooth',
   AUX1: 'AUX1', AUX2: 'AUX2',
 }
 

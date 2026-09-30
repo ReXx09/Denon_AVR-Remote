@@ -271,6 +271,8 @@ export default function App() {
                   post={post}
                   radioFavorites={radioFavorites}
                   onRadioFavoriteChange={saveRadioFavorite}
+                  sourceFavorites={sourceFavorites}
+                  onSourceFavoriteChange={saveSourceFavorite}
                 />
                 <MemoSourceSelector
                   state={state}
