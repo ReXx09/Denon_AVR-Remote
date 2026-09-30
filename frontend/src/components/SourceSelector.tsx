@@ -14,13 +14,6 @@ const RadioTowerIcon = () => (
   </svg>
 )
 
-const ChevronDownIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-       strokeLinecap="round" strokeLinejoin="round" className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-denon-muted">
-    <path d="m6 9 6 6 6-6" />
-  </svg>
-)
-
 const BluetoothIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
        strokeLinecap="round" strokeLinejoin="round" className="inline w-4 h-4 align-text-bottom">
@@ -111,14 +104,8 @@ const DEFAULT_SOURCES: Record<string, string> = {
   AUX1: 'AUX1', AUX2: 'AUX2',
 }
 
+type SourceFilter = 'inputs' | 'network' | 'favorites'
 type SourceCategory = 'inputs' | 'network' | 'media' | 'other'
-
-const SOURCE_CATEGORIES: { id: SourceCategory; label: string }[] = [
-  { id: 'inputs', label: 'Inputs' },
-  { id: 'network', label: 'Network' },
-  { id: 'media', label: 'Media' },
-  { id: 'other', label: 'Other' },
-]
 
 const INPUT_SOURCES = new Set([
   // AVC-X4800H physical source slots exposed by the receiver configuration.
@@ -173,8 +160,7 @@ export default function SourceSelector({
   const [editMode, setEditMode] = useState(false)
   const [editingCode, setEditingCode] = useState<string | null>(null)
   const [draftName, setDraftName] = useState('')
-  const [sourceCategory, setSourceCategory] = useState<SourceCategory>('inputs')
-  const [showAllSources, setShowAllSources] = useState(false)
+  const [sourceFilter, setSourceFilter] = useState<SourceFilter>('inputs')
   const longPressRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const horizontalInputsRef = useRef<HTMLDivElement>(null)
 
@@ -195,7 +181,7 @@ export default function SourceSelector({
   const sourceList = availableSources.filter(source => !(hasNamedGame1 && source.id === 'GAME'))
 
   const categorizedSources = useMemo(() => {
-    const grouped: Record<SourceCategory, SourceEntry[]> = {
+    const grouped: Record<string, SourceEntry[]> = {
       inputs: [], network: [], media: [], other: [],
     }
     for (const source of sourceList) grouped[getSourceCategory(source.id)].push(source)
@@ -205,13 +191,17 @@ export default function SourceSelector({
     return grouped
   }, [sourceList])
 
-  const visibleSources = categorizedSources[sourceCategory]
-  const selectedSource = current && sourceList.some(source => source.id === current) ? current : ''
+  const visibleSources = sourceFilter === 'favorites'
+    ? sourceFavorites
+        .map(id => sourceList.find(source => source.id === id))
+        .filter((source): source is SourceEntry => Boolean(source))
+    : categorizedSources[sourceFilter]
   const horizontalInputs = HORIZONTAL_INPUTS
     .map(id => sourceList.find(source => source.id === id) || (id === 'GAME' ? sourceList.find(source => source.id === 'GAME1') : undefined))
     .filter((source): source is SourceEntry => Boolean(source))
-  const networkActive = current === 'NET' || current === 'BT' || current === 'IRADIO' || Boolean(heosServiceCode)
-  const networkTarget = current === 'BT' ? 'NET' : networkActive ? 'BT' : 'NET'
+  const quickSources = sourceFilter === 'inputs'
+    ? horizontalInputs
+    : visibleSources
   const scrollHorizontalInputs = (direction: 'left' | 'right') => {
     horizontalInputsRef.current?.scrollBy({
       left: direction === 'right' ? 360 : -360,
@@ -307,7 +297,7 @@ export default function SourceSelector({
         </button>
         <div ref={horizontalInputsRef} className="min-w-0 flex-1 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
           <div className="flex min-w-max gap-1.5">
-            {horizontalInputs.map(source => {
+            {quickSources.map(source => {
               const active = current === source.id || (source.id === 'GAME' && current === 'GAME1')
               return (
                 <button
@@ -325,19 +315,6 @@ export default function SourceSelector({
                 </button>
               )
             })}
-            <button
-              type="button"
-              onClick={() => sendCommand(getSourceCommand(networkTarget))}
-              className={`h-14 min-w-[112px] shrink-0 rounded-lg px-3 text-xs font-medium transition-all ${
-                networkActive
-                  ? 'bg-gradient-to-br from-denon-gold/20 to-amber-500/10 text-denon-gold ring-1 ring-denon-gold/40'
-                  : 'bg-denon-card text-denon-muted hover:bg-denon-border/70 hover:text-denon-text'
-              }`}
-              title={`Switch to ${networkTarget === 'BT' ? 'Bluetooth' : 'Network'}`}
-            >
-              <span className="block text-base leading-5">{networkTarget === 'BT' ? '🔵' : '🌐'}</span>
-              <span className="block truncate">Network/BT</span>
-            </button>
           </div>
         </div>
         <button
@@ -351,73 +328,31 @@ export default function SourceSelector({
         </button>
       </div>
 
-      {favoriteSources.length > 0 && (
-        <div className="mb-3">
-          <div className="flex items-center justify-between mb-1.5">
-            <span className="text-[10px] text-denon-muted uppercase tracking-wider">Favorites</span>
-            <span className="text-[10px] text-denon-muted">Source + profile</span>
-          </div>
-          <div className="flex flex-wrap gap-1.5 py-1">
-            {favoriteSources.map(source => (
-              <button
-                key={source.id}
-                onClick={() => sendCommand(getSourceCommand(source.id))}
-                className={`shrink-0 min-w-[150px] py-2.5 px-4 rounded-lg text-xs font-medium transition-all ${
-                  current === source.id
-                    ? 'bg-gradient-to-br from-denon-gold/20 to-amber-500/10 text-denon-gold ring-1 ring-denon-gold/40'
-                    : 'bg-denon-surface/70 text-denon-text hover:bg-denon-surface'
-                }`}
-                title="Select source and apply profile"
-              >
-                <span className="mr-1">{getIcon(source.id, getName(source.id))}</span>
-                {getName(source.id)}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <div className="flex items-center gap-2 mb-2">
-        <label className="relative flex-1">
-          <select
-            value={sourceCategory}
-            onChange={(event) => setSourceCategory(event.target.value as SourceCategory)}
-            className="w-full appearance-none bg-denon-surface text-denon-text text-xs rounded-lg px-3 py-2 pr-8 border border-denon-border transition-colors hover:bg-denon-border/60 hover:border-denon-gold/50 focus:outline-none focus:border-denon-gold focus:ring-1 focus:ring-denon-gold/40"
-            aria-label="Source category"
+      <div className="mb-2 grid grid-cols-3 gap-1 rounded-xl bg-denon-surface/40 p-1">
+        {([
+          ['inputs', 'Inputs'],
+          ['network', 'BT / Network'],
+          ['favorites', 'Favorites'],
+        ] as const).map(([filter, label]) => (
+          <button
+            key={filter}
+            type="button"
+            onClick={() => setSourceFilter(filter)}
+            className={`rounded-lg px-2 py-2 text-xs font-medium transition-colors ${
+              sourceFilter === filter
+                ? 'bg-denon-card text-denon-gold ring-1 ring-denon-gold/30'
+                : 'text-denon-muted hover:bg-denon-card/60 hover:text-denon-text'
+            }`}
           >
-            {SOURCE_CATEGORIES.map(category => (
-              <option key={category.id} value={category.id}>
-                {category.label} ({categorizedSources[category.id].length})
-              </option>
-            ))}
-          </select>
-          <ChevronDownIcon />
-        </label>
-        <label className="relative flex-1">
-          <select
-            value={selectedSource}
-            onChange={(event) => {
-              if (event.target.value) sendCommand(getSourceCommand(event.target.value))
-            }}
-            className="w-full appearance-none bg-denon-surface text-denon-text text-xs rounded-lg px-3 py-2 pr-8 border border-denon-border transition-colors hover:bg-denon-border/60 hover:border-denon-gold/50 focus:outline-none focus:border-denon-gold focus:ring-1 focus:ring-denon-gold/40"
-            aria-label="Select source"
-          >
-            <option value="">Select source...</option>
-            {sourceList.map(source => <option key={source.id} value={source.id}>{getName(source.id)}</option>)}
-          </select>
-          <ChevronDownIcon />
-        </label>
-        <button
-          onClick={() => setShowAllSources(value => !value)}
-          className="shrink-0 px-2.5 py-2 rounded-lg bg-denon-surface text-denon-muted hover:text-denon-text text-xs"
-          aria-expanded={showAllSources}
-          title="Show all source buttons"
-        >
-          {showAllSources ? 'Less' : 'All'}
-        </button>
+            {label}
+            <span className="ml-1 text-[10px] opacity-60">
+              {filter === 'inputs' ? horizontalInputs.length : filter === 'network' ? categorizedSources.network.length : favoriteSources.length}
+            </span>
+          </button>
+        ))}
       </div>
 
-      {showAllSources && <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+      {editMode && <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
         {visibleSources.map(s => {
           const active = heosServiceCode
             ? s.id === heosServiceCode  // Highlight the specific HEOS service button
