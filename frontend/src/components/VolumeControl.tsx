@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import type { ReceiverState, SendCommandFn, PostFn } from '../types'
 
 interface Props {
@@ -13,10 +13,26 @@ export default function VolumeControl({ state, sendCommand, post }: Props) {
   const volumeMax = state?.volume_max || 98
   const [dragging, setDragging] = useState(false)
   const [localVol, setLocalVol] = useState<number | undefined>(volume)
+  const previousVolume = useRef<number | undefined>(undefined)
 
   useEffect(() => {
     if (!dragging && volume != null) setLocalVol(volume)
   }, [volume, dragging])
+
+  useEffect(() => {
+    if (volume == null) return
+    const previous = previousVolume.current
+    previousVolume.current = volume
+    if (previous == null || previous === volume) return
+
+    const delta = volume - previous
+    if (state.z2_power && state.z2_volume != null) {
+      void post('/zone2/volume', { level: Math.max(0, Math.min(98, Math.round(state.z2_volume + delta))) })
+    }
+    if (state.z3_power && state.z3_volume != null) {
+      void post('/zone3/volume', { level: Math.max(0, Math.min(98, Math.round(state.z3_volume + delta))) })
+    }
+  }, [volume, state.z2_power, state.z2_volume, state.z3_power, state.z3_volume, post])
 
   const displayVol = dragging ? localVol : volume
   const dB = displayVol != null ? (displayVol - 80).toFixed(1) : '—'
@@ -83,6 +99,46 @@ export default function VolumeControl({ state, sendCommand, post }: Props) {
         <span>0 dB</span>
         <span>+18 dB</span>
       </div>
+      {(state.z2_power || state.z3_power) && (
+        <div className="mt-4 space-y-3 border-t border-denon-border/50 pt-3">
+          {state.z2_power && state.z2_volume != null && (
+            <label className="block">
+              <span className="mb-1 flex justify-between text-xs text-denon-muted">
+                <span>Zone 2</span>
+                <span className="tabular-nums text-denon-text">{state.z2_volume}</span>
+              </span>
+              <input
+                type="range"
+                aria-label="Zone 2 volume"
+                min={0}
+                max={98}
+                step={1}
+                value={state.z2_volume}
+                onChange={event => void post('/zone2/volume', { level: Number(event.target.value) })}
+                className="w-full"
+              />
+            </label>
+          )}
+          {state.z3_power && state.z3_volume != null && (
+            <label className="block">
+              <span className="mb-1 flex justify-between text-xs text-denon-muted">
+                <span>Zone 3</span>
+                <span className="tabular-nums text-denon-text">{state.z3_volume}</span>
+              </span>
+              <input
+                type="range"
+                aria-label="Zone 3 volume"
+                min={0}
+                max={98}
+                step={1}
+                value={state.z3_volume}
+                onChange={event => void post('/zone3/volume', { level: Number(event.target.value) })}
+                className="w-full"
+              />
+            </label>
+          )}
+        </div>
+      )}
     </div>
   )
 }
