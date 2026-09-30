@@ -14,7 +14,7 @@ services:
     #network_mode: host
 
     ports:
-      - "8080:8080"
+      - "8001:8080"
 
     # ── Security hardening ────────────────────────────────────────────────────
     cap_drop:
@@ -29,7 +29,7 @@ services:
       # ── Discovery ────────────────────────────────────────────────────────────
       # Leave empty for automatic SSDP discovery (requires network_mode: host).
       # Set to your receiver's IP if using bridge mode or auto-discovery doesn't work.
-      - DENON_DASHBOARD_DENON_HOST=
+      - DENON_DASHBOARD_DENON_HOST=${DENON_DASHBOARD_DENON_HOST:-}
 
       # ── Port ─────────────────────────────────────────────────────────────────
       # Dashboard port (default 8080). Change if 8080 is taken on your host.
