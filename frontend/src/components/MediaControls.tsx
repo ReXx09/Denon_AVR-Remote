@@ -34,6 +34,9 @@ interface QueueItem {
 
 export default function MediaControls({ state, zone = 'main', radioFavorites = [], onRadioFavoriteChange }: Props) {
   const source = zone === 'main' ? state?.source : zone === 'zone2' ? state?.z2_source : state?.z3_source
+  const sourceName = zone === 'main'
+    ? state?.source_name
+    : zone === 'zone2' ? state?.z2_source_name : state?.z3_source_name
   const mediaCapable = source != null && MEDIA_SOURCES.includes(source)
 
   // Now-playing data comes from WebSocket state (backend polls HEOS once for all clients)
@@ -87,10 +90,19 @@ export default function MediaControls({ state, zone = 'main', radioFavorites = [
   if (!mediaCapable) {
     return (
       <div className="card">
-        <h2 className="text-xs font-medium text-denon-muted uppercase tracking-wider">Media</h2>
-        <p className="mt-3 text-xs text-denon-muted">
-          No media controls for {source || 'the current source'}.
-        </p>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-xs font-medium text-denon-muted uppercase tracking-wider">Media</h2>
+          <span className="text-[10px] px-2 py-0.5 rounded-full bg-denon-green/10 text-denon-green">Active input</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="w-11 h-11 rounded-xl bg-denon-surface flex items-center justify-center text-lg" aria-hidden="true">
+            🎬
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-denon-text truncate">{sourceName || source || 'Unknown input'}</p>
+            <p className="text-xs text-denon-muted">Audio/video signal from this input</p>
+          </div>
+        </div>
       </div>
     )
   }
