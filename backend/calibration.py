@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import ipaddress
 import logging
+import time
 
 import defusedxml.ElementTree as ET
 import httpx
@@ -41,7 +42,7 @@ async def set_digital_input_level(host: str, level_db: int) -> bool:
         async with httpx.AsyncClient(verify=False) as client:
             response = await client.get(
                 url,
-                params={"type": 5, "data": data},
+                params={"type": 5, "data": data, "_": int(time.time() * 1000)},
                 headers={"User-Agent": "DenonDashboard/1.0"},
                 timeout=5.0,
             )

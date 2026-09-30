@@ -181,14 +181,17 @@ class AppState:
         tmp.write_text(json.dumps(self.source_favorites, indent=2))
         tmp.replace(self.source_favorites_path)
 
-    async def apply_source_profile(self, source: str) -> None:
+    async def apply_source_profile(self, source: str) -> bool:
         """Apply the saved profile for a source, if one exists."""
         profile = self.source_profiles.get(source)
         if not profile or not self.telnet:
-            return
+            return True
+        digital_level_ok = True
         if profile.get("digital_input_level") is not None:
             from calibration import set_digital_input_level
-            await set_digital_input_level(self.telnet.host, int(profile["digital_input_level"]))
+            digital_level_ok = await set_digital_input_level(
+                self.telnet.host, int(profile["digital_input_level"])
+            )
         commands: list[str] = []
         if profile.get("volume") is not None:
             volume = float(profile["volume"])
@@ -222,6 +225,7 @@ class AppState:
             await self.telnet.send(command)
         if commands:
             await self.telnet.refresh()
+        return digital_level_ok
 
     def reset_source_name_override(self, code: str) -> None:
         self.source_name_overrides.pop(code, None)

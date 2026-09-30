@@ -58,8 +58,10 @@ async def apply_source_profile(source: str, state: AppState = Depends(get_app_st
         raise HTTPException(400, "Invalid source code")
     if code not in state.source_profiles:
         raise HTTPException(404, "No saved profile for this source")
-    await state.apply_source_profile(code)
+    applied = await state.apply_source_profile(code)
     await state.broadcast_state(force=True)
+    if not applied:
+        raise HTTPException(502, "Digital input level could not be applied to the receiver")
     return {"ok": True, "source": code}
 
 
