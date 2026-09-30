@@ -27,11 +27,12 @@ export default function VolumeControl({ state, sendCommand, post }: Props) {
     if (previous == null || previous === volume || !zonesLinked) return
 
     const delta = volume - previous
+    const zoneDelta = Math.sign(delta) * Math.round(Math.abs(delta))
     if (state.z2_power && state.z2_volume != null) {
-      void post('/zone2/volume', { level: Math.max(0, Math.min(98, Math.round(state.z2_volume + delta))) })
+      void post('/zone2/volume', { level: Math.max(0, Math.min(98, state.z2_volume + zoneDelta)) })
     }
     if (state.z3_power && state.z3_volume != null) {
-      void post('/zone3/volume', { level: Math.max(0, Math.min(98, Math.round(state.z3_volume + delta))) })
+      void post('/zone3/volume', { level: Math.max(0, Math.min(98, state.z3_volume + zoneDelta)) })
     }
   }, [volume, state.z2_power, state.z2_volume, state.z3_power, state.z3_volume, zonesLinked, post])
 
