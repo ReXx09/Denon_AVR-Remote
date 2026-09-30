@@ -157,6 +157,12 @@ export default function MediaControls({
         )}
       </div>
 
+      {sourceName && (
+        <p className="mb-3 truncate text-xs text-denon-muted" title={sourceName}>
+          Source: <span className="text-denon-text">{sourceName}</span>
+        </p>
+      )}
+
       {/* Now Playing Info */}
       {(title || subtitle) && (
         <div className="flex items-center gap-3 mb-4">

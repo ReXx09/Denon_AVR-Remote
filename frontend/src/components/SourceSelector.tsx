@@ -104,6 +104,10 @@ const DEFAULT_SOURCES: Record<string, string> = {
   AUX1: 'AUX1', AUX2: 'AUX2',
 }
 
+const SELECTOR_NAMES: Record<string, string> = {
+  TV: 'TV', AUX1: 'AUX 1', AUX2: 'AUX 2', NET: 'Network/Bluetooth',
+}
+
 type SourceFilter = 'inputs' | 'network' | 'favorites'
 type SourceCategory = 'inputs' | 'network' | 'media' | 'other'
 
@@ -174,6 +178,7 @@ export default function SourceSelector({
   })()
 
   const getName = (code: string) => sourceNameMap?.[code] || availableSources.find(source => source.id === code)?.name || DEFAULT_SOURCES[code] || code
+  const getSelectorName = (code: string) => SELECTOR_NAMES[code] || DEFAULT_SOURCES[code] || code
   const game1Name = getName('GAME1')
   const hasNamedGame1 = availableSources.some(source =>
     source.id === 'GAME1' && game1Name.toLowerCase() !== 'game 1' && game1Name.toLowerCase() !== 'game1'
@@ -269,7 +274,7 @@ export default function SourceSelector({
         {current && (
           <span className="text-xs text-denon-gold font-medium flex items-center gap-1">
             <span className="text-base">{getIcon(current, currentDisplayName)}</span>
-            {currentDisplayName}
+            {getSelectorName(current)}
             {(heosServiceCode || current === 'NET') && (
               <span className="ml-1 rounded-full bg-denon-green/10 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-denon-green">
                 HEOS
@@ -311,7 +316,7 @@ export default function SourceSelector({
                   }`}
                 >
                   <span className="block text-base leading-5">{getIcon(source.id, getName(source.id))}</span>
-                  <span className="block max-w-[100px] truncate">{getName(source.id)}</span>
+                  <span className="block max-w-[100px] truncate">{getSelectorName(source.id)}</span>
                 </button>
               )
             })}
@@ -390,8 +395,10 @@ export default function SourceSelector({
                   className="w-[calc(100%-1.5rem)] bg-denon-dark border border-denon-gold/50 rounded-lg text-xs px-2 py-1 text-denon-text"
                 />
               ) : (
-                <span className="line-clamp-2 text-xs pr-10">
-                  {displayName}{editMode && <span className="text-denon-muted ml-1">✎</span>}
+                <span className="min-w-0 flex-1 pr-1">
+                  <span className="line-clamp-2 text-xs">
+                    {getSelectorName(s.id)}{editMode && <span className="text-denon-muted ml-1">✎</span>}
+                  </span>
                 </span>
               )}
               {editMode && canReset && !editing && (
@@ -416,7 +423,6 @@ export default function SourceSelector({
                 </span>
               )}
             </button>
-            {!editMode && (
               <button
                 onClick={() => toggleFavorite(s.id)}
                 className={`w-8 h-14 shrink-0 rounded-lg text-sm ${sourceFavorites.includes(s.id) ? 'bg-denon-gold/20 text-denon-gold' : 'bg-denon-surface/70 text-denon-muted hover:text-denon-gold'}`}
@@ -425,7 +431,6 @@ export default function SourceSelector({
               >
                 {sourceFavorites.includes(s.id) ? '★' : '☆'}
               </button>
-            )}
             </div>
           )
         })}
