@@ -42,6 +42,11 @@ services:
       #- DENON_DASHBOARD_DENON_ZONE2_NAME=Zone 2
       #- DENON_DASHBOARD_DENON_SOURCE_NAMES={"GAME":"Game Console","TV":"TV Audio","NET":"Streaming","BD":"Blu-ray","BT":"Bluetooth"}
       #- DENON_DASHBOARD_LOG_LEVEL=INFO
+      # ── Optional direct Navidrome integration ──────────────────────────────
+      # Set these in the host .env file, not directly in this compose file.
+      #- DENON_DASHBOARD_NAVIDROME_URL=http://192.168.8.100:4533
+      #- DENON_DASHBOARD_NAVIDROME_USERNAME=dashboard
+      #- DENON_DASHBOARD_NAVIDROME_PASSWORD=change-me
 
       # ── Demo mode ────────────────────────────────────────────────────────────
       # Serve a fully simulated AVR with no physical receiver — the whole UI

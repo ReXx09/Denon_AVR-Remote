@@ -2,15 +2,96 @@
 from __future__ import annotations
 
 # pyrefly: ignore [missing-import]
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Response
 from pydantic import BaseModel, Field
+import httpx
 
 from api.models import RadioFavoriteRequest
 
 from state import AppState, app_state
 from dependencies import get_app_state
+from config import settings
+from denon.navidrome_client import NavidromeClient
 
 router = APIRouter(prefix="/api/v1/media", tags=["media"])
+
+
+def _navidrome() -> NavidromeClient:
+    return NavidromeClient(
+        settings.navidrome_url,
+        settings.navidrome_username,
+        settings.navidrome_password,
+    )
+
+
+@router.get("/navidrome/status")
+async def navidrome_status():
+    client = _navidrome()
+    return {"configured": client.configured, "url": client.base_url if client.configured else None}
+
+
+@router.get("/navidrome/indexes")
+async def navidrome_indexes():
+    try:
+        return await _navidrome().indexes()
+    except RuntimeError as exc:
+        raise HTTPException(503, str(exc)) from exc
+    except httpx.HTTPError as exc:
+        raise HTTPException(502, "Navidrome is unreachable") from exc
+
+
+@router.get("/navidrome/album/{album_id}")
+async def navidrome_album(album_id: str):
+    if not album_id or len(album_id) > 200 or any(char in album_id for char in "\r\n/?&"):
+        raise HTTPException(400, "Invalid album ID")
+    try:
+        return await _navidrome().album(album_id)
+    except RuntimeError as exc:
+        raise HTTPException(503, str(exc)) from exc
+    except httpx.HTTPError as exc:
+        raise HTTPException(502, "Navidrome is unreachable") from exc
+
+
+@router.get("/navidrome/artist/{artist_id}")
+async def navidrome_artist(artist_id: str):
+    if not artist_id or len(artist_id) > 200 or any(char in artist_id for char in "\r\n/?&"):
+        raise HTTPException(400, "Invalid artist ID")
+    try:
+        return await _navidrome().artist(artist_id)
+    except RuntimeError as exc:
+        raise HTTPException(503, str(exc)) from exc
+    except httpx.HTTPError as exc:
+        raise HTTPException(502, "Navidrome is unreachable") from exc
+
+
+class NavidromePlayRequest(BaseModel):
+    song_id: str = Field(..., min_length=1, max_length=200, pattern=r"^[^\r\n/?&]+$")
+
+
+@router.post("/navidrome/play")
+async def navidrome_play(req: NavidromePlayRequest, state: AppState = Depends(get_app_state)):
+    if not state.heos:
+        raise HTTPException(503, "HEOS not connected")
+    client = _navidrome()
+    if not client.configured:
+        raise HTTPException(503, "Navidrome is not configured")
+    ok = await state.heos.play_stream(1024, client.stream_url(req.song_id))
+    if not ok:
+        raise HTTPException(502, "Failed to start Navidrome stream")
+    return {"ok": True}
+
+
+@router.get("/navidrome/cover/{cover_id}")
+async def navidrome_cover(cover_id: str):
+    if not cover_id or len(cover_id) > 200 or any(char in cover_id for char in "\r\n/?&"):
+        raise HTTPException(400, "Invalid cover ID")
+    try:
+        content, media_type = await _navidrome().cover(cover_id)
+        return Response(content=content, media_type=media_type)
+    except RuntimeError as exc:
+        raise HTTPException(503, str(exc)) from exc
+    except httpx.HTTPError as exc:
+        raise HTTPException(502, "Navidrome is unreachable") from exc
 
 
 async def _sync_play_state(state: AppState) -> None:

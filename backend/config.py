@@ -19,6 +19,11 @@ class Settings(BaseSettings):
     denon_telnet_port: int = 23
     denon_heos_port: int = 1255
 
+    # Optional direct Navidrome/Subsonic connection. Credentials stay server-side.
+    navidrome_url: str = ""
+    navidrome_username: str = ""
+    navidrome_password: str = ""
+
     # Optional display names (auto-detected via telnet if not set)
     denon_device_name: str = "Denon AVR"
     denon_zone1_name: str = "Main Zone"

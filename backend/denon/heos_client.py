@@ -4,6 +4,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+from urllib.parse import quote
 from typing import Any, Callable, Coroutine
 
 _LOGGER = logging.getLogger("denon.heos_client")
@@ -304,6 +305,7 @@ class HeosClient:
             _LOGGER.warning("Invalid mid rejected (injection or length)")
             return False
             
-        resp = await self._command("browse/play_stream", f"pid={self._pid}&sid={sid}&mid={mid}")
+        encoded_mid = quote(mid, safe="")
+        resp = await self._command("browse/play_stream", f"pid={self._pid}&sid={sid}&mid={encoded_mid}")
         return resp is not None and resp.get("heos", {}).get("result") == "success"
 

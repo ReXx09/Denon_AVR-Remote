@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import RadioBrowser from './RadioBrowser'
 import ServerBrowser from './ServerBrowser'
+import NavidromeBrowser from './NavidromeBrowser'
 import type { ReceiverState, SendCommandFn, PostFn, Zone, RadioFavorite } from '../types'
 
 const MEDIA_SOURCES = ['NET', 'MPLAY', 'BT', 'USB', 'USB/IPOD', 'SPOTIFY', 'PANDORA', 'SIRIUSXM', 'IRADIO', 'SERVER', 'FAVORITES']
@@ -253,6 +254,7 @@ export default function MediaControls({ state, zone = 'main', radioFavorites = [
       </div>
 
       <ServerBrowser active={source === 'SERVER'} />
+      <NavidromeBrowser active={source === 'SERVER'} />
 
       {onRadioFavoriteChange && (
         <RadioBrowser
