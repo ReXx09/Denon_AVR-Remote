@@ -84,7 +84,16 @@ export default function MediaControls({ state, zone = 'main', radioFavorites = [
     if (mediaCapable) void loadQueue()
   }, [mediaCapable, nowPlaying?.song, nowPlaying?.station])
 
-  if (!mediaCapable) return null
+  if (!mediaCapable) {
+    return (
+      <div className="card">
+        <h2 className="text-xs font-medium text-denon-muted uppercase tracking-wider">Media</h2>
+        <p className="mt-3 text-xs text-denon-muted">
+          No media controls for {source || 'the current source'}.
+        </p>
+      </div>
+    )
+  }
 
   const isPlaying = (optimisticPlayState ?? playState) === 'play'
   const song = nowPlaying?.song
@@ -98,7 +107,6 @@ export default function MediaControls({ state, zone = 'main', radioFavorites = [
   const subtitle = artist || (song && station ? station : null)
 
   return (
-    <>
     <div className="card">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-xs font-medium text-denon-muted uppercase tracking-wider">Now Playing</h2>
@@ -232,6 +240,8 @@ export default function MediaControls({ state, zone = 'main', radioFavorites = [
         )}
       </div>
 
+      <ServerBrowser active={source === 'SERVER'} />
+
       {onRadioFavoriteChange && (
         <RadioBrowser
           open={radioOpen}
@@ -241,7 +251,5 @@ export default function MediaControls({ state, zone = 'main', radioFavorites = [
         />
       )}
     </div>
-    <ServerBrowser active={source === 'SERVER'} />
-    </>
   )
 }

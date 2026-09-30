@@ -75,7 +75,7 @@ export default function ServerBrowser({ active }: Props) {
   }
 
   return (
-    <div className="card">
+    <div className="mt-4 border-t border-denon-border/50 pt-4">
       <div className="flex items-center justify-between mb-3">
         <div>
           <h2 className="text-xs font-medium text-denon-muted uppercase tracking-wider">Music Server</h2>
