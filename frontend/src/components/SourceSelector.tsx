@@ -174,9 +174,14 @@ export default function SourceSelector({
   const [showAllSources, setShowAllSources] = useState(false)
   const longPressRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
-  const availableSources = sources.length > 0
-    ? sources
-    : Object.entries(DEFAULT_SOURCES).map(([id, name]) => ({ id, name }))
+  const availableSources = (() => {
+    const baseSources = sources.length > 0
+      ? sources
+      : Object.entries(DEFAULT_SOURCES).map(([id, name]) => ({ id, name }))
+    return baseSources.some(source => source.id === 'SERVER')
+      ? baseSources
+      : [...baseSources, { id: 'SERVER', name: 'Server' }]
+  })()
 
   const getName = (code: string) => sourceNameMap?.[code] || availableSources.find(source => source.id === code)?.name || DEFAULT_SOURCES[code] || code
   const game1Name = getName('GAME1')
