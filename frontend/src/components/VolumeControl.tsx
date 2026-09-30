@@ -5,9 +5,11 @@ interface Props {
   state: ReceiverState
   sendCommand: SendCommandFn
   post: PostFn
+  zone2VolumeMax: number
+  zone3VolumeMax: number
 }
 
-export default function VolumeControl({ state, sendCommand, post }: Props) {
+export default function VolumeControl({ state, sendCommand, post, zone2VolumeMax, zone3VolumeMax }: Props) {
   const volume = state?.volume
   const muted = state?.muted
   const volumeMax = state?.volume_max || 98
@@ -29,12 +31,12 @@ export default function VolumeControl({ state, sendCommand, post }: Props) {
     const delta = volume - previous
     const zoneDelta = Math.sign(delta) * Math.round(Math.abs(delta))
     if (state.z2_power && state.z2_volume != null) {
-      void post('/zone2/volume', { level: Math.max(0, Math.min(98, state.z2_volume + zoneDelta)) })
+      void post('/zone2/volume', { level: Math.max(0, Math.min(zone2VolumeMax, state.z2_volume + zoneDelta)) })
     }
     if (state.z3_power && state.z3_volume != null) {
-      void post('/zone3/volume', { level: Math.max(0, Math.min(98, state.z3_volume + zoneDelta)) })
+      void post('/zone3/volume', { level: Math.max(0, Math.min(zone3VolumeMax, state.z3_volume + zoneDelta)) })
     }
-  }, [volume, state.z2_power, state.z2_volume, state.z3_power, state.z3_volume, zonesLinked, post])
+  }, [volume, state.z2_power, state.z2_volume, state.z3_power, state.z3_volume, zonesLinked, zone2VolumeMax, zone3VolumeMax, post])
 
   const displayVol = dragging ? localVol : volume
   const dB = displayVol != null ? (displayVol - 80).toFixed(1) : '—'
@@ -135,7 +137,7 @@ export default function VolumeControl({ state, sendCommand, post }: Props) {
                 type="range"
                 aria-label="Zone 2 volume"
                 min={0}
-                max={98}
+                max={zone2VolumeMax}
                 step={1}
                 value={state.z2_volume}
                 onChange={event => void post('/zone2/volume', { level: Number(event.target.value) })}
@@ -153,7 +155,7 @@ export default function VolumeControl({ state, sendCommand, post }: Props) {
                 type="range"
                 aria-label="Zone 3 volume"
                 min={0}
-                max={98}
+                max={zone3VolumeMax}
                 step={1}
                 value={state.z3_volume}
                 onChange={event => void post('/zone3/volume', { level: Number(event.target.value) })}

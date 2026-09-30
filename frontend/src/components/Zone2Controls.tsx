@@ -8,6 +8,8 @@ interface Props {
   state: ReceiverState
   sendCommand: SendCommandFn
   post: PostFn
+  volumeMax: number
+  onVolumeMaxChange: (value: number) => void
   sources: SourceEntry[]
   sourceNameMap?: Record<string, string>
   sourceNameOverrides?: Record<string, string>
@@ -17,7 +19,7 @@ interface Props {
   zoneName?: string
 }
 
-export default function Zone2Controls({ state, sendCommand, post, sources, sourceNameMap, sourceNameOverrides, radioFavorites, onRenameSource, onRadioFavoriteChange }: Props) {
+export default function Zone2Controls({ state, sendCommand, post, volumeMax, onVolumeMaxChange, sources, sourceNameMap, sourceNameOverrides, radioFavorites, onRenameSource, onRadioFavoriteChange }: Props) {
   const volume = state?.z2_volume
   const muted = state?.z2_muted
   const sleepTimer = state?.z2_sleep_timer
@@ -74,15 +76,38 @@ export default function Zone2Controls({ state, sendCommand, post, sources, sourc
                 )}
               </svg>
             </button>
-            <button onClick={() => void post('/zone2/volume/up')} className="btn-ghost w-10 h-10 flex items-center justify-center text-lg font-bold">+</button>
+            <button disabled={volume == null || volume >= volumeMax} onClick={() => void post('/zone2/volume', { level: Math.min(volumeMax, (volume ?? 0) + 1) })} className="btn-ghost w-10 h-10 flex items-center justify-center text-lg font-bold disabled:opacity-40">+</button>
           </div>
         </div>
         <input
-          type="range" min={0} max={98} step={1}
-          value={localVol ?? 0}
+          type="range" min={0} max={volumeMax} step={1}
+          value={Math.min(localVol ?? 0, volumeMax)}
           onChange={handleVolChange}
           className="w-full"
         />
+        <div className="mt-4 border-t border-denon-border/50 pt-3">
+          <label className="mb-1 flex items-center justify-between text-xs text-denon-muted" htmlFor="zone2-volume-max">
+            <span>Dashboard-Maximum</span>
+            <span className="tabular-nums text-denon-text">{volumeMax}</span>
+          </label>
+          <input
+            id="zone2-volume-max"
+            type="range"
+            min={0}
+            max={98}
+            step={1}
+            value={volumeMax}
+            onChange={event => onVolumeMaxChange(Number(event.target.value))}
+            onPointerUp={() => {
+              if (volume != null && volume > volumeMax) void post('/zone2/volume', { level: volumeMax })
+            }}
+            onKeyUp={() => {
+              if (volume != null && volume > volumeMax) void post('/zone2/volume', { level: volumeMax })
+            }}
+            className="w-full"
+          />
+          <p className="mt-1 text-[10px] text-denon-muted/70">Begrenzt die Lautstärkeregler im Dashboard, nicht das AVR-Menü.</p>
+        </div>
       </div>
 
       {/* Sleep Timer */}

@@ -8,6 +8,8 @@ interface Props {
   state: ReceiverState
   sendCommand: SendCommandFn
   post: PostFn
+  volumeMax: number
+  onVolumeMaxChange: (value: number) => void
   sources: SourceEntry[]
   sourceNameMap?: Record<string, string>
   sourceNameOverrides?: Record<string, string>
@@ -16,7 +18,7 @@ interface Props {
   onRadioFavoriteChange?: (favorite: RadioFavorite, enabled: boolean) => void
 }
 
-export default function Zone3Controls({ state, sendCommand, post, sources, sourceNameMap, sourceNameOverrides, radioFavorites, onRenameSource, onRadioFavoriteChange }: Props) {
+export default function Zone3Controls({ state, sendCommand, post, volumeMax, onVolumeMaxChange, sources, sourceNameMap, sourceNameOverrides, radioFavorites, onRenameSource, onRadioFavoriteChange }: Props) {
   const volume = state?.z3_volume
   const muted = state?.z3_muted
   const sleepTimer = state?.z3_sleep_timer
@@ -58,10 +60,33 @@ export default function Zone3Controls({ state, sendCommand, post, sources, sourc
                 {muted ? <path d="M3.63 3.63a.996.996 0 000 1.41L7.29 8.7 7 9H4c-.55 0-1 .45-1 1v4c0 .55.45 1 1 1h3l3.29 3.29c.63.63 1.71.18 1.71-.71v-4.17l4.18 4.18c-.49.37-1.02.68-1.6.91-.36.15-.58.53-.58.92 0 .72.73 1.18 1.39.91.8-.33 1.55-.77 2.22-1.31l1.34 1.34a.996.996 0 101.41-1.41L5.05 3.63c-.39-.39-1.02-.39-1.42 0z" /> : <path d="M3 10v4c0 .55.45 1 1 1h3l3.29 3.29c.63.63 1.71.18 1.71-.71V6.41c0-.89-1.08-1.34-1.71-.71L7 9H4c-.55 0-1 .45-1 1zm13.5 2A4.5 4.5 0 0014 7.97v8.05c1.48-.73 2.5-2.25 2.5-3.98zM14 3.23v.06c0 .38.25.71.61.85C17.18 5.18 19 7.71 19 10.69c0 2.99-1.82 5.52-4.39 6.56-.36.14-.61.47-.61.85v.06c0 .63.63 1.09 1.22.86C18.6 17.84 21 14.53 21 10.69c0-3.83-2.4-7.14-5.78-8.32-.59-.23-1.22.24-1.22.86z" />}
               </svg>
             </button>
-            <button onClick={() => void post('/zone3/volume/up')} className="btn-ghost w-10 h-10 flex items-center justify-center text-lg font-bold">+</button>
+            <button disabled={volume == null || volume >= volumeMax} onClick={() => void post('/zone3/volume', { level: Math.min(volumeMax, (volume ?? 0) + 1) })} className="btn-ghost w-10 h-10 flex items-center justify-center text-lg font-bold disabled:opacity-40">+</button>
           </div>
         </div>
-        <input type="range" min={0} max={98} step={1} value={localVol} onChange={handleVolChange} className="w-full" />
+        <input type="range" min={0} max={volumeMax} step={1} value={Math.min(localVol, volumeMax)} onChange={handleVolChange} className="w-full" />
+        <div className="mt-4 border-t border-denon-border/50 pt-3">
+          <label className="mb-1 flex items-center justify-between text-xs text-denon-muted" htmlFor="zone3-volume-max">
+            <span>Dashboard-Maximum</span>
+            <span className="tabular-nums text-denon-text">{volumeMax}</span>
+          </label>
+          <input
+            id="zone3-volume-max"
+            type="range"
+            min={0}
+            max={98}
+            step={1}
+            value={volumeMax}
+            onChange={event => onVolumeMaxChange(Number(event.target.value))}
+            onPointerUp={() => {
+              if (volume != null && volume > volumeMax) void post('/zone3/volume', { level: volumeMax })
+            }}
+            onKeyUp={() => {
+              if (volume != null && volume > volumeMax) void post('/zone3/volume', { level: volumeMax })
+            }}
+            className="w-full"
+          />
+          <p className="mt-1 text-[10px] text-denon-muted/70">Begrenzt die Lautstärkeregler im Dashboard, nicht das AVR-Menü.</p>
+        </div>
       </div>
 
       <div className="card">

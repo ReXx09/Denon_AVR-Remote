@@ -40,6 +40,16 @@ const FALLBACK_CHANNEL_NAMES: Record<string, string> = {
   TRL: 'Top R.L', TRR: 'Top R.R',
 }
 
+function readZoneVolumeLimit(key: string): number {
+  try {
+    const stored = localStorage.getItem(key)
+    const value = stored == null ? 98 : Number(stored)
+    return Number.isInteger(value) && value >= 0 && value <= 98 ? value : 98
+  } catch {
+    return 98
+  }
+}
+
 // Memoize heavy child components to avoid re-renders on every WebSocket push
 const MemoChannelLevels = memo(ChannelLevels)
 const MemoAudioSettings = memo(AudioSettings)
@@ -54,6 +64,8 @@ export default function App() {
   const { info, reload: reloadDeviceInfo } = useDeviceInfo()
   const { post } = useApi()
   const [zone, setZone] = useState<Zone>('main')
+  const [zone2VolumeMax, setZone2VolumeMax] = useState(() => readZoneVolumeLimit('denon-zone2-volume-max'))
+  const [zone3VolumeMax, setZone3VolumeMax] = useState(() => readZoneVolumeLimit('denon-zone3-volume-max'))
   useForegroundEffects()
   useKeyboardShortcuts({ state, post, sendCommand, zone, setZone })
   const [activeSection, setActiveSection] = useState<Section>('controls')
@@ -181,6 +193,13 @@ export default function App() {
     else console.warn('Source favorite update failed', await res.text().catch(() => res.statusText))
   }
 
+  const saveZoneVolumeMax = (targetZone: 'zone2' | 'zone3', value: number) => {
+    const key = targetZone === 'zone2' ? 'denon-zone2-volume-max' : 'denon-zone3-volume-max'
+    if (targetZone === 'zone2') setZone2VolumeMax(value)
+    else setZone3VolumeMax(value)
+    try { localStorage.setItem(key, String(value)) } catch { /* Keep the in-memory setting if storage is unavailable. */ }
+  }
+
   const mainSections: { id: Section; label: string }[] = [
     { id: 'controls', label: 'Controls' },
     { id: 'audio', label: 'Audio' },
@@ -264,7 +283,13 @@ export default function App() {
             {activeSection === 'controls' && (
               <>
                 <MemoPowerControl state={state} sendCommand={sendCommand} zone="main" />
-                <MemoVolumeControl state={state} sendCommand={sendCommand} post={post} />
+                <MemoVolumeControl
+                  state={state}
+                  sendCommand={sendCommand}
+                  post={post}
+                  zone2VolumeMax={zone2VolumeMax}
+                  zone3VolumeMax={zone3VolumeMax}
+                />
                 <MemoMediaControls
                   state={state}
                   sendCommand={sendCommand}
@@ -346,6 +371,8 @@ export default function App() {
             state={state}
             sendCommand={sendCommand}
             post={post}
+            volumeMax={zone2VolumeMax}
+            onVolumeMaxChange={value => saveZoneVolumeMax('zone2', value)}
             sources={configuredSources}
             sourceNameMap={sourceNameMap}
             sourceNameOverrides={sourceNameOverrides}
@@ -358,6 +385,8 @@ export default function App() {
             state={state}
             sendCommand={sendCommand}
             post={post}
+            volumeMax={zone3VolumeMax}
+            onVolumeMaxChange={value => saveZoneVolumeMax('zone3', value)}
             sources={configuredSources}
             sourceNameMap={sourceNameMap}
             sourceNameOverrides={sourceNameOverrides}
