@@ -16,6 +16,7 @@ import ToneControls from './components/ToneControls'
 import SubwooferLevel from './components/SubwooferLevel'
 import AudioSettings from './components/AudioSettings'
 import InputProfiles from './components/InputProfiles'
+import RadioBrowser from './components/RadioBrowser'
 import AudioDiagnostics from './components/AudioDiagnostics'
 import MediaControls from './components/MediaControls'
 import Zone2Controls from './components/Zone2Controls'
@@ -27,7 +28,7 @@ import ShortcutOverlay from './experience/ShortcutOverlay'
 import type { Zone, ThemeName, UiEffects, RadioFavorite } from './types'
 import type { NightModeConfigState } from './components/NightModeModal'
 
-type Section = 'controls' | 'audio' | 'profiles'
+type Section = 'controls' | 'audio' | 'profiles' | 'heos'
 
 // Fallback channel names if API hasn't loaded yet
 const FALLBACK_CHANNEL_NAMES: Record<string, string> = {
@@ -204,6 +205,7 @@ export default function App() {
     { id: 'controls', label: 'Controls' },
     { id: 'audio', label: 'Audio' },
     { id: 'profiles', label: 'Profiles' },
+    { id: 'heos', label: 'HEOS' },
   ]
 
   return (
@@ -214,7 +216,7 @@ export default function App() {
     <SeasonalEffects mode={uiEffects.seasonal_effects || 'auto'} />
     {uiEffects.shortcut_overlay !== false && <ShortcutOverlay />}
     <CacheReset />
-    <div className={`relative z-10 max-w-2xl mx-auto px-4 pb-24 sm:pb-8 min-h-screen ${uiEffects.card_animations === false ? 'no-card-animations' : ''}`}>
+    <div className={`relative z-10 max-w-4xl mx-auto px-4 pb-24 sm:pb-8 min-h-screen ${uiEffects.card_animations === false ? 'no-card-animations' : ''}`}>
       {/* Header + Health */}
       <MemoStatusBar
         deviceName={deviceName}
@@ -336,6 +338,21 @@ export default function App() {
                 <InputProfiles sources={configuredSources} state={state} channelNames={channelNames} />
               </>
             )}
+
+            {activeSection === 'heos' && (
+              <div className="space-y-3">
+                <div>
+                  <h2 className="text-xs font-medium text-denon-muted uppercase tracking-wider">HEOS Radio</h2>
+                </div>
+                <RadioBrowser
+                  open
+                  onClose={() => {}}
+                  favorites={radioFavorites}
+                  onFavoriteChange={saveRadioFavorite}
+                  inline
+                />
+              </div>
+            )}
           </div>
         </>
       )}
@@ -404,7 +421,7 @@ export default function App() {
       className="mobile-bottom-nav sm:hidden fixed inset-x-0 z-40 bg-denon-card/95 backdrop-blur-xl border-t border-denon-border/60"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
-      <div className="max-w-2xl mx-auto px-3 pt-2 pb-2 space-y-2">
+      <div className="max-w-4xl mx-auto px-3 pt-2 pb-2 space-y-2">
         {/* Zone toggle */}
         <div className="flex gap-1">
           <button

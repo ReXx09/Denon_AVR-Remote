@@ -34,6 +34,7 @@ interface Props {
   onClose: () => void
   favorites?: RadioFavorite[]
   onFavoriteChange?: (favorite: RadioFavorite, enabled: boolean) => void | Promise<void>
+  inline?: boolean
 }
 
 const CATEGORY_ICONS: Record<string, string> = {
@@ -139,7 +140,8 @@ function safeImageUrl(url: unknown): string | null {
   } catch { return null }
 }
 
-export default function RadioBrowser({ open, onClose, favorites = [], onFavoriteChange }: Props) {
+export default function RadioBrowser({ open, onClose, favorites = [], onFavoriteChange, inline = false }: Props) {
+  const [inlineTarget, setInlineTarget] = useState<HTMLDivElement | null>(null)
   const [navStack, setNavStack] = useState<NavEntry[]>([]) // [{title, cid}]
   const [items, setItems] = useState<RadioItem[]>([])
   const [loading, setLoading] = useState(false)
@@ -285,6 +287,7 @@ export default function RadioBrowser({ open, onClose, favorites = [], onFavorite
   }, [navStack.length])
 
   const handleClose = () => {
+    if (inline) return
     setClosing(true)
     setTimeout(() => {
       setClosing(false)
@@ -327,7 +330,7 @@ export default function RadioBrowser({ open, onClose, favorites = [], onFavorite
           body: JSON.stringify({ mid: item.mid }),
         })
         if (!resp.ok) throw new Error()
-        setTimeout(handleClose, 600)
+        if (!inline) setTimeout(handleClose, 600)
       } catch {
         setPlayingMid(null)
         setError('Could not play station')
@@ -459,19 +462,21 @@ export default function RadioBrowser({ open, onClose, favorites = [], onFavorite
     : 'opacity-100 translate-y-0'
   const backdropClass = closing ? 'opacity-0' : 'opacity-100'
 
-  return createPortal(
+  const browserContent = (
     <>
       {/* Backdrop */}
-      <div
+      {!inline && <div
         className={`fixed inset-0 bg-black/70 z-50 transition-opacity duration-200 ${backdropClass}`}
         onClick={handleClose}
-      />
+      />}
 
       {/* Modal */}
-      <div data-modal="radio" className={`fixed inset-2 sm:inset-auto sm:top-4 sm:bottom-4 sm:left-1/2 sm:-translate-x-1/2 sm:w-full sm:max-w-2xl
-        bg-denon-dark rounded-2xl z-50 flex flex-col overflow-hidden
-        border border-denon-accent/40 shadow-2xl shadow-black/50
-        transition-all duration-200 ease-out ${animClass}`}
+      <div data-modal="radio" className={inline
+        ? 'relative flex h-[70vh] min-h-[20rem] w-full flex-col overflow-hidden rounded-xl border border-denon-border/50 bg-denon-dark'
+        : `fixed inset-2 sm:inset-auto sm:top-4 sm:bottom-4 sm:left-1/2 sm:-translate-x-1/2 sm:w-full sm:max-w-2xl
+          bg-denon-dark rounded-2xl z-50 flex flex-col overflow-hidden
+          border border-denon-accent/40 shadow-2xl shadow-black/50
+          transition-all duration-200 ease-out ${animClass}`}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-denon-border/30 shrink-0">
@@ -517,14 +522,15 @@ export default function RadioBrowser({ open, onClose, favorites = [], onFavorite
                 <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15" />
               </svg>
             </button>
-            <button
+            {!inline && <button
               onClick={handleClose}
               className="text-denon-muted hover:text-denon-text transition-colors p-1"
+              aria-label="Close radio browser"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M18 6L6 18M6 6l12 12" />
               </svg>
-            </button>
+            </button>}
           </div>
         </div>
 
@@ -714,9 +720,19 @@ export default function RadioBrowser({ open, onClose, favorites = [], onFavorite
           </>)}
         </div>
       </div>
-    </>,
-    document.body
+    </>
   )
+
+  if (inline) {
+    return (
+      <>
+        <div ref={setInlineTarget} className="w-full" />
+        {inlineTarget && createPortal(browserContent, inlineTarget)}
+      </>
+    )
+  }
+
+  return createPortal(browserContent, document.body)
 }
 
 function decodeLabel(name: string | null | undefined): string {
