@@ -299,6 +299,34 @@ class RadioPlayRequest(BaseModel):
                      description="Station media ID (e.g. 's280354')")
 
 
+# HEOS local music / DLNA server source. Navidrome is exposed here when its
+# DLNA service is enabled and visible to the receiver.
+SERVER_SID = 1024
+
+
+@router.get("/server/browse")
+async def server_browse(cid: str | None = None, state: AppState = Depends(get_app_state)):
+    """Browse the receiver's local music server, including Navidrome via DLNA."""
+    if not state.heos:
+        raise HTTPException(503, "HEOS not connected")
+    return await state.heos.browse_source(SERVER_SID, cid)
+
+
+class ServerPlayRequest(BaseModel):
+    mid: str = Field(..., min_length=1, max_length=500, pattern=r"^[^\r\n]+$")
+
+
+@router.post("/server/play")
+async def server_play(req: ServerPlayRequest, state: AppState = Depends(get_app_state)):
+    """Start a track from the receiver's local music server."""
+    if not state.heos:
+        raise HTTPException(503, "HEOS not connected")
+    ok = await state.heos.play_stream(SERVER_SID, req.mid)
+    if not ok:
+        raise HTTPException(502, "Failed to play server item")
+    return {"ok": True}
+
+
 @router.post("/radio/play")
 async def radio_play(req: RadioPlayRequest, state: AppState = Depends(get_app_state)):
     """Play a TuneIn radio station by media ID."""

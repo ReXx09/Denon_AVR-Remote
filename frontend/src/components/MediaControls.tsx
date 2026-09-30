@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import RadioBrowser from './RadioBrowser'
+import ServerBrowser from './ServerBrowser'
 import type { ReceiverState, SendCommandFn, PostFn, Zone, RadioFavorite } from '../types'
 
 const MEDIA_SOURCES = ['NET', 'MPLAY', 'BT', 'USB', 'USB/IPOD', 'SPOTIFY', 'PANDORA', 'SIRIUSXM', 'IRADIO', 'SERVER', 'FAVORITES']
@@ -97,6 +98,7 @@ export default function MediaControls({ state, zone = 'main', radioFavorites = [
   const subtitle = artist || (song && station ? station : null)
 
   return (
+    <>
     <div className="card">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-xs font-medium text-denon-muted uppercase tracking-wider">Now Playing</h2>
@@ -239,5 +241,7 @@ export default function MediaControls({ state, zone = 'main', radioFavorites = [
         />
       )}
     </div>
+    <ServerBrowser active={source === 'SERVER'} />
+    </>
   )
 }
