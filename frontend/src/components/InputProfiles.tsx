@@ -109,7 +109,7 @@ export default function InputProfiles({ sources, state, channelNames }: Props) {
         <span className="text-[10px] text-denon-muted">{selectedName}</span>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+      <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
         {sources.map(source => {
           const selected = selectedSource === source.id
           const hasProfile = Boolean(profiles[source.id])
@@ -119,10 +119,10 @@ export default function InputProfiles({ sources, state, channelNames }: Props) {
               type="button"
               onClick={() => { setSelectedSource(source.id); setMessage('') }}
               aria-pressed={selected}
-              className={`min-w-0 rounded-lg px-3 py-2 text-left text-xs transition-all ${selected ? 'bg-denon-gold/20 text-denon-gold ring-1 ring-denon-gold/40' : 'bg-denon-surface/70 text-denon-muted hover:bg-denon-surface hover:text-denon-text'}`}
+              className={`min-w-0 rounded-lg px-2.5 py-1.5 text-left text-xs transition-all ${selected ? 'bg-denon-gold/20 text-denon-gold ring-1 ring-denon-gold/40' : 'bg-denon-surface/70 text-denon-muted hover:bg-denon-surface hover:text-denon-text'}`}
             >
               <span className="block truncate">{source.name}</span>
-              <span className="mt-0.5 block text-[10px] opacity-50">{hasProfile ? 'Profile saved' : 'New profile'}</span>
+              <span className="mt-0.5 block text-[9px] leading-3 opacity-50">{hasProfile ? 'Profile saved' : 'New profile'}</span>
             </button>
           )
         })}
