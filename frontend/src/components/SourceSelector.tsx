@@ -176,6 +176,7 @@ export default function SourceSelector({
   const [sourceCategory, setSourceCategory] = useState<SourceCategory>('inputs')
   const [showAllSources, setShowAllSources] = useState(false)
   const longPressRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const horizontalInputsRef = useRef<HTMLDivElement>(null)
 
   const availableSources = (() => {
     const baseSources = sources.length > 0
@@ -211,6 +212,12 @@ export default function SourceSelector({
     .filter((source): source is SourceEntry => Boolean(source))
   const networkActive = current === 'NET' || current === 'BT' || current === 'IRADIO' || Boolean(heosServiceCode)
   const networkTarget = current === 'BT' ? 'NET' : networkActive ? 'BT' : 'NET'
+  const scrollHorizontalInputs = (direction: 'left' | 'right') => {
+    horizontalInputsRef.current?.scrollBy({
+      left: direction === 'right' ? 360 : -360,
+      behavior: 'smooth',
+    })
+  }
   const favoriteSources = sourceFavorites
     .map(id => sourceList.find(source => source.id === id))
     .filter((source): source is SourceEntry => Boolean(source))
@@ -288,40 +295,60 @@ export default function SourceSelector({
         </p>
       )}
 
-      <div className="mb-4 overflow-x-auto rounded-xl bg-denon-surface/40 p-1.5">
-        <div className="flex min-w-max gap-1.5">
-          {horizontalInputs.map(source => {
-            const active = current === source.id || (source.id === 'GAME' && current === 'GAME1')
-            return (
-              <button
-                key={source.id}
-                type="button"
-                onClick={() => sendCommand(getSourceCommand(source.id))}
-                className={`h-14 min-w-[88px] shrink-0 rounded-lg px-3 text-xs font-medium transition-all ${
-                  active
-                    ? 'bg-gradient-to-br from-denon-gold/20 to-amber-500/10 text-denon-gold ring-1 ring-denon-gold/40'
-                    : 'bg-denon-card text-denon-muted hover:bg-denon-border/70 hover:text-denon-text'
-                }`}
-              >
-                <span className="block text-base leading-5">{getIcon(source.id, getName(source.id))}</span>
-                <span className="block max-w-[100px] truncate">{getName(source.id)}</span>
-              </button>
-            )
-          })}
-          <button
-            type="button"
-            onClick={() => sendCommand(getSourceCommand(networkTarget))}
-            className={`h-14 min-w-[112px] shrink-0 rounded-lg px-3 text-xs font-medium transition-all ${
-              networkActive
-                ? 'bg-gradient-to-br from-denon-gold/20 to-amber-500/10 text-denon-gold ring-1 ring-denon-gold/40'
-                : 'bg-denon-card text-denon-muted hover:bg-denon-border/70 hover:text-denon-text'
-            }`}
-            title={`Switch to ${networkTarget === 'BT' ? 'Bluetooth' : 'Network'}`}
-          >
-            <span className="block text-base leading-5">{networkTarget === 'BT' ? '🔵' : '🌐'}</span>
-            <span className="block truncate">Network/BT</span>
-          </button>
+      <div className="mb-4 flex items-center gap-1.5 rounded-xl bg-denon-surface/40 p-1.5">
+        <button
+          type="button"
+          onClick={() => scrollHorizontalInputs('left')}
+          className="flex h-14 w-8 shrink-0 items-center justify-center rounded-lg bg-denon-card text-denon-muted hover:bg-denon-border/70 hover:text-denon-text"
+          aria-label="Scroll inputs left"
+          title="Previous inputs"
+        >
+          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m15 18-6-6 6-6" /></svg>
+        </button>
+        <div ref={horizontalInputsRef} className="min-w-0 flex-1 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+          <div className="flex min-w-max gap-1.5">
+            {horizontalInputs.map(source => {
+              const active = current === source.id || (source.id === 'GAME' && current === 'GAME1')
+              return (
+                <button
+                  key={source.id}
+                  type="button"
+                  onClick={() => sendCommand(getSourceCommand(source.id))}
+                  className={`h-14 min-w-[88px] shrink-0 rounded-lg px-3 text-xs font-medium transition-all ${
+                    active
+                      ? 'bg-gradient-to-br from-denon-gold/20 to-amber-500/10 text-denon-gold ring-1 ring-denon-gold/40'
+                      : 'bg-denon-card text-denon-muted hover:bg-denon-border/70 hover:text-denon-text'
+                  }`}
+                >
+                  <span className="block text-base leading-5">{getIcon(source.id, getName(source.id))}</span>
+                  <span className="block max-w-[100px] truncate">{getName(source.id)}</span>
+                </button>
+              )
+            })}
+            <button
+              type="button"
+              onClick={() => sendCommand(getSourceCommand(networkTarget))}
+              className={`h-14 min-w-[112px] shrink-0 rounded-lg px-3 text-xs font-medium transition-all ${
+                networkActive
+                  ? 'bg-gradient-to-br from-denon-gold/20 to-amber-500/10 text-denon-gold ring-1 ring-denon-gold/40'
+                  : 'bg-denon-card text-denon-muted hover:bg-denon-border/70 hover:text-denon-text'
+              }`}
+              title={`Switch to ${networkTarget === 'BT' ? 'Bluetooth' : 'Network'}`}
+            >
+              <span className="block text-base leading-5">{networkTarget === 'BT' ? '🔵' : '🌐'}</span>
+              <span className="block truncate">Network/BT</span>
+            </button>
+          </div>
         </div>
+        <button
+          type="button"
+          onClick={() => scrollHorizontalInputs('right')}
+          className="flex h-14 w-8 shrink-0 items-center justify-center rounded-lg bg-denon-card text-denon-muted hover:bg-denon-border/70 hover:text-denon-text"
+          aria-label="Scroll inputs right"
+          title="Next inputs"
+        >
+          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m9 18 6-6-6-6" /></svg>
+        </button>
       </div>
 
       {favoriteSources.length > 0 && (
