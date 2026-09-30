@@ -309,10 +309,10 @@ export default function SourceSelector({
                   key={source.id}
                   type="button"
                   onClick={() => sendCommand(getSourceCommand(source.id))}
-                  className={`h-14 min-w-[88px] shrink-0 rounded-lg px-3 text-xs font-medium transition-all ${
+                  className={`h-14 min-w-[88px] shrink-0 rounded-lg border px-3 text-xs font-medium transition-all ${
                     active
-                      ? 'bg-gradient-to-br from-denon-gold/20 to-amber-500/10 text-denon-gold ring-1 ring-denon-gold/40'
-                      : 'bg-denon-card text-denon-muted hover:bg-denon-border/70 hover:text-denon-text'
+                      ? 'border-denon-gold/50 bg-gradient-to-br from-denon-gold/20 to-amber-500/10 text-denon-gold'
+                      : 'border-transparent bg-denon-card text-denon-muted hover:bg-denon-border/70 hover:text-denon-text'
                   }`}
                 >
                   <span className="block text-base leading-5">{getIcon(source.id, getName(source.id))}</span>
