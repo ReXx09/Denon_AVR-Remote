@@ -202,7 +202,7 @@ export default function SourceSelector({
   }, [sourceList])
 
   const visibleSources = categorizedSources[sourceCategory]
-  const selectedSource = current && visibleSources.some(source => source.id === current) ? current : ''
+  const selectedSource = current && sourceList.some(source => source.id === current) ? current : ''
   const favoriteSources = sourceFavorites
     .map(id => sourceList.find(source => source.id === id))
     .filter((source): source is SourceEntry => Boolean(source))
@@ -334,7 +334,7 @@ export default function SourceSelector({
             aria-label="Select source"
           >
             <option value="">Select source...</option>
-            {visibleSources.map(source => <option key={source.id} value={source.id}>{getName(source.id)}</option>)}
+            {sourceList.map(source => <option key={source.id} value={source.id}>{getName(source.id)}</option>)}
           </select>
           <ChevronDownIcon />
         </label>
