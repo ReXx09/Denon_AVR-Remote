@@ -13,6 +13,7 @@ export default function VolumeControl({ state, sendCommand, post }: Props) {
   const volumeMax = state?.volume_max || 98
   const [dragging, setDragging] = useState(false)
   const [localVol, setLocalVol] = useState<number | undefined>(volume)
+  const [zonesLinked, setZonesLinked] = useState(true)
   const previousVolume = useRef<number | undefined>(undefined)
 
   useEffect(() => {
@@ -23,7 +24,7 @@ export default function VolumeControl({ state, sendCommand, post }: Props) {
     if (volume == null) return
     const previous = previousVolume.current
     previousVolume.current = volume
-    if (previous == null || previous === volume) return
+    if (previous == null || previous === volume || !zonesLinked) return
 
     const delta = volume - previous
     if (state.z2_power && state.z2_volume != null) {
@@ -32,7 +33,7 @@ export default function VolumeControl({ state, sendCommand, post }: Props) {
     if (state.z3_power && state.z3_volume != null) {
       void post('/zone3/volume', { level: Math.max(0, Math.min(98, Math.round(state.z3_volume + delta))) })
     }
-  }, [volume, state.z2_power, state.z2_volume, state.z3_power, state.z3_volume, post])
+  }, [volume, state.z2_power, state.z2_volume, state.z3_power, state.z3_volume, zonesLinked, post])
 
   const displayVol = dragging ? localVol : volume
   const dB = displayVol != null ? (displayVol - 80).toFixed(1) : '—'
@@ -48,7 +49,29 @@ export default function VolumeControl({ state, sendCommand, post }: Props) {
     <div className="card">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h2 className="text-xs font-medium text-denon-muted uppercase tracking-wider mb-1">Volume</h2>
+          <div className="mb-1 flex items-center gap-2">
+            <h2 className="text-xs font-medium text-denon-muted uppercase tracking-wider">Volume</h2>
+            {(state.z2_power || state.z3_power) && (
+              <button
+                type="button"
+                onClick={() => setZonesLinked(linked => !linked)}
+                aria-pressed={zonesLinked}
+                title={zonesLinked ? 'Zonenlautstärke von Master trennen' : 'Zonenlautstärke mit Master verbinden'}
+                className={`flex items-center gap-1 rounded-md px-1.5 py-1 text-[10px] transition-colors ${
+                  zonesLinked
+                    ? 'bg-denon-gold/15 text-denon-gold'
+                    : 'bg-denon-surface text-denon-muted hover:text-denon-text'
+                }`}
+              >
+                <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  {zonesLinked
+                    ? <><path d="M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.07 0l-3 3A5 5 0 0 0 11 21.07l1.71-1.71" /></>
+                    : <><path d="M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.07 0l-3 3A5 5 0 0 0 11 21.07l1.71-1.71" /><path d="m3 3 18 18" /></>}
+                </svg>
+                {zonesLinked ? 'Verbunden' : 'Getrennt'}
+              </button>
+            )}
+          </div>
           <div className="flex items-baseline gap-2">
             <span className="text-3xl font-bold tabular-nums text-denon-text">
               {displayVol != null ? displayVol : '—'}
