@@ -28,6 +28,12 @@ export default function Zone2Controls({ state, sendCommand, post, volumeMax, onV
 
   const [localVol, setLocalVol] = useState<number>(volume ?? 0)
   const [selectedSleep, setSelectedSleep] = useState<'OFF' | number>(sleepTimer ?? 'OFF')
+  const [audioValues, setAudioValues] = useState({
+    bass: state.z2_bass ?? 50,
+    treble: state.z2_treble ?? 50,
+    balance: state.z2_balance ?? 50,
+  })
+  const [mono, setMono] = useState(state.z2_mono ?? false)
 
   useEffect(() => {
     if (volume != null) setLocalVol(volume)
@@ -36,6 +42,15 @@ export default function Zone2Controls({ state, sendCommand, post, volumeMax, onV
   useEffect(() => {
     setSelectedSleep(sleepTimer ?? 'OFF')
   }, [sleepTimer])
+
+  useEffect(() => {
+    setAudioValues(current => ({
+      bass: state.z2_bass ?? current.bass,
+      treble: state.z2_treble ?? current.treble,
+      balance: state.z2_balance ?? current.balance,
+    }))
+    if (state.z2_mono != null) setMono(state.z2_mono)
+  }, [state.z2_bass, state.z2_treble, state.z2_balance, state.z2_mono])
 
   const handleVolChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const v = parseInt(e.target.value)
@@ -118,10 +133,14 @@ export default function Zone2Controls({ state, sendCommand, post, volumeMax, onV
           <h2 className="text-xs font-medium uppercase tracking-wider text-denon-muted">Zone 2 Audio</h2>
           <button
             type="button"
-            onClick={() => void post('/zone2/audio/mono', { enabled: !state.z2_mono })}
-            className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${state.z2_mono ? 'bg-denon-gold/20 text-denon-gold ring-1 ring-denon-gold/40' : 'bg-denon-surface text-denon-muted hover:text-denon-text'}`}
+            onClick={() => {
+              const enabled = !mono
+              setMono(enabled)
+              void post('/zone2/audio/mono', { enabled })
+            }}
+            className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${mono ? 'bg-denon-gold/20 text-denon-gold ring-1 ring-denon-gold/40' : 'bg-denon-surface text-denon-muted hover:text-denon-text'}`}
           >
-            {state.z2_mono ? 'Mono' : 'Stereo'}
+            {mono ? 'Mono' : 'Stereo'}
           </button>
         </div>
         <div className="space-y-3">
@@ -130,7 +149,8 @@ export default function Zone2Controls({ state, sendCommand, post, volumeMax, onV
             ['z2_treble', 'Treble', '/zone2/audio/treble', 44, 56],
             ['z2_balance', 'Balance', '/zone2/audio/balance', 38, 62],
           ] as const).map(([key, label, path, min, max]) => {
-            const value = state[key] ?? 50
+            const audioKey = key === 'z2_bass' ? 'bass' : key === 'z2_treble' ? 'treble' : 'balance'
+            const value = audioValues[audioKey]
             const center = key === 'z2_balance' ? 50 : 50
             const display = value - center
             return (
@@ -139,15 +159,29 @@ export default function Zone2Controls({ state, sendCommand, post, volumeMax, onV
                   <span className="text-denon-muted">{label}</span>
                   <strong>{display > 0 ? '+' : ''}{display}{key === 'z2_balance' ? '' : ' dB'}</strong>
                 </div>
-                <input
-                  type="range"
-                  min={min}
-                  max={max}
-                  value={value}
-                  onChange={event => void post(path, { value: Number(event.target.value) })}
-                  className="w-full"
-                  aria-label={`Zone 2 ${label}`}
-                />
+                <div className="flex items-center gap-2">
+                  <button type="button" onClick={() => {
+                    setAudioValues(current => ({ ...current, [audioKey]: Math.max(min, current[audioKey] - 1) }))
+                    void post(`${path}/down`)
+                  }} className="btn-ghost flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-base font-bold" aria-label={`Decrease Zone 2 ${label}`}>−</button>
+                  <input
+                    type="range"
+                    min={min}
+                    max={max}
+                    value={value}
+                    onChange={event => {
+                      const next = Number(event.target.value)
+                      setAudioValues(current => ({ ...current, [audioKey]: next }))
+                      void post(path, { value: next })
+                    }}
+                    className="w-full"
+                    aria-label={`Zone 2 ${label}`}
+                  />
+                  <button type="button" onClick={() => {
+                    setAudioValues(current => ({ ...current, [audioKey]: Math.min(max, current[audioKey] + 1) }))
+                    void post(`${path}/up`)
+                  }} className="btn-ghost flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-base font-bold" aria-label={`Increase Zone 2 ${label}`}>+</button>
+                </div>
                 <div className="flex justify-between text-[10px] text-denon-muted/60">
                   <span>{key === 'z2_balance' ? 'L' : '−6 dB'}</span>
                   <span>{key === 'z2_balance' ? '0' : '0 dB'}</span>

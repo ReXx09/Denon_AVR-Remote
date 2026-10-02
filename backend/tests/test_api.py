@@ -362,6 +362,12 @@ async def test_z2_audio_settings(mock_app_state):
             assert resp.status_code == 200
             mock_app_state.telnet.send.assert_called_with(command)
 
+        resp = await ac.post("/api/v1/zone2/audio/bass/up")
+        assert resp.status_code == 200
+        mock_app_state.telnet.send.assert_called_with("Z2BAS UP")
+        resp = await ac.post("/api/v1/zone2/audio/unknown/up")
+        assert resp.status_code == 400
+
 
 @pytest.mark.asyncio
 async def test_z3_volume(mock_app_state):

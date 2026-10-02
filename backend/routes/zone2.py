@@ -1,7 +1,7 @@
 """Zone 2 control endpoints."""
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 
 from api.models import SourceRequest, Zone2BalanceRequest, Zone2MonoRequest, Zone2ToneRequest, Zone2VolumeRequest
 from routes._helpers import send_command
@@ -69,4 +69,12 @@ async def z2_balance(req: Zone2BalanceRequest, state: AppState = Depends(get_app
 @router.post("/audio/mono")
 async def z2_mono(req: Zone2MonoRequest, state: AppState = Depends(get_app_state)):
     return await send_command(state, f"Z2MONO {'ON' if req.enabled else 'OFF'}")
+
+
+@router.post("/audio/{setting}/{direction}")
+async def z2_audio_step(setting: str, direction: str, state: AppState = Depends(get_app_state)):
+    prefixes = {"bass": "Z2BAS", "treble": "Z2TRE", "balance": "Z2BAL"}
+    if setting not in prefixes or direction not in ("up", "down"):
+        raise HTTPException(400, "Invalid Zone 2 audio setting")
+    return await send_command(state, f"{prefixes[setting]} {direction.upper()}")
 
