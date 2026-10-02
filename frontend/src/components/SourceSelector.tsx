@@ -114,14 +114,14 @@ type SourceCategory = 'inputs' | 'network' | 'media' | 'other'
 
 const INPUT_SOURCES = new Set([
   // AVC-X4800H physical source slots exposed by the receiver configuration.
-  'CD', 'TUNER', 'DVD', 'TV', 'SAT/CBL', 'BD', 'GAME', 'GAME1', 'GAME2', 'AUX1', 'AUX2',
+  'CD', 'TUNER', 'DVD', 'TV', 'SAT/CBL', 'BD', 'GAME', 'GAME1', 'GAME2', 'AUX1', 'AUX2', 'MPLAY',
 ])
 const NETWORK_SOURCES = new Set([
   'NET', 'BT', 'MPLAY', 'SPOTIFY', 'PANDORA', 'SIRIUSXM', 'HDRADIO', 'IRADIO',
 ])
 const MEDIA_SOURCES = new Set(['SERVER', 'FAVORITES', 'USB', 'USB/IPOD'])
 
-const HORIZONTAL_INPUTS = ['CD', 'TUNER', 'DVD', 'BD', 'TV', 'SAT/CBL', 'GAME', 'AUX1', 'AUX2']
+const HORIZONTAL_INPUTS = ['CD', 'TUNER', 'DVD', 'BD', 'TV', 'SAT/CBL', 'GAME', 'AUX1', 'AUX2', 'MPLAY']
 
 function getSourceCategory(id: string): SourceCategory {
   if (INPUT_SOURCES.has(id)) return 'inputs'
