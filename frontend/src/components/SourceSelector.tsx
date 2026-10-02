@@ -139,6 +139,8 @@ interface Props {
   onRenameSource?: (code: string, name: string | null) => void
   sourceFavorites?: string[]
   onSourceFavoriteChange?: (code: string, enabled: boolean) => void
+  sourceDisabled?: string[]
+  onSourceDisabledChange?: (codes: string[]) => void
   onRadioFavoriteChange?: (favorite: RadioFavorite, enabled: boolean) => void
   zone?: Zone
 }
@@ -153,6 +155,8 @@ export default function SourceSelector({
   onRenameSource,
   sourceFavorites = [],
   onSourceFavoriteChange,
+  sourceDisabled = [],
+  onSourceDisabledChange,
   onRadioFavoriteChange,
   zone = 'main',
 }: Props) {
@@ -165,6 +169,8 @@ export default function SourceSelector({
   const [editingCode, setEditingCode] = useState<string | null>(null)
   const [draftName, setDraftName] = useState('')
   const [sourceFilter, setSourceFilter] = useState<SourceFilter>('inputs')
+  const [configOpen, setConfigOpen] = useState(false)
+  const [draftDisabled, setDraftDisabled] = useState<string[]>(sourceDisabled)
   const longPressRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const horizontalInputsRef = useRef<HTMLDivElement>(null)
 
@@ -183,7 +189,9 @@ export default function SourceSelector({
   const hasNamedGame1 = availableSources.some(source =>
     source.id === 'GAME1' && game1Name.toLowerCase() !== 'game 1' && game1Name.toLowerCase() !== 'game1'
   )
-  const sourceList = availableSources.filter(source => !(hasNamedGame1 && source.id === 'GAME'))
+  const sourceList = availableSources
+    .filter(source => !(hasNamedGame1 && source.id === 'GAME'))
+    .filter(source => !sourceDisabled.includes(source.id))
 
   const categorizedSources = useMemo(() => {
     const grouped: Record<string, SourceEntry[]> = {
@@ -219,6 +227,16 @@ export default function SourceSelector({
 
   const toggleFavorite = (code: string) => {
     onSourceFavoriteChange?.(code, !sourceFavorites.includes(code))
+  }
+
+  const openSourceConfig = () => {
+    setDraftDisabled([...sourceDisabled])
+    setConfigOpen(true)
+  }
+
+  const saveSourceConfig = () => {
+    onSourceDisabledChange?.(draftDisabled)
+    setConfigOpen(false)
   }
 
   const getDefaultName = (code: string) => {
@@ -269,6 +287,15 @@ export default function SourceSelector({
             title={editMode ? 'Done renaming' : 'Rename inputs'}
           >
             {editMode ? '✓' : '✏️'}
+          </button>
+          <button
+            type="button"
+            onClick={openSourceConfig}
+            className="text-xs text-denon-muted transition-colors hover:text-denon-gold"
+            title="Configure visible inputs"
+            aria-label="Configure visible inputs"
+          >
+            ⚙
           </button>
         </div>
         {current && (
@@ -438,6 +465,41 @@ export default function SourceSelector({
 
       {visibleSources.length === 0 && (
         <p className="py-4 text-center text-xs text-denon-muted">No sources in this category</p>
+      )}
+
+      {configOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" role="dialog" aria-modal="true" aria-labelledby="source-config-title">
+          <div className="w-full max-w-md rounded-xl border border-denon-border bg-denon-card p-4 shadow-2xl">
+            <div className="mb-3 flex items-center justify-between">
+              <div>
+                <h3 id="source-config-title" className="text-sm font-semibold text-denon-text">Input Source Config</h3>
+                <p className="mt-1 text-[10px] text-denon-muted">Inputs deaktivieren, die nicht angezeigt werden sollen.</p>
+              </div>
+              <button type="button" onClick={() => setConfigOpen(false)} className="text-lg text-denon-muted hover:text-denon-text" aria-label="Close">×</button>
+            </div>
+            <div className="max-h-[60vh] space-y-1 overflow-y-auto pr-1">
+              {availableSources.map(source => {
+                const disabled = draftDisabled.includes(source.id)
+                return (
+                  <label key={source.id} className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 text-sm text-denon-text hover:bg-denon-surface">
+                    <input
+                      type="checkbox"
+                      checked={!disabled}
+                      onChange={() => setDraftDisabled(current => disabled ? current.filter(id => id !== source.id) : [...current, source.id])}
+                      className="h-4 w-4 accent-denon-gold"
+                    />
+                    <span className="min-w-0 flex-1 truncate">{getName(source.id)}</span>
+                    <span className="text-[10px] text-denon-muted">{disabled ? 'Aus' : 'An'}</span>
+                  </label>
+                )
+              })}
+            </div>
+            <div className="mt-4 flex justify-end gap-2 border-t border-denon-border/50 pt-3">
+              <button type="button" onClick={() => setConfigOpen(false)} className="btn-ghost px-4 py-2 text-xs">Cancel</button>
+              <button type="button" onClick={saveSourceConfig} className="btn-primary px-4 py-2 text-xs">Save</button>
+            </div>
+          </div>
+        </div>
       )}
 
       <RadioBrowser

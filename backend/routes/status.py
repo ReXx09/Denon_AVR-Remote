@@ -12,6 +12,7 @@ from api.models import (
     DeviceInfoResponse,
     HealthResponse,
     SourceFavoriteRequest,
+    SourceDisabledRequest,
     SourceNameRequest,
     StatusResponse,
     TimeSettingsResponse,
@@ -182,6 +183,7 @@ async def device_info(state: AppState = Depends(get_app_state)):
         },
         source_name_overrides=state.source_name_overrides,
         source_favorites=state.source_favorites,
+        source_disabled=state.source_disabled,
         channel_volumes=state.telnet.state.get("channel_volumes", {}) if state.telnet else {},
         channel_names=active_channels,
         receiver_ip=settings.denon_host,
@@ -237,6 +239,13 @@ async def remove_source_favorite(source_code: str, state: AppState = Depends(get
     state.source_favorites = [source for source in state.source_favorites if source != code]
     state.save_source_favorites()
     return {"ok": True, "source_favorites": state.source_favorites}
+
+
+@router.post("/source-disabled")
+async def set_disabled_sources(req: SourceDisabledRequest, state: AppState = Depends(get_app_state)):
+    state.source_disabled = req.sources
+    state.save_source_disabled()
+    return {"ok": True, "source_disabled": state.source_disabled}
 
 
 @router.post("/ui-settings")

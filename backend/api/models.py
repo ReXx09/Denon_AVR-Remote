@@ -1,6 +1,7 @@
 """Pydantic models for the API."""
 from __future__ import annotations
 
+import re
 from typing import Any, Literal
 from zoneinfo import ZoneInfo
 
@@ -108,6 +109,18 @@ class SourceNameRequest(BaseModel):
 
 class SourceFavoriteRequest(BaseModel):
     source: str = Field(..., pattern=r"^[A-Z0-9/]{1,10}$")
+
+
+class SourceDisabledRequest(BaseModel):
+    sources: list[str] = Field(default_factory=list)
+
+    @field_validator("sources")
+    @classmethod
+    def _validate_sources(cls, values: list[str]) -> list[str]:
+        normalized = [value.strip().upper() for value in values]
+        if any(not re.fullmatch(r"[A-Z0-9/]{1,10}", value) for value in normalized):
+            raise ValueError("invalid source code")
+        return list(dict.fromkeys(normalized))
 
 
 class RadioFavoriteRequest(BaseModel):
@@ -246,6 +259,7 @@ class DeviceInfoResponse(BaseModel):
     source_name_map: dict[str, str] = {}
     source_name_overrides: dict[str, str] = {}
     source_favorites: list[str] = []
+    source_disabled: list[str] = []
     channel_volumes: dict[str, int] = {}
     channel_names: dict[str, str] = {}
     receiver_ip: str | None = None

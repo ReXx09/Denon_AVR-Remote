@@ -35,6 +35,7 @@ class AppState:
         self.source_name_overrides_path = self.data_dir / "source_names.json"
         self.source_profiles_path = self.data_dir / "audio_profiles.json"
         self.source_favorites_path = self.data_dir / "source_favorites.json"
+        self.source_disabled_path = self.data_dir / "source_disabled.json"
         self.ui_settings_path = self.data_dir / "ui_settings.json"
         self.night_mode_config_path = self.data_dir / "night_mode.json"
         self.radio_favorites_path = self.data_dir / "radio_favorites.json"
@@ -43,6 +44,7 @@ class AppState:
         self.radio_favorites: list[dict[str, Any]] = []
         self.source_profiles: dict[str, dict[str, Any]] = {}
         self.source_favorites: list[str] = []
+        self.source_disabled: list[str] = []
         self._profile_source: str | None = None
         self.night_mode_auto_active: bool = False
         self.heos_available_services: set[str] = set()  # HEOS service names from receiver
@@ -180,6 +182,27 @@ class AppState:
         tmp = self.source_favorites_path.with_suffix(".json.tmp")
         tmp.write_text(json.dumps(self.source_favorites, indent=2))
         tmp.replace(self.source_favorites_path)
+
+    def load_source_disabled(self) -> None:
+        """Load the ordered list of source codes hidden in the UI."""
+        try:
+            if not self.source_disabled_path.exists():
+                self.source_disabled = []
+                return
+            data = json.loads(self.source_disabled_path.read_text())
+            self.source_disabled = list(dict.fromkeys(
+                code for code in data if isinstance(code, str)
+            )) if isinstance(data, list) else []
+        except Exception as exc:
+            _LOGGER.warning("Failed to load disabled sources: %s", exc)
+            self.source_disabled = []
+
+    def save_source_disabled(self) -> None:
+        """Persist source codes hidden in the UI to the data volume."""
+        self.source_disabled_path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = self.source_disabled_path.with_suffix(".json.tmp")
+        tmp.write_text(json.dumps(self.source_disabled, indent=2))
+        tmp.replace(self.source_disabled_path)
 
     async def apply_source_profile(self, source: str) -> bool:
         """Apply the saved profile for a source, if one exists."""

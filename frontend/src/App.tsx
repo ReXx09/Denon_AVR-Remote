@@ -144,6 +144,7 @@ export default function App() {
   const sourceNameMap = info?.source_name_map || {}
   const sourceNameOverrides = info?.source_name_overrides || {}
   const sourceFavorites = info?.source_favorites || []
+  const sourceDisabled = info?.source_disabled || []
   const configuredSources = info?.sources || []
   const radioFavorites = info?.radio_favorites || []
   const uiEffects: Partial<UiEffects> = info?.ui_effects || {}
@@ -192,6 +193,16 @@ export default function App() {
       : await fetch(`/api/v1/source-favorites/${encodeURIComponent(code)}`, { method: 'DELETE' })
     if (res.ok) reloadDeviceInfo()
     else console.warn('Source favorite update failed', await res.text().catch(() => res.statusText))
+  }
+
+  const saveSourceDisabled = async (codes: string[]): Promise<void> => {
+    const res = await fetch('/api/v1/source-disabled', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sources: codes }),
+    })
+    if (res.ok) reloadDeviceInfo()
+    else console.warn('Source visibility update failed', await res.text().catch(() => res.statusText))
   }
 
   const saveZoneVolumeMax = (targetZone: 'zone2' | 'zone3', value: number) => {
@@ -309,6 +320,8 @@ export default function App() {
                   sourceNameOverrides={sourceNameOverrides}
                   sourceFavorites={sourceFavorites}
                   onSourceFavoriteChange={saveSourceFavorite}
+                  sourceDisabled={sourceDisabled}
+                  onSourceDisabledChange={saveSourceDisabled}
                   radioFavorites={radioFavorites}
                   onRenameSource={renameSource}
                   onRadioFavoriteChange={saveRadioFavorite}
@@ -393,6 +406,8 @@ export default function App() {
             sources={configuredSources}
             sourceNameMap={sourceNameMap}
             sourceNameOverrides={sourceNameOverrides}
+            sourceDisabled={sourceDisabled}
+            onSourceDisabledChange={saveSourceDisabled}
             radioFavorites={radioFavorites}
             onRenameSource={renameSource}
             onRadioFavoriteChange={saveRadioFavorite}
@@ -407,6 +422,8 @@ export default function App() {
             sources={configuredSources}
             sourceNameMap={sourceNameMap}
             sourceNameOverrides={sourceNameOverrides}
+            sourceDisabled={sourceDisabled}
+            onSourceDisabledChange={saveSourceDisabled}
             radioFavorites={radioFavorites}
             onRenameSource={renameSource}
             onRadioFavoriteChange={saveRadioFavorite}

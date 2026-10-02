@@ -13,13 +13,15 @@ interface Props {
   sources: SourceEntry[]
   sourceNameMap?: Record<string, string>
   sourceNameOverrides?: Record<string, string>
+  sourceDisabled?: string[]
+  onSourceDisabledChange?: (codes: string[]) => void
   radioFavorites?: RadioFavorite[]
   onRenameSource?: (code: string, name: string | null) => void
   onRadioFavoriteChange?: (favorite: RadioFavorite, enabled: boolean) => void
   zoneName?: string
 }
 
-export default function Zone2Controls({ state, sendCommand, post, volumeMax, onVolumeMaxChange, sources, sourceNameMap, sourceNameOverrides, radioFavorites, onRenameSource, onRadioFavoriteChange }: Props) {
+export default function Zone2Controls({ state, sendCommand, post, volumeMax, onVolumeMaxChange, sources, sourceNameMap, sourceNameOverrides, sourceDisabled, onSourceDisabledChange, radioFavorites, onRenameSource, onRadioFavoriteChange }: Props) {
   const volume = state?.z2_volume
   const muted = state?.z2_muted
   const sleepTimer = state?.z2_sleep_timer
@@ -150,6 +152,8 @@ export default function Zone2Controls({ state, sendCommand, post, volumeMax, onV
         sources={sources}
         sourceNameMap={sourceNameMap}
         sourceNameOverrides={sourceNameOverrides}
+        sourceDisabled={sourceDisabled}
+        onSourceDisabledChange={onSourceDisabledChange}
         radioFavorites={radioFavorites}
         onRenameSource={onRenameSource}
         onRadioFavoriteChange={onRadioFavoriteChange}
