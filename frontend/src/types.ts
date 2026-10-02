@@ -73,6 +73,10 @@ export interface ReceiverState {
   z2_sleep_timer?: number
   z2_source?: string
   z2_source_name?: string
+  z2_bass?: number
+  z2_treble?: number
+  z2_balance?: number
+  z2_mono?: boolean
   z3_power?: boolean
   z3_volume?: number
   z3_muted?: boolean

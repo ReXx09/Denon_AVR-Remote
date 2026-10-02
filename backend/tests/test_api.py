@@ -347,6 +347,23 @@ async def test_z2_power_on(mock_app_state):
 
 
 @pytest.mark.asyncio
+async def test_z2_audio_settings(mock_app_state):
+    from main import app
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        for path, body, command in (
+            ("bass", {"value": 54}, "Z2BAS 54"),
+            ("treble", {"value": 47}, "Z2TRE 47"),
+            ("balance", {"value": 55}, "Z2BAL 55"),
+            ("mono", {"enabled": True}, "Z2MONO ON"),
+        ):
+            resp = await ac.post(f"/api/v1/zone2/audio/{path}", json=body)
+            assert resp.status_code == 200
+            mock_app_state.telnet.send.assert_called_with(command)
+
+
+@pytest.mark.asyncio
 async def test_z3_volume(mock_app_state):
     from main import app
 

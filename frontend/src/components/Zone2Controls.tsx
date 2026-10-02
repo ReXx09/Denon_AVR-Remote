@@ -112,6 +112,53 @@ export default function Zone2Controls({ state, sendCommand, post, volumeMax, onV
         </div>
       </div>
 
+      {/* Zone 2 audio */}
+      <div className="card">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-xs font-medium uppercase tracking-wider text-denon-muted">Zone 2 Audio</h2>
+          <button
+            type="button"
+            onClick={() => void post('/zone2/audio/mono', { enabled: !state.z2_mono })}
+            className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${state.z2_mono ? 'bg-denon-gold/20 text-denon-gold ring-1 ring-denon-gold/40' : 'bg-denon-surface text-denon-muted hover:text-denon-text'}`}
+          >
+            {state.z2_mono ? 'Mono' : 'Stereo'}
+          </button>
+        </div>
+        <div className="space-y-3">
+          {([
+            ['z2_bass', 'Bass', '/zone2/audio/bass', 44, 56],
+            ['z2_treble', 'Treble', '/zone2/audio/treble', 44, 56],
+            ['z2_balance', 'Balance', '/zone2/audio/balance', 38, 62],
+          ] as const).map(([key, label, path, min, max]) => {
+            const value = state[key] ?? 50
+            const center = key === 'z2_balance' ? 50 : 50
+            const display = value - center
+            return (
+              <div key={key}>
+                <div className="mb-1 flex justify-between text-xs">
+                  <span className="text-denon-muted">{label}</span>
+                  <strong>{display > 0 ? '+' : ''}{display}{key === 'z2_balance' ? '' : ' dB'}</strong>
+                </div>
+                <input
+                  type="range"
+                  min={min}
+                  max={max}
+                  value={value}
+                  onChange={event => void post(path, { value: Number(event.target.value) })}
+                  className="w-full"
+                  aria-label={`Zone 2 ${label}`}
+                />
+                <div className="flex justify-between text-[10px] text-denon-muted/60">
+                  <span>{key === 'z2_balance' ? 'L' : '-6 dB'}</span>
+                  <span>0</span>
+                  <span>{key === 'z2_balance' ? 'R' : '+6 dB'}</span>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
       {/* Sleep Timer */}
       <div className="card">
         <div className="flex items-center justify-between gap-3">

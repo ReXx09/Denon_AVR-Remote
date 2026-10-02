@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends
 
-from api.models import SourceRequest, Zone2VolumeRequest
+from api.models import SourceRequest, Zone2BalanceRequest, Zone2MonoRequest, Zone2ToneRequest, Zone2VolumeRequest
 from routes._helpers import send_command
 from state import AppState
 from dependencies import get_app_state
@@ -49,4 +49,24 @@ async def z2_mute_off(state: AppState = Depends(get_app_state)):
 @router.post("/source")
 async def z2_source(req: SourceRequest, state: AppState = Depends(get_app_state)):
     return await send_command(state, f"Z2{req.source}")
+
+
+@router.post("/audio/bass")
+async def z2_bass(req: Zone2ToneRequest, state: AppState = Depends(get_app_state)):
+    return await send_command(state, f"Z2BAS {req.value}")
+
+
+@router.post("/audio/treble")
+async def z2_treble(req: Zone2ToneRequest, state: AppState = Depends(get_app_state)):
+    return await send_command(state, f"Z2TRE {req.value}")
+
+
+@router.post("/audio/balance")
+async def z2_balance(req: Zone2BalanceRequest, state: AppState = Depends(get_app_state)):
+    return await send_command(state, f"Z2BAL {req.value}")
+
+
+@router.post("/audio/mono")
+async def z2_mono(req: Zone2MonoRequest, state: AppState = Depends(get_app_state)):
+    return await send_command(state, f"Z2MONO {'ON' if req.enabled else 'OFF'}")
 

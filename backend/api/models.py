@@ -139,6 +139,18 @@ class Zone2VolumeRequest(BaseModel):
     level: int = Field(..., ge=0, le=98, description="Zone 2 volume 0–98")
 
 
+class Zone2ToneRequest(BaseModel):
+    value: int = Field(..., ge=44, le=56, description="Zone 2 tone -6 to +6 dB")
+
+
+class Zone2BalanceRequest(BaseModel):
+    value: int = Field(..., ge=38, le=62, description="Zone 2 balance")
+
+
+class Zone2MonoRequest(BaseModel):
+    enabled: bool
+
+
 class Zone3VolumeRequest(BaseModel):
     level: int = Field(..., ge=0, le=98, description="Zone 3 volume 0–98")
 
@@ -210,6 +222,10 @@ class StatusResponse(BaseModel):
     z2_sleep_timer: int | None = None
     z2_source: str | None = None
     z2_source_name: str | None = None
+    z2_bass: int | None = None
+    z2_treble: int | None = None
+    z2_balance: int | None = None
+    z2_mono: bool | None = None
     z3_power: bool | None = None
     z3_volume: int | None = None
     z3_muted: bool | None = None

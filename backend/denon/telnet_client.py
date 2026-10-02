@@ -98,6 +98,10 @@ class DenonTelnetClient:
             "z2_muted": None,
             "z2_sleep_timer": None,
             "z2_source": None,
+            "z2_bass": None,
+            "z2_treble": None,
+            "z2_balance": None,
+            "z2_mono": None,
             # Zone 3
             "z3_power": None,
             "z3_volume": None,
@@ -300,6 +304,10 @@ class DenonTelnetClient:
             (re.compile(r"^NSFRN\s*(.+)$"), self._handle_nsfrn),
             (re.compile(r"^SSFUN(.+)$"), self._handle_ssfun),
             (re.compile(r"^SSSOD(.+)$"), self._handle_sssod),
+            (re.compile(r"^Z2BAS(.+)$"), self._handle_z2_bass),
+            (re.compile(r"^Z2TRE(.+)$"), self._handle_z2_treble),
+            (re.compile(r"^Z2BAL(.+)$"), self._handle_z2_balance),
+            (re.compile(r"^Z2MONO(.+)$"), self._handle_z2_mono),
             (re.compile(r"^SD(.+)$"), self._handle_sd),
             (re.compile(r"^OPSMLALL(.*)$"), self._handle_opsmlall),
             # Z2 payloads: power/mute, sleep (SLP<value>), volume (2-3 digits),
@@ -568,6 +576,32 @@ class DenonTelnetClient:
             return True
         elif val:
             self.state["z2_source"] = val
+            return True
+        return False
+
+    def _parse_zone2_level(self, value: str, key: str) -> bool:
+        value = value.strip()
+        if value in ("", "?"):
+            return False
+        try:
+            self.state[key] = int(value)
+            return True
+        except ValueError:
+            return False
+
+    def _handle_z2_bass(self, match: re.Match) -> bool:
+        return self._parse_zone2_level(match.group(1), "z2_bass")
+
+    def _handle_z2_treble(self, match: re.Match) -> bool:
+        return self._parse_zone2_level(match.group(1), "z2_treble")
+
+    def _handle_z2_balance(self, match: re.Match) -> bool:
+        return self._parse_zone2_level(match.group(1), "z2_balance")
+
+    def _handle_z2_mono(self, match: re.Match) -> bool:
+        value = match.group(1).strip()
+        if value in ("ON", "OFF"):
+            self.state["z2_mono"] = value == "ON"
             return True
         return False
 
