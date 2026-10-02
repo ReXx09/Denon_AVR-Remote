@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import RadioBrowser from './RadioBrowser'
 import type { ReceiverState, SendCommandFn, SourceEntry, RadioFavorite, Zone } from '../types'
 
@@ -467,7 +468,7 @@ export default function SourceSelector({
         <p className="py-4 text-center text-xs text-denon-muted">No sources in this category</p>
       )}
 
-      {configOpen && (
+      {configOpen && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" role="dialog" aria-modal="true" aria-labelledby="source-config-title">
           <div className="w-full max-w-md rounded-xl border border-denon-border bg-denon-card p-4 shadow-2xl">
             <div className="mb-3 flex items-center justify-between">
@@ -499,7 +500,8 @@ export default function SourceSelector({
               <button type="button" onClick={saveSourceConfig} className="btn-primary px-4 py-2 text-xs">Save</button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
 
       <RadioBrowser
