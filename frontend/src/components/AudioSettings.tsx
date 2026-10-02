@@ -55,6 +55,7 @@ export default function AudioSettings({ state, post }: Props) {
             className="w-full"
             disabled={!dialogEnabled}
           />
+          <div className="mt-1 flex justify-between text-[10px] text-denon-muted/60"><span>0 dB</span><span>6 dB</span><span>+12 dB</span></div>
         </div>
       </div>
 

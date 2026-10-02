@@ -149,8 +149,8 @@ export default function Zone2Controls({ state, sendCommand, post, volumeMax, onV
                   aria-label={`Zone 2 ${label}`}
                 />
                 <div className="flex justify-between text-[10px] text-denon-muted/60">
-                  <span>{key === 'z2_balance' ? 'L' : '-6 dB'}</span>
-                  <span>0</span>
+                  <span>{key === 'z2_balance' ? 'L' : '−6 dB'}</span>
+                  <span>{key === 'z2_balance' ? '0' : '0 dB'}</span>
                   <span>{key === 'z2_balance' ? 'R' : '+6 dB'}</span>
                 </div>
               </div>

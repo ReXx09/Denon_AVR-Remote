@@ -136,7 +136,7 @@ export default function InputProfiles({ sources, state, channelNames }: Props) {
               <div key={kind}>
                 <div className="flex justify-between text-xs mb-1"><span className="text-denon-muted">{kind === 'analog_input_level' ? 'Analog input' : 'Digital input'}</span><strong>{value > 0 ? '+' : ''}{value} dB</strong></div>
                 <input type="range" min={-12} max={12} step={1} value={value} onChange={event => updateProfile({ [kind]: Number(event.target.value) })} className="w-full" aria-label={`${kind} profile level`} />
-                <div className="flex justify-between text-[10px] text-denon-muted/60"><span>−12</span><span>0</span><span>+12 dB</span></div>
+                <div className="flex justify-between text-[10px] text-denon-muted/60"><span>−12 dB</span><span>0 dB</span><span>+12 dB</span></div>
               </div>
             )
           })}

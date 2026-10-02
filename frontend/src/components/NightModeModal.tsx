@@ -289,6 +289,9 @@ export default function NightModeModal({ open, onClose, state, info, post, onCon
                           onChange={e => setChannels(prev => ({ ...prev, [ch]: { value: parseInt(e.target.value, 10) } }))}
                           className="w-full"
                         />
+                        <div className="mt-1 flex justify-between text-[10px] text-denon-muted/60">
+                          {mode === 'offset' ? <><span>−24 dB</span><span>0 dB</span><span>+24 dB</span></> : <><span>−12 dB</span><span>0 dB</span><span>+12 dB</span></>}
+                        </div>
                       </div>
                     )}
                   </div>
