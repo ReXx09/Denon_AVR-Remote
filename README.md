@@ -4,11 +4,15 @@
 
 A modern, real-time web dashboard for controlling Denon/Marantz AVR receivers. Built with React + FastAPI, communicates via **telnet** (port 23) and **HEOS CLI** (port 1255) — no dependency on the receiver's unreliable built-in web interface.
 
-[![Build](https://github.com/rexx09/Denon_AVR-Remote/actions/workflows/docker.yml/badge.svg)](https://github.com/rexx09/Denon_AVR-Remote/actions/workflows/docker.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) ![React 19](https://img.shields.io/badge/React-19-61dafb) ![FastAPI](https://img.shields.io/badge/FastAPI-0.138-009688) ![Docker](https://img.shields.io/badge/Docker-ready-2496ed) [![Home Assistant](https://img.shields.io/badge/Home%20Assistant-integration-41BDF5?logo=homeassistant&logoColor=white)](https://github.com/OxygenLack/denon-dashboard-ha)
+[![Build](https://github.com/rexx09/Denon_AVR-Remote/actions/workflows/docker.yml/badge.svg)](https://github.com/rexx09/Denon_AVR-Remote/actions/workflows/docker.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) ![React 19](https://img.shields.io/badge/React-19-61dafb) ![FastAPI](https://img.shields.io/badge/FastAPI-0.138-009688) ![Docker](https://img.shields.io/badge/Docker-ready-2496ed) [![Home Assistant](https://img.shields.io/badge/Home%20Assistant-integration-41BDF5?logo=homeassistant&logoColor=white)](https://github.com/OxygenLack/denon-dashboard-ha) [![Sponsor](https://img.shields.io/badge/Sponsor-GitHub%20Sponsors-ea4aaa?logo=githubsponsors&logoColor=white)](https://github.com/sponsors/ReXx09)
 
 > **Disclaimer:** This is an unofficial, community-developed project. Not affiliated with or endorsed by Denon, Marantz, or Sound United/Masimo. All product names and trademarks are the property of their respective owners.
 
 > **Fork notice:** This repository is a fork of [OxygenLack/Denon-Marantz-AVR-Dashboard](https://github.com/OxygenLack/Denon-Marantz-AVR-Dashboard). Copyright and the original license remain with the upstream project and its copyright holders. This fork is maintained by ReXx09.
+
+## Support the Project
+
+If this dashboard is useful to you, you can support its continued development through [GitHub Sponsors](https://github.com/sponsors/ReXx09).
 
 <div align="center">
 
