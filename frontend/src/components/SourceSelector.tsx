@@ -186,11 +186,15 @@ export default function SourceSelector({
 
   const getName = (code: string) => sourceNameMap?.[code] || availableSources.find(source => source.id === code)?.name || DEFAULT_SOURCES[code] || code
   const getSelectorName = (code: string) => SELECTOR_NAMES[code] || DEFAULT_SOURCES[code] || code
+  const uniqueSources = availableSources.filter((source, index, allSources) => {
+    const name = getName(source.id).trim().toLocaleLowerCase()
+    return allSources.findIndex(candidate => getName(candidate.id).trim().toLocaleLowerCase() === name) === index
+  })
   const game1Name = getName('GAME1')
-  const hasNamedGame1 = availableSources.some(source =>
+  const hasNamedGame1 = uniqueSources.some(source =>
     source.id === 'GAME1' && game1Name.toLowerCase() !== 'game 1' && game1Name.toLowerCase() !== 'game1'
   )
-  const sourceList = availableSources
+  const sourceList = uniqueSources
     .filter(source => !(hasNamedGame1 && source.id === 'GAME'))
     .filter(source => !sourceDisabled.includes(source.id))
 
@@ -479,7 +483,7 @@ export default function SourceSelector({
               <button type="button" onClick={() => setConfigOpen(false)} className="text-lg text-denon-muted hover:text-denon-text" aria-label="Close">×</button>
             </div>
             <div className="max-h-[60vh] space-y-1 overflow-y-auto pr-1">
-              {availableSources.map(source => {
+              {uniqueSources.map(source => {
                 const disabled = draftDisabled.includes(source.id)
                 return (
                   <label key={source.id} className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 text-sm text-denon-text hover:bg-denon-surface">
