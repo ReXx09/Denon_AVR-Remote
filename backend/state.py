@@ -445,6 +445,11 @@ class AppState:
             if heos:
                 heos_source = heos[0]   # source code for button highlight
                 source_name = heos[1]   # display name
+        z2_channel_volumes = state.get("z2_channel_volumes", {})
+        z2_balance = None
+        if "FL" in z2_channel_volumes and "FR" in z2_channel_volumes:
+            z2_balance = 50 + z2_channel_volumes["FR"] - z2_channel_volumes["FL"]
+
         return {
             "connected": self.telnet.connected if self.telnet else False,
             "discovering": self.discovering,
@@ -484,8 +489,9 @@ class AppState:
             "z2_source_name": self.resolve_source_name(z2src),
             "z2_bass": state.get("z2_bass"),
             "z2_treble": state.get("z2_treble"),
-            "z2_balance": state.get("z2_balance"),
+                "z2_balance": z2_balance,
             "z2_mono": state.get("z2_mono"),
+            "z2_channel_volumes": state.get("z2_channel_volumes", {}),
             "z3_power": state.get("z3_power"),
             "z3_volume": state.get("z3_volume"),
             "z3_muted": state.get("z3_muted"),

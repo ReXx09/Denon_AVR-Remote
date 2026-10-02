@@ -102,6 +102,7 @@ class DenonTelnetClient:
             "z2_treble": None,
             "z2_balance": None,
             "z2_mono": None,
+            "z2_channel_volumes": {},
             # Zone 3
             "z3_power": None,
             "z3_volume": None,
@@ -304,10 +305,10 @@ class DenonTelnetClient:
             (re.compile(r"^NSFRN\s*(.+)$"), self._handle_nsfrn),
             (re.compile(r"^SSFUN(.+)$"), self._handle_ssfun),
             (re.compile(r"^SSSOD(.+)$"), self._handle_sssod),
-            (re.compile(r"^Z2BAS(.+)$"), self._handle_z2_bass),
-            (re.compile(r"^Z2TRE(.+)$"), self._handle_z2_treble),
-            (re.compile(r"^Z2BAL(.+)$"), self._handle_z2_balance),
-            (re.compile(r"^Z2MONO(.+)$"), self._handle_z2_mono),
+            (re.compile(r"^Z2PSBAS(.+)$"), self._handle_z2_bass),
+            (re.compile(r"^Z2PSTRE(.+)$"), self._handle_z2_treble),
+            (re.compile(r"^Z2CS(ST|MONO)$"), self._handle_z2_mono),
+            (re.compile(r"^Z2CV([A-Z0-9]+)\s+(\d+)$"), self._handle_z2_channel_volume),
             (re.compile(r"^SD(.+)$"), self._handle_sd),
             (re.compile(r"^OPSMLALL(.*)$"), self._handle_opsmlall),
             # Z2 payloads: power/mute, sleep (SLP<value>), volume (2-3 digits),
@@ -599,11 +600,16 @@ class DenonTelnetClient:
         return self._parse_zone2_level(match.group(1), "z2_balance")
 
     def _handle_z2_mono(self, match: re.Match) -> bool:
-        value = match.group(1).strip()
-        if value in ("ON", "OFF"):
-            self.state["z2_mono"] = value == "ON"
+        self.state["z2_mono"] = match.group(1) == "MONO"
+        return True
+
+    def _handle_z2_channel_volume(self, match: re.Match) -> bool:
+        channel = match.group(1)
+        try:
+            self.state["z2_channel_volumes"][channel] = int(match.group(2))
             return True
-        return False
+        except ValueError:
+            return False
 
     def _handle_zone3(self, match: re.Match) -> bool:
         val = match.group(1)

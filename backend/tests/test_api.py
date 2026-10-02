@@ -353,10 +353,10 @@ async def test_z2_audio_settings(mock_app_state):
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         for path, body, command in (
-            ("bass", {"value": 54}, "Z2BAS 54"),
-            ("treble", {"value": 47}, "Z2TRE 47"),
-            ("balance", {"value": 55}, "Z2BAL 55"),
-            ("mono", {"enabled": True}, "Z2MONO ON"),
+            ("bass", {"value": 54}, "Z2PSBAS 54"),
+            ("treble", {"value": 47}, "Z2PSTRE 47"),
+            ("balance", {"value": 55}, "Z2CVFR 50"),
+            ("mono", {"enabled": True}, "Z2CSMONO"),
         ):
             resp = await ac.post(f"/api/v1/zone2/audio/{path}", json=body)
             assert resp.status_code == 200
@@ -364,7 +364,7 @@ async def test_z2_audio_settings(mock_app_state):
 
         resp = await ac.post("/api/v1/zone2/audio/bass/up")
         assert resp.status_code == 200
-        mock_app_state.telnet.send.assert_called_with("Z2BAS UP")
+        mock_app_state.telnet.send.assert_called_with("Z2PSBAS UP")
         resp = await ac.post("/api/v1/zone2/audio/unknown/up")
         assert resp.status_code == 400
 

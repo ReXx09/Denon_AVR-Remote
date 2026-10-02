@@ -53,28 +53,41 @@ async def z2_source(req: SourceRequest, state: AppState = Depends(get_app_state)
 
 @router.post("/audio/bass")
 async def z2_bass(req: Zone2ToneRequest, state: AppState = Depends(get_app_state)):
-    return await send_command(state, f"Z2BAS {req.value}")
+    return await send_command(state, f"Z2PSBAS {req.value:02d}")
 
 
 @router.post("/audio/treble")
 async def z2_treble(req: Zone2ToneRequest, state: AppState = Depends(get_app_state)):
-    return await send_command(state, f"Z2TRE {req.value}")
+    return await send_command(state, f"Z2PSTRE {req.value:02d}")
 
 
 @router.post("/audio/balance")
 async def z2_balance(req: Zone2BalanceRequest, state: AppState = Depends(get_app_state)):
-    return await send_command(state, f"Z2BAL {req.value}")
+    left = 50 if req.value <= 50 else 100 - req.value
+    right = 50 if req.value >= 50 else req.value
+    if not state.telnet:
+        raise HTTPException(503, "Not connected")
+    await state.telnet.send(f"Z2CVFL {left:02d}")
+    return await send_command(state, f"Z2CVFR {right:02d}")
 
 
 @router.post("/audio/mono")
 async def z2_mono(req: Zone2MonoRequest, state: AppState = Depends(get_app_state)):
-    return await send_command(state, f"Z2MONO {'ON' if req.enabled else 'OFF'}")
+    return await send_command(state, "Z2CSMONO" if req.enabled else "Z2CSST")
 
 
 @router.post("/audio/{setting}/{direction}")
 async def z2_audio_step(setting: str, direction: str, state: AppState = Depends(get_app_state)):
-    prefixes = {"bass": "Z2BAS", "treble": "Z2TRE", "balance": "Z2BAL"}
+    prefixes = {"bass": "Z2PSBAS", "treble": "Z2PSTRE"}
     if setting not in prefixes or direction not in ("up", "down"):
         raise HTTPException(400, "Invalid Zone 2 audio setting")
-    return await send_command(state, f"{prefixes[setting]} {direction.upper()}")
+    if setting in prefixes:
+        return await send_command(state, f"{prefixes[setting]} {direction.upper()}")
+    if not state.telnet:
+        raise HTTPException(503, "Not connected")
+    commands = ("Z2CVFL DOWN", "Z2CVFR UP") if direction == "up" else ("Z2CVFL UP", "Z2CVFR DOWN")
+    for command in commands:
+        if not await state.telnet.send(command):
+            raise HTTPException(502, "Failed to send")
+    return {"ok": True}
 

@@ -226,6 +226,7 @@ class StatusResponse(BaseModel):
     z2_treble: int | None = None
     z2_balance: int | None = None
     z2_mono: bool | None = None
+    z2_channel_volumes: dict[str, int] = {}
     z3_power: bool | None = None
     z3_volume: int | None = None
     z3_muted: bool | None = None

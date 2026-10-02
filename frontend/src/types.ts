@@ -77,6 +77,7 @@ export interface ReceiverState {
   z2_treble?: number
   z2_balance?: number
   z2_mono?: boolean
+  z2_channel_volumes?: Record<string, number>
   z3_power?: boolean
   z3_volume?: number
   z3_muted?: boolean
