@@ -393,8 +393,12 @@ class AppState:
                     return (code, name)
         # Fall back to sid
         sid = np.get("sid")
-        if isinstance(sid, int) and sid in self._HEOS_SID_MAP:
-            return self._HEOS_SID_MAP[sid]
+        try:
+            sid_number = int(sid)
+        except (TypeError, ValueError):
+            sid_number = None
+        if sid_number in self._HEOS_SID_MAP:
+            return self._HEOS_SID_MAP[sid_number]
         return None
 
     _BITRATE_RE = re.compile(r'[_/-](\d{2,3})(?:k(?:bps)?)?(?:[/.]|$)', re.I)

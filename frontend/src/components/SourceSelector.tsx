@@ -196,6 +196,7 @@ export default function SourceSelector({
   )
   const sourceList = uniqueSources
     .filter(source => !(hasNamedGame1 && source.id === 'GAME'))
+    .filter(source => source.id !== 'NET')
     .filter(source => !sourceDisabled.includes(source.id))
 
   const categorizedSources = useMemo(() => {
