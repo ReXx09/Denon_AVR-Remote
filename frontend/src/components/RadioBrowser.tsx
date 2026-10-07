@@ -5,6 +5,7 @@ import type { RadioFavorite } from '../types'
 interface RadioItem {
   cid?: string
   mid?: string
+  sid?: number | string
   name: string
   container?: string
   playable?: string
@@ -232,6 +233,27 @@ export default function RadioBrowser({ open, onClose, favorites = [], onFavorite
       return
     }
 
+    if (currentCid === '__heos_favorites__') {
+      fetch('/api/v1/media/heos/favorites', { signal: controller.signal })
+        .then(resp => {
+          if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
+          return resp.json() as Promise<{ items?: RadioItem[] }>
+        })
+        .then(data => {
+          if (fetchIdRef.current !== id) return
+          setItems(data.items || [])
+          setLoading(false)
+          setError(null)
+        })
+        .catch(() => {
+          if (fetchIdRef.current !== id) return
+          setError('HEOS favorites unavailable')
+          setItems([])
+          setLoading(false)
+        })
+      return () => controller.abort()
+    }
+
     const url = currentCid
       ? `/api/v1/media/radio/browse?cid=${encodeURIComponent(currentCid)}`
       : '/api/v1/media/radio/browse'
@@ -244,12 +266,18 @@ export default function RadioBrowser({ open, onClose, favorites = [], onFavorite
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
         return resp.json()
       })
-      .then((data: { items?: RadioItem[] }) => {
+      .then(async (data: { items?: RadioItem[] }) => {
         if (fetchIdRef.current !== id) return
         const fetched = data.items || []
-        const withFavorites = cacheKey === '__root__' && favorites.length > 0
-          ? [{ name: 'Favorites', container: 'yes', cid: '__favorites__' }, ...fetched]
-          : fetched
+        let withFavorites = fetched
+        if (cacheKey === '__root__') {
+          const heosResponse = await fetch('/api/v1/media/heos/favorites', { signal: controller.signal })
+          const heosData = heosResponse.ok ? await heosResponse.json() as { items?: RadioItem[] } : {}
+          const categories: RadioItem[] = []
+          if (favorites.length > 0) categories.push({ name: 'My Favorites', container: 'yes', cid: '__favorites__' })
+          if ((heosData.items || []).length > 0) categories.push({ name: 'HEOS Presets', container: 'yes', cid: '__heos_favorites__' })
+          withFavorites = [...categories, ...fetched]
+        }
         cacheRef.current.set(cacheKey, withFavorites)
         setItems(withFavorites)
         setLoading(false)
@@ -324,10 +352,11 @@ export default function RadioBrowser({ open, onClose, favorites = [], onFavorite
       // Play station
       setPlayingMid(item.mid)
       try {
-        const resp = await fetch('/api/v1/media/radio/play', {
+        const isHeosFavorite = currentCid === '__heos_favorites__' && item.sid != null
+        const resp = await fetch(isHeosFavorite ? '/api/v1/media/heos/favorites/play' : '/api/v1/media/radio/play', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ mid: item.mid }),
+          body: JSON.stringify(isHeosFavorite ? { sid: Number(item.sid), mid: item.mid } : { mid: item.mid }),
         })
         if (!resp.ok) throw new Error()
         if (!inline) setTimeout(handleClose, 600)

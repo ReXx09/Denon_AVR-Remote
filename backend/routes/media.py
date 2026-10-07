@@ -266,6 +266,29 @@ async def radio_favorites(state: AppState = Depends(get_app_state)):
     return {"favorites": state.radio_favorites}
 
 
+@router.get("/heos/favorites")
+async def heos_favorites(state: AppState = Depends(get_app_state)):
+    """Read presets saved on the receiver through the HEOS Favorites source."""
+    if not state.heos:
+        raise HTTPException(503, "HEOS not connected")
+    return await state.heos.browse_source(1028)
+
+
+class HeosFavoritePlayRequest(BaseModel):
+    sid: int = Field(..., ge=1, le=65535)
+    mid: str = Field(..., min_length=1, max_length=500, pattern=r"^[^\r\n]+$")
+
+
+@router.post("/heos/favorites/play")
+async def play_heos_favorite(req: HeosFavoritePlayRequest, state: AppState = Depends(get_app_state)):
+    """Play a receiver preset using the HEOS service ID returned by browse."""
+    if not state.heos:
+        raise HTTPException(503, "HEOS not connected")
+    if not await state.heos.play_stream(req.sid, req.mid):
+        raise HTTPException(502, "Failed to play HEOS favorite")
+    return {"ok": True}
+
+
 @router.post("/radio/favorites")
 async def add_radio_favorite(req: RadioFavoriteRequest, state: AppState = Depends(get_app_state)):
     favorite = req.model_dump()

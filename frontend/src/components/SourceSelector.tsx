@@ -355,6 +355,11 @@ export default function SourceSelector({
                 >
                   <span className="block text-base leading-5">{getIcon(source.id, getName(source.id))}</span>
                   <span className="block max-w-[100px] truncate">{getSelectorName(source.id)}</span>
+                  {active && heosServiceCode === source.id && (
+                    <span className="mt-0.5 inline-block rounded-full bg-denon-green/10 px-1.5 py-0.5 text-[8px] uppercase tracking-wider text-denon-green">
+                      HEOS
+                    </span>
+                  )}
                 </button>
               )
             })}

@@ -35,6 +35,15 @@ interface QueueItem {
   qid?: number
 }
 
+interface HeosPreset {
+  mid?: string
+  sid?: number | string
+  name: string
+  station?: string
+  image_url?: string
+  playable?: string
+}
+
 export default function MediaControls({
   state,
   zone = 'main',
@@ -56,6 +65,7 @@ export default function MediaControls({
   const [queueOpen, setQueueOpen] = useState(false)
   const [queueLoading, setQueueLoading] = useState(false)
   const [queueError, setQueueError] = useState(false)
+  const [heosPresets, setHeosPresets] = useState<HeosPreset[]>([])
   const [radioOpen, setRadioOpen] = useState(false)
   const [optimisticPlayState, setOptimisticPlayState] = useState<string | null>(null)
 
@@ -96,6 +106,23 @@ export default function MediaControls({
   useEffect(() => {
     if (mediaCapable) void loadQueue()
   }, [mediaCapable, nowPlaying?.song, nowPlaying?.station])
+
+  useEffect(() => {
+    if (!mediaCapable) return
+    fetch('/api/v1/media/heos/favorites')
+      .then(response => response.ok ? response.json() as Promise<{ items?: HeosPreset[] }> : Promise.reject())
+      .then(data => setHeosPresets((data.items || []).filter(item => item.mid && item.playable === 'yes')))
+      .catch(() => setHeosPresets([]))
+  }, [mediaCapable])
+
+  const playPreset = async (preset: HeosPreset) => {
+    if (!preset.mid || preset.sid == null) return
+    await fetch('/api/v1/media/heos/favorites/play', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sid: Number(preset.sid), mid: preset.mid }),
+    })
+  }
 
   if (!mediaCapable) {
     return (
@@ -165,7 +192,7 @@ export default function MediaControls({
 
       {/* Now Playing Info */}
       {(title || subtitle || station) && (
-        <div className="flex items-center gap-3 mb-4">
+        <div className="flex items-center gap-3 mb-2">
           {albumArt && (
             <img
               src={albumArt}
@@ -233,6 +260,26 @@ export default function MediaControls({
           </svg>
         </button>
       </div>
+
+      {heosPresets.length > 0 && (
+        <div className="mt-3 border-t border-denon-border/50 pt-3">
+          <p className="mb-2 text-[10px] uppercase tracking-wider text-denon-muted">HEOS Presets</p>
+          <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+            {heosPresets.map(preset => (
+              <button
+                key={`${preset.sid}-${preset.mid}`}
+                type="button"
+                onClick={() => void playPreset(preset)}
+                className="min-w-32 max-w-40 shrink-0 rounded-lg bg-denon-surface/70 px-3 py-2 text-left text-xs text-denon-text transition-colors hover:bg-denon-surface hover:text-denon-gold"
+                title={preset.station || preset.name}
+              >
+                <span className="block truncate font-medium">{preset.name}</span>
+                {preset.station && <span className="block truncate text-[10px] text-denon-muted">{preset.station}</span>}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="mt-4 border-t border-denon-border/50 pt-3">
         <button
