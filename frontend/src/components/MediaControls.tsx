@@ -270,11 +270,22 @@ export default function MediaControls({
                 key={`${preset.sid}-${preset.mid}`}
                 type="button"
                 onClick={() => void playPreset(preset)}
-                className="min-w-32 max-w-40 shrink-0 rounded-lg bg-denon-surface/70 px-3 py-2 text-left text-xs text-denon-text transition-colors hover:bg-denon-surface hover:text-denon-gold"
+                className="flex min-w-40 max-w-52 shrink-0 items-center gap-2 rounded-lg bg-denon-surface/70 px-2.5 py-2 text-left text-xs text-denon-text transition-colors hover:bg-denon-surface hover:text-denon-gold"
                 title={preset.station || preset.name}
               >
-                <span className="block truncate font-medium">{preset.name}</span>
-                {preset.station && <span className="block truncate text-[10px] text-denon-muted">{preset.station}</span>}
+                {safeImageUrl(preset.image_url) ? (
+                  <img
+                    src={safeImageUrl(preset.image_url) || undefined}
+                    alt=""
+                    className="h-8 w-8 shrink-0 rounded-md object-cover"
+                  />
+                ) : (
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-denon-dark text-sm" aria-hidden="true">📻</span>
+                )}
+                <span className="min-w-0">
+                  <span className="block truncate font-medium">{preset.name}</span>
+                  {preset.station && <span className="block truncate text-[10px] text-denon-muted">{preset.station}</span>}
+                </span>
               </button>
             ))}
           </div>
