@@ -53,6 +53,7 @@ class AppState:
         self.night_mode_snapshot: dict[str, int] = {}
         self._lock = asyncio.Lock()
         self._last_broadcast_state: dict[str, Any] = {}
+        self._media_poll_task: asyncio.Task | None = None
 
     @asynccontextmanager
     async def locked(self):
@@ -592,6 +593,33 @@ class AppState:
         if changed:
             await self.broadcast_state()
 
+    async def _poll_media_state(self) -> None:
+        """Refresh HEOS metadata for receivers that omit change events."""
+        try:
+            while True:
+                await asyncio.sleep(5)
+                if not self.heos or not self.heos.connected:
+                    continue
+                now_playing = self._normalize_now_playing(await self.heos.get_now_playing())
+                play_state = await self.heos.get_play_state()
+                if now_playing != self.media_state.get("now_playing") or play_state != self.media_state.get("play_state"):
+                    self.media_state["now_playing"] = now_playing
+                    self.media_state["play_state"] = play_state
+                    await self.broadcast_state()
+        except asyncio.CancelledError:
+            pass
+
+    def _start_media_poll(self) -> None:
+        if self._media_poll_task and not self._media_poll_task.done():
+            self._media_poll_task.cancel()
+        self._media_poll_task = asyncio.create_task(self._poll_media_state())
+
+    async def stop_media_poll(self) -> None:
+        if self._media_poll_task and not self._media_poll_task.done():
+            self._media_poll_task.cancel()
+            await self._media_poll_task
+        self._media_poll_task = None
+
     async def connect_to_host(self, host: str) -> None:
         """Connect telnet + HEOS for a given host IP."""
         from calibration import fetch_speaker_calibration
@@ -645,6 +673,7 @@ class AppState:
                     self.media_state["play_state"] = await heos_client.get_play_state()
                 except Exception as exc:
                     _LOGGER.warning("Failed to fetch initial HEOS state: %s", exc)
+                self._start_media_poll()
 
         # Notify all connected WebSocket clients that state changed
         await self.broadcast_state()

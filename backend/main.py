@@ -134,6 +134,7 @@ async def lifespan(app: FastAPI):
             except asyncio.CancelledError:
                 pass
     if app_state.heos:
+        await app_state.stop_media_poll()
         await app_state.heos.disconnect()
     if app_state.telnet:
         await app_state.telnet.disconnect()
