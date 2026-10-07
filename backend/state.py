@@ -431,6 +431,24 @@ class AppState:
             parts.append(f"{m.group(1)} kbps")
         return " ".join(parts) if parts else None
 
+    @staticmethod
+    def _normalize_now_playing(payload: dict[str, Any] | None) -> dict[str, Any] | None:
+        """Normalize now-playing aliases returned by different HEOS firmware versions."""
+        if not isinstance(payload, dict):
+            return payload
+        normalized = dict(payload)
+        for target, aliases in {
+            "song": ("song", "title", "track"),
+            "station": ("station", "station_name", "channel"),
+            "artist": ("artist", "artist_name"),
+        }.items():
+            if not normalized.get(target):
+                normalized[target] = next(
+                    (normalized.get(alias) for alias in aliases if normalized.get(alias)),
+                    None,
+                )
+        return normalized
+
     def build_status(self) -> dict[str, Any]:
         """Build status dict from raw telnet state."""
         state = self.telnet.state if self.telnet else {}
@@ -564,10 +582,10 @@ class AppState:
                 if part.startswith("state="):
                     self.media_state["play_state"] = part[6:]
                     changed = True
-        elif cmd == "player/now_playing_changed":
+        elif cmd in ("player/now_playing_changed", "event/player_now_playing_changed"):
             if self.heos and self.heos.connected:
                 # Fetch the full now_playing payload
-                now_playing = await self.heos.get_now_playing()
+                now_playing = self._normalize_now_playing(await self.heos.get_now_playing())
                 self.media_state["now_playing"] = now_playing
                 changed = True
 
@@ -621,7 +639,9 @@ class AppState:
                     _LOGGER.info("HEOS music services: %s", self.heos_available_services)
                     
                     # Initial state fetch
-                    self.media_state["now_playing"] = await heos_client.get_now_playing()
+                    self.media_state["now_playing"] = self._normalize_now_playing(
+                        await heos_client.get_now_playing()
+                    )
                     self.media_state["play_state"] = await heos_client.get_play_state()
                 except Exception as exc:
                     _LOGGER.warning("Failed to fetch initial HEOS state: %s", exc)

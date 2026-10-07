@@ -118,15 +118,15 @@ export default function MediaControls({
   }
 
   const isPlaying = (optimisticPlayState ?? playState) === 'play'
-  const song = nowPlaying?.song
-  const artist = nowPlaying?.artist
-  const station = nowPlaying?.station
+  const song = nowPlaying?.song || nowPlaying?.title || nowPlaying?.track
+  const artist = nowPlaying?.artist || nowPlaying?.artist_name
+  const station = nowPlaying?.station || nowPlaying?.station_name || nowPlaying?.channel
   const albumArt = safeImageUrl(nowPlaying?.image_url)
   const streamQuality = state?.stream_quality
 
   // For radio/stations: show station name when no song title is available
   const title = song || station
-  const subtitle = artist || (song && station ? station : null)
+  const subtitle = artist
   const sourceIsFavorite = Boolean(source && sourceFavorites.includes(source))
 
   return (
@@ -164,7 +164,7 @@ export default function MediaControls({
       )}
 
       {/* Now Playing Info */}
-      {(title || subtitle) && (
+      {(title || subtitle || station) && (
         <div className="flex items-center gap-3 mb-4">
           {albumArt && (
             <img
@@ -174,8 +174,9 @@ export default function MediaControls({
             />
           )}
           <div className="min-w-0 flex-1">
+            {station && <p className="text-xs text-denon-muted truncate">Station: {station}</p>}
             {title && <p className="text-sm font-medium text-denon-text truncate">{title}</p>}
-            {subtitle && <p className="text-xs text-denon-muted truncate">{subtitle}</p>}
+            {subtitle && subtitle !== station && <p className="text-xs text-denon-muted truncate">{subtitle}</p>}
           </div>
           <div className="flex flex-col items-end gap-1 shrink-0">
             <span className={`text-[10px] px-2 py-0.5 rounded-full ${

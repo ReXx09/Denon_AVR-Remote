@@ -17,9 +17,14 @@ export interface Theme {
 
 export interface NowPlaying {
   song?: string
+  title?: string
+  track?: string
   artist?: string
+  artist_name?: string
   album?: string
   station?: string
+  station_name?: string
+  channel?: string
   image_url?: string
   [key: string]: unknown
 }
