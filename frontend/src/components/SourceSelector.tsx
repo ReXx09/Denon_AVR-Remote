@@ -341,7 +341,7 @@ export default function SourceSelector({
                   key={source.id}
                   type="button"
                   onClick={() => sendCommand(getSourceCommand(source.id))}
-                  className={`h-14 min-w-[88px] shrink-0 rounded-lg border px-3 text-xs font-medium transition-all ${
+                  className={`h-14 w-28 shrink-0 rounded-lg border px-3 text-xs font-medium transition-all ${
                     active
                       ? 'border-denon-gold/50 bg-gradient-to-br from-denon-gold/20 to-amber-500/10 text-denon-gold'
                       : 'border-denon-border/70 bg-denon-surface/80 text-denon-text shadow-sm shadow-black/20 hover:border-denon-gold/40 hover:bg-denon-surface hover:text-denon-gold'

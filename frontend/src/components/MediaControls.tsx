@@ -170,12 +170,12 @@ export default function MediaControls({
             <img
               src={albumArt}
               alt="Album art"
-              className="w-12 h-12 rounded-lg object-cover shadow-md flex-shrink-0"
+              className="w-16 h-16 rounded-lg object-cover shadow-md flex-shrink-0"
             />
           )}
           <div className="min-w-0 flex-1">
             {station && <p className="text-xs text-denon-muted truncate">Station: {station}</p>}
-            {title && <p className="text-sm font-medium text-denon-text truncate">{title}</p>}
+            {title && <p className="text-base font-semibold text-denon-text truncate">{title}</p>}
             {subtitle && subtitle !== station && <p className="text-xs text-denon-muted truncate">{subtitle}</p>}
           </div>
           <div className="flex flex-col items-end gap-1 shrink-0">
