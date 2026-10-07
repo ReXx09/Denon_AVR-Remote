@@ -281,7 +281,12 @@ export default function SourceSelector({
 
   // Backend resolves the actual HEOS service (Spotify, TuneIn, etc.) when source=NET
   const backendDisplayName = zone === 'main' ? state?.source_name : zone === 'zone2' ? state?.z2_source_name : state?.z3_source_name
-  const currentDisplayName = (current ? sourceNameOverrides?.[current] : undefined) || backendDisplayName || (current ? getName(current) : '')
+  const activeSource = heosServiceCode || current
+  const activeDisplayName = activeSource === 'IRADIO'
+    ? 'IRADIO'
+    : activeSource === 'BT'
+      ? 'Bluetooth'
+      : (current ? sourceNameOverrides?.[current] : undefined) || backendDisplayName || (current ? getName(current) : '')
   return (
     <div className="card">
       <div className="flex items-center justify-between mb-3">
@@ -304,11 +309,11 @@ export default function SourceSelector({
             ⚙
           </button>
         </div>
-        {current && (
+        {activeSource && (
           <span className="text-xs text-denon-gold font-medium flex items-center gap-1">
-            <span className="text-base">{getIcon(current, currentDisplayName)}</span>
-            {getSelectorName(current)}
-            {(heosServiceCode || current === 'NET') && (
+            <span className="text-base">{getIcon(activeSource, activeDisplayName)}</span>
+            {activeSource === 'IRADIO' ? 'IRADIO' : activeSource === 'BT' ? 'Bluetooth' : getSelectorName(activeSource)}
+            {(heosServiceCode || activeSource === 'NET') && (
               <span className="ml-1 rounded-full bg-denon-green/10 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-denon-green">
                 HEOS
               </span>
@@ -336,7 +341,7 @@ export default function SourceSelector({
         <div ref={horizontalInputsRef} className="min-w-0 flex-1 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
           <div className="flex min-w-max gap-1.5">
             {quickSources.map(source => {
-              const active = current === source.id || (source.id === 'GAME' && current === 'GAME1')
+              const active = activeSource === source.id || (source.id === 'GAME' && activeSource === 'GAME1')
               return (
                 <button
                   key={source.id}
