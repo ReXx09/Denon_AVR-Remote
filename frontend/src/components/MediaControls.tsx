@@ -4,7 +4,7 @@ import ServerBrowser from './ServerBrowser'
 import NavidromeBrowser from './NavidromeBrowser'
 import type { ReceiverState, SendCommandFn, PostFn, Zone, RadioFavorite } from '../types'
 
-const MEDIA_SOURCES = ['NET', 'MPLAY', 'BT', 'USB', 'USB/IPOD', 'SPOTIFY', 'PANDORA', 'SIRIUSXM', 'IRADIO', 'SERVER', 'FAVORITES']
+const MEDIA_SOURCES = ['NET', 'MPLAY', 'BT', 'USB', 'USB/IPOD', 'SPOTIFY', 'AMAZON', 'PANDORA', 'SIRIUSXM', 'IRADIO', 'SERVER', 'FAVORITES']
 const VALID_ACTIONS = new Set(['play', 'pause', 'stop', 'next', 'previous'])
 
 /** Sanitize album art URL — only allow http(s) to prevent XSS via javascript: or data: URIs. */

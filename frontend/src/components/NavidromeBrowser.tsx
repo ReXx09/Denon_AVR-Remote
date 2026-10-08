@@ -13,7 +13,7 @@ export default function NavidromeBrowser({ active }: Props) {
   const [artists, setArtists] = useState<Artist[]>([])
   const [albums, setAlbums] = useState<Album[]>([])
   const [songs, setSongs] = useState<Song[]>([])
-  const [heading, setHeading] = useState('Navidrome')
+  const [heading, setHeading] = useState('Music server')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -27,10 +27,11 @@ export default function NavidromeBrowser({ active }: Props) {
     if (!active) return
     setLoading(true)
     void Promise.all([
-      request<{ configured: boolean }>('/api/v1/media/navidrome/status'),
+      request<{ configured: boolean; service_name?: string }>('/api/v1/media/navidrome/status'),
       request<{ indexes?: { index?: { artist?: Artist[] }[] } }>('/api/v1/media/navidrome/indexes'),
     ]).then(([status, data]) => {
       setConfigured(status.configured)
+      setHeading(status.service_name || 'Music server')
       setArtists(data.indexes?.index?.flatMap(index => index.artist || []) || [])
       setError('')
     }).catch(() => setError('Navidrome ist nicht erreichbar oder nicht konfiguriert.'))
@@ -75,7 +76,7 @@ export default function NavidromeBrowser({ active }: Props) {
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-xs font-medium text-denon-muted uppercase tracking-wider">{heading}</h3>
         {(albums.length > 0 || songs.length > 0) && (
-          <button type="button" onClick={() => { setAlbums([]); setSongs([]); setHeading('Navidrome') }} className="text-[10px] text-denon-gold">Library</button>
+          <button type="button" onClick={() => { setAlbums([]); setSongs([]) }} className="text-[10px] text-denon-gold">Library</button>
         )}
       </div>
       {loading && <p className="text-xs text-denon-muted">Loading...</p>}

@@ -125,6 +125,7 @@ HEOS_SOURCES = {
     "BT": "Bluetooth",
     "IRADIO": "Internet Radio",
     "SPOTIFY": "Spotify",
+    "AMAZON": "Amazon Music",
     "PANDORA": "Pandora",
     "SIRIUSXM": "SiriusXM",
     "FAVORITES": "Favorites",
@@ -135,6 +136,8 @@ HEOS_SOURCES = {
 # If the service isn't found via browse/get_music_sources, hide the source button.
 # Maps source code → HEOS service names that indicate availability.
 HEOS_REGION_SOURCES = {
+    "SPOTIFY": {"Spotify", "Spotify Connect"},
+    "AMAZON": {"Amazon", "Amazon Music"},
     "PANDORA": {"Pandora"},
     "SIRIUSXM": {"SiriusXM"},
 }

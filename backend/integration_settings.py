@@ -34,16 +34,18 @@ def navidrome_settings() -> dict[str, str]:
     if not isinstance(persisted, dict):
         persisted = {}
     return {
+        "service_name": str(persisted.get("service_name", "Music server")),
         "url": str(persisted.get("url", settings.navidrome_url)),
         "username": str(persisted.get("username", settings.navidrome_username)),
         "password": str(persisted.get("password", settings.navidrome_password)),
     }
 
 
-def save_navidrome_settings(url: str, username: str, password: str | None) -> None:
+def save_navidrome_settings(service_name: str, url: str, username: str, password: str | None) -> None:
     current = _load()
     previous = navidrome_settings()
     current["navidrome"] = {
+        "service_name": service_name.strip() or "Music server",
         "url": url.strip().rstrip("/"),
         "username": username.strip(),
         "password": previous["password"] if password in (None, "") else password,

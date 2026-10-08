@@ -77,7 +77,7 @@ class AppState:
         5:    ("NET",       "Deezer"),         # Deezer (no dedicated button)
         9:    ("NET",       "SoundCloud"),     # SoundCloud
         10:   ("NET",       "Tidal"),          # Tidal
-        13:   ("NET",       "Amazon Music"),   # Amazon Music
+        13:   ("AMAZON",    "Amazon Music"),   # Amazon Music
         30:   ("NET",       "Qobuz"),          # Qobuz
         1024: ("SERVER",    "Local Music"),    # DLNA/UPnP server
         1025: ("NET",       "Playlists"),      # HEOS Playlists
@@ -89,7 +89,7 @@ class AppState:
     _HEOS_MID_PREFIXES: list[tuple[str, str, str]] = [
         ("spotify:",      "SPOTIFY",   "Spotify"),
         ("tidal:",        "NET",       "Tidal"),
-        ("amazon_music:", "NET",       "Amazon Music"),
+        ("amazon_music:", "AMAZON",    "Amazon Music"),
         ("deezer:",       "NET",       "Deezer"),
         ("pandora:",      "PANDORA",   "Pandora"),
         ("siriusxm:",     "SIRIUSXM",  "SiriusXM"),

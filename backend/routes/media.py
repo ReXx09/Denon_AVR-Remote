@@ -28,10 +28,12 @@ def _navidrome() -> NavidromeClient:
 @router.get("/navidrome/status")
 async def navidrome_status():
     client = _navidrome()
-    return {"configured": client.configured, "url": client.base_url if client.configured else None}
+    configured = navidrome_settings()
+    return {"configured": client.configured, "url": client.base_url if client.configured else None, "service_name": configured["service_name"]}
 
 
 class NavidromeSettingsRequest(BaseModel):
+    service_name: str = Field(default="Music server", max_length=100)
     url: str = Field(default="", max_length=500)
     username: str = Field(default="", max_length=200)
     password: str | None = Field(default=None, max_length=500)
@@ -41,6 +43,7 @@ class NavidromeSettingsRequest(BaseModel):
 async def navidrome_settings_view():
     configured = navidrome_settings()
     return {
+        "service_name": configured["service_name"],
         "url": configured["url"],
         "username": configured["username"],
         "has_password": bool(configured["password"]),
@@ -51,7 +54,7 @@ async def navidrome_settings_view():
 async def navidrome_settings_update(req: NavidromeSettingsRequest):
     if req.url and not req.url.startswith(("http://", "https://")):
         raise HTTPException(400, "Navidrome URL must start with http:// or https://")
-    save_navidrome_settings(req.url, req.username, req.password)
+    save_navidrome_settings(req.service_name, req.url, req.username, req.password)
     client = _navidrome()
     return {"ok": True, "configured": client.configured, "restart_required": False}
 
@@ -309,6 +312,22 @@ async def heos_favorites(state: AppState = Depends(get_app_state)):
     if not state.heos:
         raise HTTPException(503, "HEOS not connected")
     return await state.heos.browse_source(1028)
+
+
+@router.get("/heos/services")
+async def heos_services(state: AppState = Depends(get_app_state)):
+    """Return music services currently reported by the receiver."""
+    if not state.heos:
+        return {"connected": False, "services": []}
+    services = await state.heos.get_music_sources()
+    return {
+        "connected": state.heos.connected,
+        "services": [
+            {"sid": item.get("sid"), "name": item.get("name"), "available": item.get("available")}
+            for item in services
+            if item.get("name")
+        ],
+    }
 
 
 class HeosFavoritePlayRequest(BaseModel):

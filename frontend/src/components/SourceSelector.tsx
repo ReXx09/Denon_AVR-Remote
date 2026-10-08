@@ -71,7 +71,7 @@ const SOURCE_ICONS: Record<string, React.ReactNode> = {
   GAME: <GamepadIcon />, BD: '📀', TV: '📺', 'SAT/CBL': '📡', MPLAY: '▶️',
   NET: '🌐', BT: <BluetoothIcon />, AUX1: '🖥️', AUX2: '🔌', CD: '💿',
   TUNER: '📻', PHONO: '🎵', DVD: '📀', USB: '💾', 'USB/IPOD': '💾',
-  SPOTIFY: <SpotifyIcon />, PANDORA: '🎵', SIRIUSXM: '📻', HDRADIO: '📻',
+  SPOTIFY: <SpotifyIcon />, AMAZON: '🛒', PANDORA: '🎵', SIRIUSXM: '📻', HDRADIO: '📻',
   IRADIO: '📻', SERVER: '🖥️', FAVORITES: '⭐',
 }
 
@@ -117,7 +117,7 @@ const INPUT_SOURCES = new Set([
   'CD', 'TUNER', 'DVD', 'TV', 'SAT/CBL', 'BD', 'GAME', 'GAME1', 'GAME2', 'AUX1', 'AUX2', 'MPLAY',
 ])
 const NETWORK_SOURCES = new Set([
-  'NET', 'BT', 'MPLAY', 'SPOTIFY', 'PANDORA', 'SIRIUSXM', 'HDRADIO', 'IRADIO',
+  'NET', 'BT', 'MPLAY', 'SPOTIFY', 'AMAZON', 'PANDORA', 'SIRIUSXM', 'HDRADIO', 'IRADIO',
 ])
 const MEDIA_SOURCES = new Set(['SERVER', 'FAVORITES', 'USB', 'USB/IPOD'])
 

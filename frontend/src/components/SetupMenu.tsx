@@ -7,9 +7,20 @@ interface Props {
   info: DeviceInfo | null | undefined
 }
 
+function isValidReceiverHost(host: string): boolean {
+  if (!host.trim()) return true
+  const parts = host.trim().split('.')
+  return parts.length === 4 && parts.every(part => /^\d{1,3}$/.test(part) && Number(part) <= 255)
+}
+
+function isValidPort(port: number): boolean {
+  return Number.isInteger(port) && port >= 1 && port <= 65535
+}
+
 export default function SetupMenu({ state, info }: Props) {
   const [open, setOpen] = useState(false)
   const [navidromeConfigured, setNavidromeConfigured] = useState<boolean | null>(null)
+  const [musicServerName, setMusicServerName] = useState('Music server')
   const [navidromeUrl, setNavidromeUrl] = useState('')
   const [navidromeUsername, setNavidromeUsername] = useState('')
   const [navidromePassword, setNavidromePassword] = useState('')
@@ -20,6 +31,7 @@ export default function SetupMenu({ state, info }: Props) {
   const [heosSources, setHeosSources] = useState(true)
   const [heosAccount, setHeosAccount] = useState<boolean | null>(null)
   const [heosAccountName, setHeosAccountName] = useState<string | null>(null)
+  const [heosServices, setHeosServices] = useState<string[]>([])
   const [expanded, setExpanded] = useState<Record<string, boolean>>({ navidrome: true, receiver: false, heos: false })
   const [saving, setSaving] = useState(false)
   const [testing, setTesting] = useState(false)
@@ -38,13 +50,14 @@ export default function SetupMenu({ state, info }: Props) {
       .then(async ([statusResponse, settingsResponse, setupResponse]) => {
         if (!statusResponse.ok || !settingsResponse.ok || !setupResponse.ok) throw new Error()
         return await Promise.all([
-          statusResponse.json() as Promise<{ configured?: boolean }>,
-          settingsResponse.json() as Promise<{ url?: string; username?: string; has_password?: boolean }>,
+          statusResponse.json() as Promise<{ configured?: boolean; service_name?: string }>,
+          settingsResponse.json() as Promise<{ service_name?: string; url?: string; username?: string; has_password?: boolean }>,
           setupResponse.json() as Promise<{ receiver?: { host?: string; telnet_port?: number; heos_port?: number; heos_sources?: boolean } }>,
         ])
       })
       .then(([status, saved, setup]) => {
         setNavidromeConfigured(Boolean(status.configured))
+        setMusicServerName(saved.service_name || status.service_name || 'Music server')
         setNavidromeUrl(saved.url || '')
         setNavidromeUsername(saved.username || '')
         setHasNavidromePassword(Boolean(saved.has_password))
@@ -61,15 +74,23 @@ export default function SetupMenu({ state, info }: Props) {
 
   useEffect(() => {
     if (!open) return
-    fetch('/api/v1/media/radio/status')
-      .then(response => response.ok ? response.json() as Promise<{ account_signed_in?: boolean; username?: string | null }> : Promise.reject())
-      .then(data => {
+    Promise.all([fetch('/api/v1/media/radio/status'), fetch('/api/v1/media/heos/services')])
+      .then(async ([statusResponse, servicesResponse]) => {
+        if (!statusResponse.ok || !servicesResponse.ok) throw new Error()
+        return await Promise.all([
+          statusResponse.json() as Promise<{ account_signed_in?: boolean; username?: string | null }>,
+          servicesResponse.json() as Promise<{ services?: { name?: string }[] }>,
+        ])
+      })
+      .then(([data, serviceData]) => {
         setHeosAccount(Boolean(data.account_signed_in))
         setHeosAccountName(data.username || null)
+        setHeosServices((serviceData.services || []).map(service => service.name).filter((name): name is string => Boolean(name)))
       })
       .catch(() => {
         setHeosAccount(false)
         setHeosAccountName(null)
+        setHeosServices([])
       })
   }, [open])
 
@@ -82,6 +103,7 @@ export default function SetupMenu({ state, info }: Props) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          service_name: musicServerName,
           url: navidromeUrl,
           username: navidromeUsername,
           password: navidromePassword || undefined,
@@ -141,6 +163,22 @@ export default function SetupMenu({ state, info }: Props) {
     setExpanded(current => ({ ...current, [section]: !current[section] }))
   }
 
+  const navidromeHasValues = Boolean(navidromeUrl.trim() || navidromeUsername.trim() || navidromePassword)
+  const navidromeValidation = navidromeHasValues
+    ? !/^https?:\/\//i.test(navidromeUrl.trim())
+      ? 'Use a complete URL starting with http:// or https://.'
+      : !navidromeUsername.trim()
+        ? 'Enter the Navidrome username.'
+        : !navidromePassword && !hasNavidromePassword
+          ? 'Enter the password or leave Navidrome empty to disable it.'
+          : ''
+    : ''
+  const receiverValidation = !isValidReceiverHost(receiverHost)
+    ? 'Receiver IP must be a valid IPv4 address or empty for auto-discovery.'
+    : !isValidPort(telnetPort) || !isValidPort(heosPort)
+      ? 'Ports must be whole numbers between 1 and 65535.'
+      : ''
+
   return (
     <>
       <button
@@ -192,13 +230,17 @@ export default function SetupMenu({ state, info }: Props) {
               </button>
               {expanded.navidrome && <div className="pt-3">
                 <div className="space-y-3">
+                  <label className="block text-xs text-denon-muted">Service name<input value={musicServerName} onChange={event => setMusicServerName(event.target.value)} placeholder="Music server" className="mt-1 w-full rounded-lg border border-denon-border bg-denon-surface px-3 py-2 text-sm text-denon-text outline-none focus:border-denon-gold" /></label>
                   <label className="block text-xs text-denon-muted">Server URL<input value={navidromeUrl} onChange={event => setNavidromeUrl(event.target.value)} placeholder="http://navidrome:4533" className="mt-1 w-full rounded-lg border border-denon-border bg-denon-surface px-3 py-2 text-sm text-denon-text outline-none focus:border-denon-gold" /></label>
                   <label className="block text-xs text-denon-muted">Username<input value={navidromeUsername} onChange={event => setNavidromeUsername(event.target.value)} autoComplete="username" className="mt-1 w-full rounded-lg border border-denon-border bg-denon-surface px-3 py-2 text-sm text-denon-text outline-none focus:border-denon-gold" /></label>
                   <label className="block text-xs text-denon-muted">Password {hasNavidromePassword && <span className="text-denon-green">(saved)</span>}<input type="password" value={navidromePassword} onChange={event => setNavidromePassword(event.target.value)} autoComplete="new-password" placeholder={hasNavidromePassword ? 'Leave blank to keep saved password' : ''} className="mt-1 w-full rounded-lg border border-denon-border bg-denon-surface px-3 py-2 text-sm text-denon-text outline-none focus:border-denon-gold" /></label>
                 </div>
+                {navidromeValidation && <p className="mt-3 rounded-lg bg-denon-red/10 px-3 py-2 text-xs text-denon-red">{navidromeValidation}</p>}
+                {!navidromeHasValues && <p className="mt-3 rounded-lg bg-denon-surface px-3 py-2 text-xs text-denon-muted">Optional. Leave all fields empty to keep Navidrome disabled.</p>}
+                {navidromeHasValues && !navidromeValidation && <p className="mt-3 rounded-lg bg-denon-green/10 px-3 py-2 text-xs text-denon-green">Configuration looks complete. Save it, then test the connection.</p>}
                 <div className="mt-3 flex gap-2">
-                  <button type="button" onClick={() => void saveNavidrome()} disabled={saving} className="flex-1 rounded-lg bg-denon-gold px-3 py-2 text-sm font-medium text-denon-dark hover:brightness-110 disabled:opacity-50">{saving ? 'Saving...' : 'Save'}</button>
-                  <button type="button" onClick={() => void testNavidrome()} disabled={testing || !navidromeConfigured} className="flex-1 rounded-lg bg-denon-surface px-3 py-2 text-sm font-medium text-denon-text hover:bg-denon-border/70 disabled:opacity-50">{testing ? 'Testing...' : 'Test connection'}</button>
+                  <button type="button" onClick={() => void saveNavidrome()} disabled={saving || Boolean(navidromeValidation)} className="flex-1 rounded-lg bg-denon-gold px-3 py-2 text-sm font-medium text-denon-dark hover:brightness-110 disabled:opacity-50">{saving ? 'Saving...' : 'Save'}</button>
+                  <button type="button" onClick={() => void testNavidrome()} disabled={testing || !navidromeConfigured || Boolean(navidromeValidation)} className="flex-1 rounded-lg bg-denon-surface px-3 py-2 text-sm font-medium text-denon-text hover:bg-denon-border/70 disabled:opacity-50">{testing ? 'Testing...' : 'Test connection'}</button>
                 </div>
               </div>}
             </div>
@@ -214,7 +256,9 @@ export default function SetupMenu({ state, info }: Props) {
                   <label className="block text-xs text-denon-muted">Telnet port<input type="number" min="1" max="65535" value={telnetPort} onChange={event => setTelnetPort(Number(event.target.value))} className="mt-1 w-full rounded-lg border border-denon-border bg-denon-surface px-3 py-2 text-sm text-denon-text outline-none focus:border-denon-gold" /></label>
                   <label className="block text-xs text-denon-muted">HEOS port<input type="number" min="1" max="65535" value={heosPort} onChange={event => setHeosPort(Number(event.target.value))} className="mt-1 w-full rounded-lg border border-denon-border bg-denon-surface px-3 py-2 text-sm text-denon-text outline-none focus:border-denon-gold" /></label>
                 </div>
-                <button type="button" onClick={() => void saveReceiver()} disabled={saving} className="w-full rounded-lg bg-denon-gold px-3 py-2 text-sm font-medium text-denon-dark hover:brightness-110 disabled:opacity-50">{saving ? 'Saving...' : 'Save receiver settings'}</button>
+                {receiverValidation && <p className="rounded-lg bg-denon-red/10 px-3 py-2 text-xs text-denon-red">{receiverValidation}</p>}
+                {!receiverValidation && <p className="rounded-lg bg-denon-green/10 px-3 py-2 text-xs text-denon-green">Receiver settings look valid. Saving a new IP reconnects immediately.</p>}
+                <button type="button" onClick={() => void saveReceiver()} disabled={saving || Boolean(receiverValidation)} className="w-full rounded-lg bg-denon-gold px-3 py-2 text-sm font-medium text-denon-dark hover:brightness-110 disabled:opacity-50">{saving ? 'Saving...' : 'Save receiver settings'}</button>
               </div>}
             </div>
 
@@ -230,6 +274,12 @@ export default function SetupMenu({ state, info }: Props) {
                     <span className={heosAccount ? 'text-denon-green' : heosAccount === null ? 'text-denon-muted' : 'text-denon-red'}>{heosAccount === null ? 'Checking...' : heosAccount ? 'Signed in' : 'Not signed in'}</span>
                   </div>
                   {heosAccountName && <p className="mt-1 truncate text-xs text-denon-text">{heosAccountName}</p>}
+                </div>
+                <div className="mb-3 rounded-lg bg-denon-surface px-3 py-2.5 text-xs">
+                  <p className="text-denon-muted">Services reported by receiver</p>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {heosServices.length > 0 ? heosServices.map(service => <span key={service} className="rounded-full bg-denon-green/10 px-2 py-1 text-denon-green">{service}</span>) : <span className="text-denon-muted">No services detected yet</span>}
+                  </div>
                 </div>
                 <label className="flex items-center justify-between rounded-lg bg-denon-surface px-3 py-2.5 text-sm text-denon-text">Show HEOS sources<input type="checkbox" checked={heosSources} onChange={event => setHeosSources(event.target.checked)} className="h-4 w-4 accent-[var(--accent)]" /></label>
                 <p className="mt-2 text-xs leading-relaxed text-denon-muted">HEOS uses the port configured under Receiver. Sign in to your HEOS account in the HEOS app on the same network; the receiver then makes the account available here. Login credentials are not sent through the dashboard.</p>
