@@ -105,10 +105,6 @@ const DEFAULT_SOURCES: Record<string, string> = {
   AUX1: 'AUX1', AUX2: 'AUX2',
 }
 
-const SELECTOR_NAMES: Record<string, string> = {
-  TV: 'TV', AUX1: 'AUX 1', AUX2: 'AUX 2', NET: 'Network/Bluetooth',
-}
-
 type SourceFilter = 'inputs' | 'network' | 'favorites'
 type SourceCategory = 'inputs' | 'network' | 'media' | 'other'
 
@@ -179,24 +175,32 @@ export default function SourceSelector({
     const baseSources = sources.length > 0
       ? sources
       : Object.entries(DEFAULT_SOURCES).map(([id, name]) => ({ id, name }))
-    return baseSources.some(source => source.id === 'SERVER')
+    const withServer = baseSources.some(source => source.id === 'SERVER')
       ? baseSources
       : [...baseSources, { id: 'SERVER', name: 'Server' }]
+    const hasHeosSource = withServer.some(source => ['NET', 'IRADIO', 'BT', 'SPOTIFY', 'AMAZON'].includes(source.id))
+    const withHeosSources = hasHeosSource
+      ? [
+        ...withServer,
+        ...(withServer.some(source => source.id === 'NET') ? [] : [{ id: 'NET', name: 'HEOS' }]),
+        ...(withServer.some(source => source.id === 'IRADIO') ? [] : [{ id: 'IRADIO', name: 'Internet Radio' }]),
+      ]
+      : withServer
+    return withHeosSources
   })()
 
   const getName = (code: string) => sourceNameOverrides?.[code] || sourceNameMap?.[code] || availableSources.find(source => source.id === code)?.name || DEFAULT_SOURCES[code] || code
-  const getSelectorName = (code: string) => SELECTOR_NAMES[code] || DEFAULT_SOURCES[code] || code
   const uniqueSources = availableSources.filter((source, index, allSources) => {
-    const name = getName(source.id).trim().toLocaleLowerCase()
-    return allSources.findIndex(candidate => getName(candidate.id).trim().toLocaleLowerCase() === name) === index
+    return allSources.findIndex(candidate => candidate.id === source.id) === index
   })
+  const hasInternetRadio = uniqueSources.some(source => source.id === 'IRADIO')
+  const displaySources = uniqueSources.filter(source => !(hasInternetRadio && source.id === 'NET'))
   const game1Name = getName('GAME1')
   const hasNamedGame1 = uniqueSources.some(source =>
     source.id === 'GAME1' && game1Name.toLowerCase() !== 'game 1' && game1Name.toLowerCase() !== 'game1'
   )
-  const sourceList = uniqueSources
+  const sourceList = displaySources
     .filter(source => !(hasNamedGame1 && source.id === 'GAME'))
-    .filter(source => source.id !== 'NET')
     .filter(source => !sourceDisabled.includes(source.id))
 
   const categorizedSources = useMemo(() => {
@@ -352,7 +356,7 @@ export default function SourceSelector({
                   }`}
                 >
                   <span className="block text-base leading-5">{getIcon(source.id, getName(source.id))}</span>
-                  <span className="block max-w-[100px] truncate">{getSelectorName(source.id)}</span>
+                  <span className="block max-w-[100px] truncate">{getName(source.id)}</span>
                   {active && heosServiceCode === source.id && (
                     <span className="mt-0.5 inline-block rounded-full bg-denon-green/10 px-1.5 py-0.5 text-[8px] uppercase tracking-wider text-denon-green">
                       HEOS
@@ -438,7 +442,7 @@ export default function SourceSelector({
               ) : (
                 <span className="min-w-0 flex-1 pr-1">
                   <span className="line-clamp-2 text-xs">
-                    {getSelectorName(s.id)}{editMode && <span className="text-denon-muted ml-1">✎</span>}
+                    {getName(s.id)}{editMode && <span className="text-denon-muted ml-1">✎</span>}
                   </span>
                 </span>
               )}
@@ -492,7 +496,7 @@ export default function SourceSelector({
               <button type="button" onClick={() => setConfigOpen(false)} className="text-lg text-denon-muted hover:text-denon-text" aria-label="Close">×</button>
             </div>
             <div className="max-h-[60vh] space-y-1 overflow-y-auto pr-1">
-              {uniqueSources.map(source => {
+              {displaySources.map(source => {
                 const disabled = draftDisabled.includes(source.id)
                 return (
                   <label key={source.id} className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 text-sm text-denon-text hover:bg-denon-surface">
