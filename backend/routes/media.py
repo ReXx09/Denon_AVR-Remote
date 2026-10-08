@@ -257,7 +257,11 @@ def _add_cached_station_images(result: dict) -> dict:
         return result
 
     images_by_mid: dict[str, str] = {}
-    images_by_name: dict[str, str] = {}
+    images_by_name: list[tuple[str, str]] = []
+
+    def normalize_name(value: object) -> str:
+        return "".join(char for char in str(value).casefold() if char.isalnum())
+
     for _, (_, cached) in _BROWSE_CACHE.items():
         for station in cached.get("items", []):
             image_url = station.get("image_url")
@@ -268,7 +272,9 @@ def _add_cached_station_images(result: dict) -> dict:
                 images_by_mid[str(station_mid)] = image_url
             for name in (station.get("name"), station.get("station")):
                 if name:
-                    images_by_name[str(name).strip().casefold()] = image_url
+                    normalized = normalize_name(name)
+                    if normalized:
+                        images_by_name.append((normalized, image_url))
 
     enriched = []
     for item in items:
@@ -279,7 +285,17 @@ def _add_cached_station_images(result: dict) -> dict:
         if not image_url:
             for name in (item.get("name"), item.get("station")):
                 if name:
-                    image_url = images_by_name.get(str(name).strip().casefold())
+                    normalized = normalize_name(name)
+                    if not normalized:
+                        continue
+                    exact = next((url for candidate, url in images_by_name if candidate == normalized), None)
+                    related = next(
+                        (url for candidate, url in images_by_name
+                         if len(normalized) >= 5 and len(candidate) >= 5
+                         and (normalized in candidate or candidate in normalized)),
+                        None,
+                    )
+                    image_url = exact or related
                     if image_url:
                         break
         enriched.append({**item, "image_url": image_url} if image_url else item)
