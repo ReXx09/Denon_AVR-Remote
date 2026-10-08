@@ -6,6 +6,7 @@ import logging
 import re
 
 from fastapi import APIRouter, HTTPException, Depends
+from pydantic import BaseModel, Field
 
 from api.models import (
     CommandRequest,
@@ -24,10 +25,62 @@ from denon.const import AVC_X4800H_SOURCES, CHANNEL_NAMES, DEFAULT_SOURCES, HEOS
 from denon.discovery import discover_receivers
 from state import AppState
 from dependencies import get_app_state
+from integration_settings import receiver_settings, save_receiver_settings
 
 _LOGGER = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1", tags=["status"])
+
+
+class ReceiverSettingsRequest(BaseModel):
+    host: str = Field(default="", max_length=200)
+    telnet_port: int = Field(default=23, ge=1, le=65535)
+    heos_port: int = Field(default=1255, ge=1, le=65535)
+    heos_sources: bool = True
+
+
+@router.get("/setup/settings")
+async def setup_settings():
+    configured = receiver_settings()
+    return {
+        "receiver": configured,
+        "heos": {
+            "port": configured["heos_port"],
+            "sources": configured["heos_sources"],
+        },
+    }
+
+
+@router.post("/setup/settings")
+async def update_setup_settings(req: ReceiverSettingsRequest, state: AppState = Depends(get_app_state)):
+    host = req.host.strip()
+    if host:
+        try:
+            address = ipaddress.ip_address(host)
+        except ValueError as exc:
+            raise HTTPException(400, "Invalid receiver IP address") from exc
+        if not address.is_private or address.is_loopback or address.is_link_local:
+            raise HTTPException(400, "Receiver IP must be a private LAN address")
+
+    previous = receiver_settings()
+    save_receiver_settings(host, req.telnet_port, req.heos_port, req.heos_sources)
+    settings.denon_host = host
+    settings.denon_telnet_port = req.telnet_port
+    settings.denon_heos_port = req.heos_port
+    settings.heos_sources = req.heos_sources
+
+    reconnected = False
+    if host and host != (state.telnet.host if state.telnet else None):
+        await state.connect_to_host(host)
+        reconnected = True
+    elif host and (
+        previous["telnet_port"] != req.telnet_port
+        or previous["heos_port"] != req.heos_port
+    ) and state.telnet:
+        await state.connect_to_host(host)
+        reconnected = True
+
+    return {"ok": True, "reconnected": reconnected, "restart_required": not bool(host)}
 
 
 @router.get("/health", response_model=HealthResponse)

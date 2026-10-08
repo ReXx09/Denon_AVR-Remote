@@ -14,6 +14,13 @@ export default function SetupMenu({ state, info }: Props) {
   const [navidromeUsername, setNavidromeUsername] = useState('')
   const [navidromePassword, setNavidromePassword] = useState('')
   const [hasNavidromePassword, setHasNavidromePassword] = useState(false)
+  const [receiverHost, setReceiverHost] = useState('')
+  const [telnetPort, setTelnetPort] = useState(23)
+  const [heosPort, setHeosPort] = useState(1255)
+  const [heosSources, setHeosSources] = useState(true)
+  const [heosAccount, setHeosAccount] = useState<boolean | null>(null)
+  const [heosAccountName, setHeosAccountName] = useState<string | null>(null)
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({ navidrome: true, receiver: false, heos: false })
   const [saving, setSaving] = useState(false)
   const [testing, setTesting] = useState(false)
   const [setupMessage, setSetupMessage] = useState('')
@@ -26,23 +33,43 @@ export default function SetupMenu({ state, info }: Props) {
     Promise.all([
       fetch('/api/v1/media/navidrome/status'),
       fetch('/api/v1/media/navidrome/settings'),
+      fetch('/api/v1/setup/settings'),
     ])
-      .then(async ([statusResponse, settingsResponse]) => {
-        if (!statusResponse.ok || !settingsResponse.ok) throw new Error()
+      .then(async ([statusResponse, settingsResponse, setupResponse]) => {
+        if (!statusResponse.ok || !settingsResponse.ok || !setupResponse.ok) throw new Error()
         return await Promise.all([
           statusResponse.json() as Promise<{ configured?: boolean }>,
           settingsResponse.json() as Promise<{ url?: string; username?: string; has_password?: boolean }>,
+          setupResponse.json() as Promise<{ receiver?: { host?: string; telnet_port?: number; heos_port?: number; heos_sources?: boolean } }>,
         ])
       })
-      .then(([status, saved]) => {
+      .then(([status, saved, setup]) => {
         setNavidromeConfigured(Boolean(status.configured))
         setNavidromeUrl(saved.url || '')
         setNavidromeUsername(saved.username || '')
         setHasNavidromePassword(Boolean(saved.has_password))
+        setReceiverHost(setup.receiver?.host || '')
+        setTelnetPort(setup.receiver?.telnet_port || 23)
+        setHeosPort(setup.receiver?.heos_port || 1255)
+        setHeosSources(setup.receiver?.heos_sources ?? true)
       })
       .catch(() => {
         setNavidromeConfigured(false)
         setSetupError('Could not load setup settings')
+      })
+  }, [open])
+
+  useEffect(() => {
+    if (!open) return
+    fetch('/api/v1/media/radio/status')
+      .then(response => response.ok ? response.json() as Promise<{ account_signed_in?: boolean; username?: string | null }> : Promise.reject())
+      .then(data => {
+        setHeosAccount(Boolean(data.account_signed_in))
+        setHeosAccountName(data.username || null)
+      })
+      .catch(() => {
+        setHeosAccount(false)
+        setHeosAccountName(null)
       })
   }, [open])
 
@@ -90,6 +117,30 @@ export default function SetupMenu({ state, info }: Props) {
     }
   }
 
+  const saveReceiver = async () => {
+    setSaving(true)
+    setSetupMessage('')
+    setSetupError('')
+    try {
+      const response = await fetch('/api/v1/setup/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ host: receiverHost, telnet_port: telnetPort, heos_port: heosPort, heos_sources: heosSources }),
+      })
+      const data = await response.json() as { detail?: string; reconnected?: boolean; restart_required?: boolean }
+      if (!response.ok) throw new Error(data.detail || 'Could not save receiver settings')
+      setSetupMessage(data.restart_required ? 'Saved. Restart required for discovery mode.' : data.reconnected ? 'Saved and receiver reconnected' : 'Receiver settings saved')
+    } catch (error) {
+      setSetupError(error instanceof Error ? error.message : 'Could not save receiver settings')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const toggleSection = (section: string) => {
+    setExpanded(current => ({ ...current, [section]: !current[section] }))
+  }
+
   return (
     <>
       <button
@@ -134,32 +185,59 @@ export default function SetupMenu({ state, info }: Props) {
               </div>
             </div>
 
-            <div className="mt-5 border-t border-denon-border/50 pt-4">
-              <div className="mb-3">
-                <h3 className="text-sm font-medium text-denon-text">Navidrome</h3>
-                <p className="mt-1 text-xs text-denon-muted">Configure the optional music library connection.</p>
-              </div>
-              <div className="space-y-3">
-                <label className="block text-xs text-denon-muted">
-                  Server URL
-                  <input value={navidromeUrl} onChange={event => setNavidromeUrl(event.target.value)} placeholder="http://navidrome:4533" className="mt-1 w-full rounded-lg border border-denon-border bg-denon-surface px-3 py-2 text-sm text-denon-text outline-none focus:border-denon-gold" />
-                </label>
-                <label className="block text-xs text-denon-muted">
-                  Username
-                  <input value={navidromeUsername} onChange={event => setNavidromeUsername(event.target.value)} autoComplete="username" className="mt-1 w-full rounded-lg border border-denon-border bg-denon-surface px-3 py-2 text-sm text-denon-text outline-none focus:border-denon-gold" />
-                </label>
-                <label className="block text-xs text-denon-muted">
-                  Password {hasNavidromePassword && <span className="text-denon-green">(saved)</span>}
-                  <input type="password" value={navidromePassword} onChange={event => setNavidromePassword(event.target.value)} autoComplete="new-password" placeholder={hasNavidromePassword ? 'Leave blank to keep saved password' : ''} className="mt-1 w-full rounded-lg border border-denon-border bg-denon-surface px-3 py-2 text-sm text-denon-text outline-none focus:border-denon-gold" />
-                </label>
-              </div>
-              <div className="mt-3 flex gap-2">
-                <button type="button" onClick={() => void saveNavidrome()} disabled={saving} className="flex-1 rounded-lg bg-denon-gold px-3 py-2 text-sm font-medium text-denon-dark hover:brightness-110 disabled:opacity-50">{saving ? 'Saving...' : 'Save'}</button>
-                <button type="button" onClick={() => void testNavidrome()} disabled={testing || !navidromeConfigured} className="flex-1 rounded-lg bg-denon-surface px-3 py-2 text-sm font-medium text-denon-text hover:bg-denon-border/70 disabled:opacity-50">{testing ? 'Testing...' : 'Test connection'}</button>
-              </div>
-              {setupMessage && <p className="mt-3 text-xs text-denon-green">{setupMessage}</p>}
-              {setupError && <p className="mt-3 text-xs text-denon-red">{setupError}</p>}
+            <div className="mt-5 border-t border-denon-border/50 pt-3">
+              <button type="button" onClick={() => toggleSection('navidrome')} className="flex w-full items-center justify-between py-2 text-left">
+                <span><span className="block text-sm font-medium text-denon-text">Navidrome</span><span className="mt-1 block text-xs text-denon-muted">Optional music library connection</span></span>
+                <span className="text-denon-muted" aria-hidden="true">{expanded.navidrome ? '▲' : '▼'}</span>
+              </button>
+              {expanded.navidrome && <div className="pt-3">
+                <div className="space-y-3">
+                  <label className="block text-xs text-denon-muted">Server URL<input value={navidromeUrl} onChange={event => setNavidromeUrl(event.target.value)} placeholder="http://navidrome:4533" className="mt-1 w-full rounded-lg border border-denon-border bg-denon-surface px-3 py-2 text-sm text-denon-text outline-none focus:border-denon-gold" /></label>
+                  <label className="block text-xs text-denon-muted">Username<input value={navidromeUsername} onChange={event => setNavidromeUsername(event.target.value)} autoComplete="username" className="mt-1 w-full rounded-lg border border-denon-border bg-denon-surface px-3 py-2 text-sm text-denon-text outline-none focus:border-denon-gold" /></label>
+                  <label className="block text-xs text-denon-muted">Password {hasNavidromePassword && <span className="text-denon-green">(saved)</span>}<input type="password" value={navidromePassword} onChange={event => setNavidromePassword(event.target.value)} autoComplete="new-password" placeholder={hasNavidromePassword ? 'Leave blank to keep saved password' : ''} className="mt-1 w-full rounded-lg border border-denon-border bg-denon-surface px-3 py-2 text-sm text-denon-text outline-none focus:border-denon-gold" /></label>
+                </div>
+                <div className="mt-3 flex gap-2">
+                  <button type="button" onClick={() => void saveNavidrome()} disabled={saving} className="flex-1 rounded-lg bg-denon-gold px-3 py-2 text-sm font-medium text-denon-dark hover:brightness-110 disabled:opacity-50">{saving ? 'Saving...' : 'Save'}</button>
+                  <button type="button" onClick={() => void testNavidrome()} disabled={testing || !navidromeConfigured} className="flex-1 rounded-lg bg-denon-surface px-3 py-2 text-sm font-medium text-denon-text hover:bg-denon-border/70 disabled:opacity-50">{testing ? 'Testing...' : 'Test connection'}</button>
+                </div>
+              </div>}
             </div>
+
+            <div className="border-t border-denon-border/50 pt-3">
+              <button type="button" onClick={() => toggleSection('receiver')} className="flex w-full items-center justify-between py-2 text-left">
+                <span><span className="block text-sm font-medium text-denon-text">Receiver</span><span className="mt-1 block text-xs text-denon-muted">Network address and control ports</span></span>
+                <span className="text-denon-muted" aria-hidden="true">{expanded.receiver ? '▲' : '▼'}</span>
+              </button>
+              {expanded.receiver && <div className="space-y-3 pt-3">
+                <label className="block text-xs text-denon-muted">Receiver IP<input value={receiverHost} onChange={event => setReceiverHost(event.target.value)} placeholder="Empty for auto-discovery" className="mt-1 w-full rounded-lg border border-denon-border bg-denon-surface px-3 py-2 font-mono text-sm text-denon-text outline-none focus:border-denon-gold" /></label>
+                <div className="grid grid-cols-2 gap-2">
+                  <label className="block text-xs text-denon-muted">Telnet port<input type="number" min="1" max="65535" value={telnetPort} onChange={event => setTelnetPort(Number(event.target.value))} className="mt-1 w-full rounded-lg border border-denon-border bg-denon-surface px-3 py-2 text-sm text-denon-text outline-none focus:border-denon-gold" /></label>
+                  <label className="block text-xs text-denon-muted">HEOS port<input type="number" min="1" max="65535" value={heosPort} onChange={event => setHeosPort(Number(event.target.value))} className="mt-1 w-full rounded-lg border border-denon-border bg-denon-surface px-3 py-2 text-sm text-denon-text outline-none focus:border-denon-gold" /></label>
+                </div>
+                <button type="button" onClick={() => void saveReceiver()} disabled={saving} className="w-full rounded-lg bg-denon-gold px-3 py-2 text-sm font-medium text-denon-dark hover:brightness-110 disabled:opacity-50">{saving ? 'Saving...' : 'Save receiver settings'}</button>
+              </div>}
+            </div>
+
+            <div className="border-t border-denon-border/50 pt-3">
+              <button type="button" onClick={() => toggleSection('heos')} className="flex w-full items-center justify-between py-2 text-left">
+                <span><span className="block text-sm font-medium text-denon-text">HEOS</span><span className="mt-1 block text-xs text-denon-muted">Network source visibility</span></span>
+                <span className="text-denon-muted" aria-hidden="true">{expanded.heos ? '▲' : '▼'}</span>
+              </button>
+              {expanded.heos && <div className="pt-3">
+                <div className="mb-3 rounded-lg bg-denon-surface px-3 py-2.5 text-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="text-denon-muted">HEOS account</span>
+                    <span className={heosAccount ? 'text-denon-green' : heosAccount === null ? 'text-denon-muted' : 'text-denon-red'}>{heosAccount === null ? 'Checking...' : heosAccount ? 'Signed in' : 'Not signed in'}</span>
+                  </div>
+                  {heosAccountName && <p className="mt-1 truncate text-xs text-denon-text">{heosAccountName}</p>}
+                </div>
+                <label className="flex items-center justify-between rounded-lg bg-denon-surface px-3 py-2.5 text-sm text-denon-text">Show HEOS sources<input type="checkbox" checked={heosSources} onChange={event => setHeosSources(event.target.checked)} className="h-4 w-4 accent-[var(--accent)]" /></label>
+                <p className="mt-2 text-xs leading-relaxed text-denon-muted">HEOS uses the port configured under Receiver. Sign in to your HEOS account in the HEOS app on the same network; the receiver then makes the account available here. Login credentials are not sent through the dashboard.</p>
+                <button type="button" onClick={() => void saveReceiver()} disabled={saving} className="mt-3 w-full rounded-lg bg-denon-gold px-3 py-2 text-sm font-medium text-denon-dark hover:brightness-110 disabled:opacity-50">{saving ? 'Saving...' : 'Save HEOS settings'}</button>
+              </div>}
+            </div>
+            {setupMessage && <p className="mt-3 text-xs text-denon-green">{setupMessage}</p>}
+            {setupError && <p className="mt-3 text-xs text-denon-red">{setupError}</p>}
             <button type="button" onClick={() => setOpen(false)} className="mt-5 w-full rounded-xl bg-denon-surface px-4 py-2 text-sm font-medium text-denon-text hover:bg-denon-border/70">Close</button>
           </div>
         </div>,

@@ -49,3 +49,26 @@ def save_navidrome_settings(url: str, username: str, password: str | None) -> No
         "password": previous["password"] if password in (None, "") else password,
     }
     _save(current)
+
+
+def receiver_settings() -> dict[str, Any]:
+    persisted = _load().get("receiver", {})
+    if not isinstance(persisted, dict):
+        persisted = {}
+    return {
+        "host": str(persisted.get("host", settings.denon_host)),
+        "telnet_port": int(persisted.get("telnet_port", settings.denon_telnet_port)),
+        "heos_port": int(persisted.get("heos_port", settings.denon_heos_port)),
+        "heos_sources": bool(persisted.get("heos_sources", settings.heos_sources)),
+    }
+
+
+def save_receiver_settings(host: str, telnet_port: int, heos_port: int, heos_sources: bool) -> None:
+    current = _load()
+    current["receiver"] = {
+        "host": host.strip(),
+        "telnet_port": telnet_port,
+        "heos_port": heos_port,
+        "heos_sources": heos_sources,
+    }
+    _save(current)

@@ -16,6 +16,7 @@ from config import settings
 from denon.const import CHANNEL_NAMES, DEFAULT_SOURCES
 from denon.heos_client import HeosClient
 from denon.telnet_client import DenonTelnetClient
+from integration_settings import receiver_settings
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -636,7 +637,8 @@ class AppState:
             if self.heos:
                 await self.heos.disconnect()
 
-            telnet_client = DenonTelnetClient(host, settings.denon_telnet_port)
+            configured = receiver_settings()
+            telnet_client = DenonTelnetClient(host, configured["telnet_port"])
 
             async def _on_state_change(state: dict[str, Any]) -> None:
                 await self.broadcast_state()
@@ -645,13 +647,13 @@ class AppState:
 
             try:
                 await telnet_client.connect()
-                _LOGGER.info("Telnet connected to %s:%s", host, settings.denon_telnet_port)
+                _LOGGER.info("Telnet connected to %s:%s", host, configured["telnet_port"])
             except Exception as exc:
                 _LOGGER.error(
                     "Initial telnet connection failed: %s (will retry in background)", exc
                 )
 
-            heos_client = HeosClient(host, settings.denon_heos_port)
+            heos_client = HeosClient(host, configured["heos_port"])
             heos_client.on_event(self._on_heos_event)
             
             try:

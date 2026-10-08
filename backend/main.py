@@ -20,6 +20,7 @@ from denon.discovery import discover_receivers
 from night_mode import reconcile_night_mode_schedule
 from routes import power, volume, audio, zone2, zone3, media, status
 from state import app_state
+from integration_settings import receiver_settings
 
 # ---- Logging ----
 logging.basicConfig(
@@ -110,7 +111,12 @@ async def lifespan(app: FastAPI):
     bg_task: asyncio.Task | None = None
     night_mode_task: asyncio.Task | None = asyncio.create_task(_night_mode_scheduler())
 
-    host = settings.denon_host
+    configured_receiver = receiver_settings()
+    host = configured_receiver["host"]
+    settings.denon_host = host
+    settings.denon_telnet_port = configured_receiver["telnet_port"]
+    settings.denon_heos_port = configured_receiver["heos_port"]
+    settings.heos_sources = configured_receiver["heos_sources"]
     if settings.demo_mode:
         _LOGGER.info("Demo mode enabled — using mock receiver (no real AVR needed)")
         await app_state.start_demo()

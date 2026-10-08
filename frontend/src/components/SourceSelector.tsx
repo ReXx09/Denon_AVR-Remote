@@ -184,7 +184,7 @@ export default function SourceSelector({
       : [...baseSources, { id: 'SERVER', name: 'Server' }]
   })()
 
-  const getName = (code: string) => sourceNameMap?.[code] || availableSources.find(source => source.id === code)?.name || DEFAULT_SOURCES[code] || code
+  const getName = (code: string) => sourceNameOverrides?.[code] || sourceNameMap?.[code] || availableSources.find(source => source.id === code)?.name || DEFAULT_SOURCES[code] || code
   const getSelectorName = (code: string) => SELECTOR_NAMES[code] || DEFAULT_SOURCES[code] || code
   const uniqueSources = availableSources.filter((source, index, allSources) => {
     const name = getName(source.id).trim().toLocaleLowerCase()
@@ -282,9 +282,7 @@ export default function SourceSelector({
   // Backend resolves the actual HEOS service (Spotify, TuneIn, etc.) when source=NET
   const backendDisplayName = zone === 'main' ? state?.source_name : zone === 'zone2' ? state?.z2_source_name : state?.z3_source_name
   const activeSource = heosServiceCode || current
-  const activeDisplayName = activeSource === 'IRADIO'
-    ? 'IRADIO'
-    : activeSource === 'BT'
+  const activeDisplayName = activeSource === 'BT'
       ? 'Bluetooth'
       : (current ? sourceNameOverrides?.[current] : undefined) || backendDisplayName || (current ? getName(current) : '')
   return (
@@ -312,7 +310,7 @@ export default function SourceSelector({
         {activeSource && (
           <span className="text-xs text-denon-gold font-medium flex items-center gap-1">
             <span className="text-base">{getIcon(activeSource, activeDisplayName)}</span>
-            {activeSource === 'IRADIO' ? 'IRADIO' : activeSource === 'BT' ? 'Bluetooth' : getSelectorName(activeSource)}
+            {activeSource === 'BT' ? 'Bluetooth' : getName(activeSource)}
             {(heosServiceCode || activeSource === 'NET') && (
               <span className="ml-1 rounded-full bg-denon-green/10 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-denon-green">
                 HEOS
