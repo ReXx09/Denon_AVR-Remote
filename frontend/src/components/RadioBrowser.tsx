@@ -679,13 +679,14 @@ export default function RadioBrowser({ open, onClose, favorites = [], onFavorite
           )}
 
           {!loading && !error && displayItems.length > 0 && (
-            <div className={isTopLevel ? 'grid grid-cols-3 gap-2 sm:gap-3' : 'space-y-1'}>
+            <div className={isTopLevel || currentCid === '__heos_favorites__' ? 'grid grid-cols-3 gap-2 sm:gap-3' : 'space-y-1'}>
               {displayItems.map((item, idx) => {
                 const label = decodeLabel(item.name)
                 const isContainer = item.container === 'yes'
                 const isPlaying = playingMid === item.mid
                 const fav = isFavorite(item)
                 const img = safeImageUrl(item.image_url)
+                const isHeosPreset = currentCid === '__heos_favorites__'
 
                 if (isTopLevel && !isSearching && isContainer) {
                   // Category card layout
@@ -699,6 +700,43 @@ export default function RadioBrowser({ open, onClose, favorites = [], onFavorite
                     >
                       <span className="text-2xl">{CATEGORY_ICONS[item.name] || CATEGORY_ICONS[label] || '📁'}</span>
                       <span className="text-xs font-medium text-center leading-tight">{label}</span>
+                    </button>
+                  )
+                }
+
+                if (isHeosPreset) {
+                  return (
+                    <button
+                      key={item.mid || item.cid || idx}
+                      onClick={() => handleItemClick(item)}
+                      className={`group relative flex min-w-0 flex-col rounded-xl border p-2 text-left transition-all
+                        ${isPlaying
+                          ? 'border-denon-gold bg-denon-gold/10 ring-1 ring-denon-gold/30'
+                          : 'border-denon-border/70 bg-denon-surface/45 hover:border-denon-gold/60 hover:bg-denon-surface active:scale-[.98]'
+                        }`}
+                    >
+                      <span className="relative mb-2 flex aspect-square w-full items-center justify-center overflow-hidden rounded-lg bg-denon-dark">
+                        {img ? (
+                          <img src={img} alt="" className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105" />
+                        ) : (
+                          <span className="text-3xl text-denon-muted" aria-hidden="true">♫</span>
+                        )}
+                        <span className="absolute bottom-1 left-1 rounded bg-black/65 px-1.5 py-0.5 text-[10px] font-semibold text-denon-gold">
+                          #{idx + 1}
+                        </span>
+                      </span>
+                      <span className="flex min-w-0 items-center gap-1">
+                        <span className="min-w-0 flex-1 truncate text-sm font-medium text-denon-text group-hover:text-denon-gold">{label}</span>
+                        {item.playable === 'yes' && item.mid && (
+                          <span
+                            onClick={(e) => { e.stopPropagation(); void toggleFavorite(item) }}
+                            className={`shrink-0 text-sm ${fav ? 'text-denon-gold' : 'text-denon-muted hover:text-denon-gold'}`}
+                            title={fav ? 'Remove favorite' : 'Add favorite'}
+                          >
+                            {fav ? '★' : '☆'}
+                          </span>
+                        )}
+                      </span>
                     </button>
                   )
                 }

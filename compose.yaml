@@ -32,8 +32,9 @@ services:
     environment:
       # ── Discovery ────────────────────────────────────────────────────────────
       # Leave empty for automatic SSDP discovery (requires network_mode: host).
-      # Set to your receiver's IP if using bridge mode or auto-discovery doesn't work.
-      - DENON_DASHBOARD_DENON_HOST=192.168.8.180
+      # Set DENON_DASHBOARD_DENON_HOST in .env if using bridge mode or
+      # auto-discovery does not work. Leave empty for automatic discovery.
+      - DENON_DASHBOARD_DENON_HOST=${DENON_DASHBOARD_DENON_HOST:-}
       # AVR control and HEOS media integration ports.
       - DENON_DASHBOARD_DENON_TELNET_PORT=23
       - DENON_DASHBOARD_DENON_HEOS_PORT=1255

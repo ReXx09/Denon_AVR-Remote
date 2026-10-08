@@ -264,27 +264,32 @@ export default function MediaControls({
       {heosPresets.length > 0 && (
         <div className="mt-3 border-t border-denon-border/50 pt-3">
           <p className="mb-2 text-[10px] uppercase tracking-wider text-denon-muted">HEOS Presets</p>
-          <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
-            {heosPresets.map(preset => (
+          <div className="flex gap-3 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+            {heosPresets.map((preset, index) => (
               <button
                 key={`${preset.sid}-${preset.mid}`}
                 type="button"
                 onClick={() => void playPreset(preset)}
-                className="flex min-w-40 max-w-52 shrink-0 items-center gap-2 rounded-lg bg-denon-surface/70 px-2.5 py-2 text-left text-xs text-denon-text transition-colors hover:bg-denon-surface hover:text-denon-gold"
+                className="group flex w-28 shrink-0 flex-col rounded-xl border border-denon-border/70 bg-denon-surface/45 p-2 text-left transition-all hover:border-denon-gold/60 hover:bg-denon-surface hover:shadow-lg hover:shadow-black/20 active:scale-[.98]"
                 title={preset.station || preset.name}
               >
-                {safeImageUrl(preset.image_url) ? (
-                  <img
-                    src={safeImageUrl(preset.image_url) || undefined}
-                    alt=""
-                    className="h-8 w-8 shrink-0 rounded-md object-cover"
-                  />
-                ) : (
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-denon-dark text-sm" aria-hidden="true">📻</span>
-                )}
-                <span className="min-w-0">
-                  <span className="block truncate font-medium">{preset.name}</span>
-                  {preset.station && <span className="block truncate text-[10px] text-denon-muted">{preset.station}</span>}
+                <span className="relative mb-1.5 flex aspect-square w-full items-center justify-center overflow-hidden rounded-lg bg-denon-dark">
+                  {safeImageUrl(preset.image_url) ? (
+                    <img
+                      src={safeImageUrl(preset.image_url) || undefined}
+                      alt=""
+                      className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
+                    />
+                  ) : (
+                    <span className="text-3xl text-denon-muted" aria-hidden="true">♫</span>
+                  )}
+                  <span className="absolute bottom-1 left-1 rounded bg-black/65 px-1.5 py-0.5 text-[10px] font-semibold text-denon-gold">
+                    #{index + 1}
+                  </span>
+                </span>
+                <span className="min-w-0 px-0.5">
+                  <span className="block truncate text-xs font-medium text-denon-text group-hover:text-denon-gold">{preset.name}</span>
+                  {preset.station && preset.station !== preset.name && <span className="block truncate text-[10px] text-denon-muted">{preset.station}</span>}
                 </span>
               </button>
             ))}

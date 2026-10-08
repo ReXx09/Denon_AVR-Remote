@@ -65,7 +65,17 @@ Browser  ◄──WebSocket──►  FastAPI Backend  ──telnet (23)──�
 
 ## Quick Start (Docker)
 
-### 1. Create `compose.yaml`
+### 1. Create the local configuration
+
+Copy `.env.example` to `.env` and adjust the values for your receiver. The `.env`
+file is ignored by Git and must not be committed. In bridge networking mode,
+set `DENON_DASHBOARD_DENON_HOST` to the receiver's local IP; leave it empty when
+using host networking and SSDP discovery.
+
+### 2. Start with the repository Compose file
+
+The repository's `compose.yaml` contains only shareable defaults and reads local
+values from `.env` through Docker Compose variable substitution.
 
 ```yaml
 services:
@@ -79,7 +89,7 @@ services:
       #- DENON_DASHBOARD_PORT=8080    # change if port 8080 is taken on your host
 ```
 
-### 2. Start
+  ### 3. Start
 
 ```bash
 docker compose up -d

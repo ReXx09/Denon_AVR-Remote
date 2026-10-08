@@ -10,17 +10,18 @@ from api.models import RadioFavoriteRequest
 
 from state import AppState, app_state
 from dependencies import get_app_state
-from config import settings
 from denon.navidrome_client import NavidromeClient
+from integration_settings import navidrome_settings, save_navidrome_settings
 
 router = APIRouter(prefix="/api/v1/media", tags=["media"])
 
 
 def _navidrome() -> NavidromeClient:
+    configured = navidrome_settings()
     return NavidromeClient(
-        settings.navidrome_url,
-        settings.navidrome_username,
-        settings.navidrome_password,
+        configured["url"],
+        configured["username"],
+        configured["password"],
     )
 
 
@@ -28,6 +29,42 @@ def _navidrome() -> NavidromeClient:
 async def navidrome_status():
     client = _navidrome()
     return {"configured": client.configured, "url": client.base_url if client.configured else None}
+
+
+class NavidromeSettingsRequest(BaseModel):
+    url: str = Field(default="", max_length=500)
+    username: str = Field(default="", max_length=200)
+    password: str | None = Field(default=None, max_length=500)
+
+
+@router.get("/navidrome/settings")
+async def navidrome_settings_view():
+    configured = navidrome_settings()
+    return {
+        "url": configured["url"],
+        "username": configured["username"],
+        "has_password": bool(configured["password"]),
+    }
+
+
+@router.post("/navidrome/settings")
+async def navidrome_settings_update(req: NavidromeSettingsRequest):
+    if req.url and not req.url.startswith(("http://", "https://")):
+        raise HTTPException(400, "Navidrome URL must start with http:// or https://")
+    save_navidrome_settings(req.url, req.username, req.password)
+    client = _navidrome()
+    return {"ok": True, "configured": client.configured, "restart_required": False}
+
+
+@router.post("/navidrome/test")
+async def navidrome_test():
+    try:
+        await _navidrome().indexes()
+        return {"ok": True}
+    except RuntimeError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    except httpx.HTTPError as exc:
+        raise HTTPException(502, "Navidrome is unreachable") from exc
 
 
 @router.get("/navidrome/indexes")
