@@ -250,6 +250,43 @@ async def _cache_browse(state: AppState, cid: str | None = None) -> dict:
     return result
 
 
+def _add_cached_station_images(result: dict) -> dict:
+    """Fill missing HEOS preset artwork from cached TuneIn station entries."""
+    items = result.get("items") or []
+    if not items:
+        return result
+
+    images_by_mid: dict[str, str] = {}
+    images_by_name: dict[str, str] = {}
+    for _, (_, cached) in _BROWSE_CACHE.items():
+        for station in cached.get("items", []):
+            image_url = station.get("image_url")
+            if not image_url:
+                continue
+            station_mid = station.get("mid")
+            if station_mid:
+                images_by_mid[str(station_mid)] = image_url
+            for name in (station.get("name"), station.get("station")):
+                if name:
+                    images_by_name[str(name).strip().casefold()] = image_url
+
+    enriched = []
+    for item in items:
+        if item.get("image_url"):
+            enriched.append(item)
+            continue
+        image_url = images_by_mid.get(str(item.get("mid", "")))
+        if not image_url:
+            for name in (item.get("name"), item.get("station")):
+                if name:
+                    image_url = images_by_name.get(str(name).strip().casefold())
+                    if image_url:
+                        break
+        enriched.append({**item, "image_url": image_url} if image_url else item)
+
+    return {**result, "items": enriched}
+
+
 async def preload_radio_stations() -> None:
     """Background task: preload Local Radio, Trending, and Music genres into cache."""
     global _preload_done
@@ -311,7 +348,7 @@ async def heos_favorites(state: AppState = Depends(get_app_state)):
     """Read presets saved on the receiver through the HEOS Favorites source."""
     if not state.heos:
         raise HTTPException(503, "HEOS not connected")
-    return await state.heos.browse_source(1028)
+    return _add_cached_station_images(await state.heos.browse_source(1028))
 
 
 @router.get("/heos/services")
