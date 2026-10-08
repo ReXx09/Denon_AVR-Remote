@@ -1,23 +1,20 @@
 import { useState } from 'react'
 import ThemePicker from './ThemePicker'
-import NightModeButton from './NightModeButton'
-import type { ReceiverState, DeviceInfo, PostFn, ThemeName } from '../types'
-import type { NightModeConfigState } from './NightModeModal'
+import SetupMenu from './SetupMenu'
+import type { ReceiverState, DeviceInfo, ThemeName } from '../types'
 
 interface Props {
   deviceName?: string
   state: ReceiverState | null | undefined
   info: DeviceInfo | null | undefined
-  post: PostFn
   wsConnected: boolean
   wsConnecting: boolean
   receiverIp?: string | null
   currentTheme: ThemeName
   onThemeChange: (name: ThemeName) => void
-  onNightModeConfigChange?: (config: NightModeConfigState) => void | Promise<void>
 }
 
-export default function StatusBar({ deviceName, state, info, post, wsConnected, wsConnecting, receiverIp, currentTheme, onThemeChange, onNightModeConfigChange }: Props) {
+export default function StatusBar({ deviceName, state, info, wsConnected, wsConnecting, receiverIp, currentTheme, onThemeChange }: Props) {
   const [expanded, setExpanded] = useState(false)
   const telnetOk = state?.connected
   const power = state?.power
@@ -48,7 +45,7 @@ export default function StatusBar({ deviceName, state, info, post, wsConnected, 
             {telnetOk ? (wsConnected ? 'Connected' : wsConnecting ? 'Connecting' : 'Connected') : 'Disconnected'}
             <svg className={`w-3 h-3 transition-transform ${expanded ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9l6 6 6-6"/></svg>
           </button>
-          <NightModeButton state={state} info={info} post={post} onConfigChange={onNightModeConfigChange} />
+          <SetupMenu state={state} info={info} />
           <ThemePicker currentTheme={currentTheme} onThemeChange={onThemeChange} />
         </div>
       </div>

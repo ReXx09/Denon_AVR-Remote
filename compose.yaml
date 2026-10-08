@@ -25,28 +25,35 @@ services:
     tmpfs:
       - /tmp
 
+    # Persist source names, favorites, profiles, and UI settings.
+    volumes:
+      - denon-dashboard-data:/data
+
     environment:
       # ── Discovery ────────────────────────────────────────────────────────────
       # Leave empty for automatic SSDP discovery (requires network_mode: host).
       # Set to your receiver's IP if using bridge mode or auto-discovery doesn't work.
-      - DENON_DASHBOARD_DENON_HOST=${DENON_DASHBOARD_DENON_HOST:-}
+      - DENON_DASHBOARD_DENON_HOST=192.168.8.180
+      # AVR control and HEOS media integration ports.
+      - DENON_DASHBOARD_DENON_TELNET_PORT=23
+      - DENON_DASHBOARD_DENON_HEOS_PORT=1255
+      - DENON_DASHBOARD_HEOS_SOURCES=true
 
       # ── Port ─────────────────────────────────────────────────────────────────
       # Dashboard port (default 8080). Change if 8080 is taken on your host.
       #- DENON_DASHBOARD_PORT=8080
 
       # ── Optional ─────────────────────────────────────────────────────────────
-      #- DENON_DASHBOARD_DENON_TELNET_PORT=23
       #- DENON_DASHBOARD_DENON_DEVICE_NAME=My Receiver
       #- DENON_DASHBOARD_DENON_ZONE1_NAME=Main Zone
       #- DENON_DASHBOARD_DENON_ZONE2_NAME=Zone 2
       #- DENON_DASHBOARD_DENON_SOURCE_NAMES={"GAME":"Game Console","TV":"TV Audio","NET":"Streaming","BD":"Blu-ray","BT":"Bluetooth"}
       #- DENON_DASHBOARD_LOG_LEVEL=INFO
       # ── Optional direct Navidrome integration ──────────────────────────────
-      # Set these in the host .env file, not directly in this compose file.
-      #- DENON_DASHBOARD_NAVIDROME_URL=http://192.168.8.100:4533
-      #- DENON_DASHBOARD_NAVIDROME_USERNAME=dashboard
-      #- DENON_DASHBOARD_NAVIDROME_PASSWORD=change-me
+      # Put the actual values in the host .env file next to this compose file.
+      - DENON_DASHBOARD_NAVIDROME_URL=${DENON_DASHBOARD_NAVIDROME_URL:-}
+      - DENON_DASHBOARD_NAVIDROME_USERNAME=${DENON_DASHBOARD_NAVIDROME_USERNAME:-}
+      - DENON_DASHBOARD_NAVIDROME_PASSWORD=${DENON_DASHBOARD_NAVIDROME_PASSWORD:-}
 
       # ── Demo mode ────────────────────────────────────────────────────────────
       # Serve a fully simulated AVR with no physical receiver — the whole UI
@@ -68,3 +75,6 @@ services:
 #networks:
 #  traefik_proxy:
 #    external: true
+
+volumes:
+  denon-dashboard-data:

@@ -26,7 +26,6 @@ import AmbientBackground from './experience/AmbientBackground'
 import SeasonalEffects from './experience/SeasonalEffects'
 import ShortcutOverlay from './experience/ShortcutOverlay'
 import type { Zone, ThemeName, UiEffects, RadioFavorite } from './types'
-import type { NightModeConfigState } from './components/NightModeModal'
 
 type Section = 'controls' | 'audio' | 'profiles' | 'heos'
 
@@ -149,16 +148,6 @@ export default function App() {
   const radioFavorites = info?.radio_favorites || []
   const uiEffects: Partial<UiEffects> = info?.ui_effects || {}
 
-  const saveNightModeConfig = async (config: NightModeConfigState): Promise<void> => {
-    const res = await fetch('/api/v1/night-mode/config', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(config),
-    })
-    if (res.ok) reloadDeviceInfo()
-    else console.warn('Night mode config save failed', await res.text().catch(() => res.statusText))
-  }
-
   const saveRadioFavorite = async (favorite: RadioFavorite, enabled: boolean): Promise<void> => {
     const res = enabled
       ? await fetch('/api/v1/media/radio/favorites', {
@@ -236,10 +225,8 @@ export default function App() {
         wsConnecting={wsConnecting}
         receiverIp={info?.receiver_ip}
         info={info}
-        post={post}
         currentTheme={currentTheme}
         onThemeChange={setCurrentTheme}
-        onNightModeConfigChange={saveNightModeConfig}
       />
 
       {/* Zone Selector (desktop; mobile uses the bottom nav) */}
