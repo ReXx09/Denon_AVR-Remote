@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { DeviceInfo, ReceiverState } from '../types'
+import { useLanguage, type Language } from '../language'
 
 interface Props {
   state: ReceiverState | null | undefined
@@ -18,6 +19,7 @@ function isValidPort(port: number): boolean {
 }
 
 export default function SetupMenu({ state, info }: Props) {
+  const { language, setLanguage, t } = useLanguage()
   const [open, setOpen] = useState(false)
   const [navidromeConfigured, setNavidromeConfigured] = useState<boolean | null>(null)
   const [musicServerName, setMusicServerName] = useState('Music server')
@@ -163,6 +165,19 @@ export default function SetupMenu({ state, info }: Props) {
     setExpanded(current => ({ ...current, [section]: !current[section] }))
   }
 
+  const changeLanguage = async (next: Language) => {
+    setLanguage(next)
+    try {
+      await fetch('/api/v1/ui-settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ language: next }),
+      })
+    } catch {
+      setSetupError('Could not save language setting')
+    }
+  }
+
   const navidromeHasValues = Boolean(navidromeUrl.trim() || navidromeUsername.trim() || navidromePassword)
   const navidromeValidation = navidromeHasValues
     ? !/^https?:\/\//i.test(navidromeUrl.trim())
@@ -196,8 +211,8 @@ export default function SetupMenu({ state, info }: Props) {
           <div className="w-full max-w-md rounded-2xl border border-denon-border bg-denon-card p-5 shadow-2xl">
             <div className="mb-5 flex items-center justify-between">
               <div>
-                <h2 id="setup-title" className="text-base font-semibold text-denon-text">Setup</h2>
-                <p className="mt-1 text-xs text-denon-muted">Connections and optional services</p>
+                <h2 id="setup-title" className="text-base font-semibold text-denon-text">{t('setupTitle')}</h2>
+                <p className="mt-1 text-xs text-denon-muted">{t('connectionsServices')}</p>
               </div>
               <button type="button" onClick={() => setOpen(false)} className="h-8 w-8 rounded-lg text-denon-muted hover:bg-denon-surface hover:text-denon-text" aria-label="Close setup">×</button>
             </div>
@@ -221,6 +236,18 @@ export default function SetupMenu({ state, info }: Props) {
                 <span className="text-denon-muted">Receiver IP</span>
                 <span className="font-mono text-xs text-denon-text">{info?.receiver_ip || '—'}</span>
               </div>
+              <label className="flex items-center justify-between rounded-xl bg-denon-surface/60 px-3 py-2.5 text-denon-muted">
+                <span>{t('language')}</span>
+                <select
+                  value={language}
+                  onChange={event => void changeLanguage(event.target.value as Language)}
+                  className="rounded-md bg-denon-surface px-2 py-1 text-xs text-denon-text"
+                  aria-label={t('language')}
+                >
+                  <option value="de">{t('german')}</option>
+                  <option value="en">{t('english')}</option>
+                </select>
+              </label>
             </div>
 
             <div className="mt-5 border-t border-denon-border/50 pt-3">

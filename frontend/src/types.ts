@@ -139,6 +139,7 @@ export interface DeviceInfo {
   channel_names?: Record<string, string>
   receiver_ip?: string | null
   theme?: ThemeName
+  language?: 'de' | 'en'
   ui_effects?: UiEffects
   time_settings?: TimeSettings
   night_mode_config?: NightModeConfig

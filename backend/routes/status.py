@@ -241,6 +241,7 @@ async def device_info(state: AppState = Depends(get_app_state)):
         channel_names=active_channels,
         receiver_ip=settings.denon_host,
         theme=persisted_theme or settings.theme,
+        language=state.ui_settings.get("language", "en") if state.ui_settings.get("language") in ("de", "en") else "en",
         ui_effects=UiEffectsResponse(
             ambient_background=settings.ui_ambient_background,
             seasonal_effects=settings.ui_seasonal_effects,
@@ -310,6 +311,8 @@ async def set_ui_settings(req: UiSettingsRequest, state: AppState = Depends(get_
         if req.theme not in allowed_themes:
             raise HTTPException(400, "Invalid theme")
         updates["theme"] = req.theme
+    if req.language is not None:
+        updates["language"] = req.language
     state.update_ui_settings(updates)
     # Push the new theme to every connected client so theme changes sync live
     # across devices (theme is part of the broadcast state payload).

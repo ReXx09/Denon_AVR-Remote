@@ -247,10 +247,12 @@ class TimeSettingsResponse(BaseModel):
 
 class UiSettingsResponse(BaseModel):
     theme: str | None = None
+    language: Literal["de", "en"] = "en"
 
 
 class UiSettingsRequest(BaseModel):
     theme: str | None = None
+    language: Literal["de", "en"] | None = None
 
 
 class UiEffectsResponse(BaseModel):
@@ -282,6 +284,7 @@ class DeviceInfoResponse(BaseModel):
     channel_names: dict[str, str] = {}
     receiver_ip: str | None = None
     theme: str = "gold"
+    language: Literal["de", "en"] = "en"
     ui_effects: UiEffectsResponse = UiEffectsResponse()
     time_settings: TimeSettingsResponse = TimeSettingsResponse()
     night_mode_config: dict[str, Any] = {"channels": []}

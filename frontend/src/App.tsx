@@ -26,6 +26,7 @@ import AmbientBackground from './experience/AmbientBackground'
 import SeasonalEffects from './experience/SeasonalEffects'
 import ShortcutOverlay from './experience/ShortcutOverlay'
 import type { Zone, ThemeName, UiEffects, RadioFavorite } from './types'
+import { useLanguage } from './language'
 
 type Section = 'controls' | 'audio' | 'profiles' | 'heos'
 
@@ -60,6 +61,7 @@ const MemoStatusBar = memo(StatusBar)
 const MemoMediaControls = memo(MediaControls)
 
 export default function App() {
+  const { t, setLanguage } = useLanguage()
   const { state, wsConnected, wsConnecting, sendCommand } = useWebSocket()
   const { info, reload: reloadDeviceInfo } = useDeviceInfo()
   const { post } = useApi()
@@ -89,13 +91,17 @@ export default function App() {
     setCurrentTheme(t)
   }, [state?.theme])
 
+  useEffect(() => {
+    if (info?.language) setLanguage(info.language)
+  }, [info?.language, setLanguage])
+
   // Loading — waiting for first WebSocket message
   if (!state) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-denon-dark">
         <div className="text-center">
           <div className="w-14 h-14 border-4 border-denon-gold/30 border-t-denon-gold rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-denon-muted text-sm">Connecting…</p>
+          <p className="text-denon-muted text-sm">{t('connecting')}</p>
           <p className="text-denon-muted/50 text-xs mt-2">If this stays here, hard refresh once to clear old cached app files.</p>
         </div>
       </div>
@@ -113,8 +119,8 @@ export default function App() {
             </svg>
           </div>
           <div>
-            <p className="text-denon-text font-semibold">Searching for receiver…</p>
-            <p className="text-denon-muted text-sm mt-1">Scanning your network for Denon / Marantz AVRs</p>
+            <p className="text-denon-text font-semibold">{t('searchingReceiver')}</p>
+            <p className="text-denon-muted text-sm mt-1">{t('scanningNetwork')}</p>
           </div>
           <div className="flex justify-center gap-1.5 pt-1">
             {[0, 1, 2].map(i => (
@@ -202,10 +208,10 @@ export default function App() {
   }
 
   const mainSections: { id: Section; label: string }[] = [
-    { id: 'controls', label: 'Controls' },
-    { id: 'audio', label: 'Audio' },
-    { id: 'profiles', label: 'Profiles' },
-    { id: 'heos', label: 'HEOS' },
+    { id: 'controls', label: t('controls') },
+    { id: 'audio', label: t('audio') },
+    { id: 'profiles', label: t('profiles') },
+    { id: 'heos', label: t('heos') },
   ]
 
   return (
