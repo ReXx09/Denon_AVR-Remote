@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { ReceiverState, SourceEntry } from '../types'
+import { useLanguage } from '../language'
 
 interface SourceProfile {
   surround_mode?: string
@@ -35,6 +36,7 @@ const toDb = (value: number | undefined, zero = 50): string => {
 }
 
 export default function InputProfiles({ sources, state, channelNames }: Props) {
+  const { language, t } = useLanguage()
   const [selectedSource, setSelectedSource] = useState(state.source || sources[0]?.id || '')
   const [profiles, setProfiles] = useState<Record<string, SourceProfile>>({})
   const [message, setMessage] = useState('')
@@ -115,8 +117,8 @@ export default function InputProfiles({ sources, state, channelNames }: Props) {
     <div className="card">
       <div className="flex items-center justify-between mb-3">
         <div>
-          <h2 className="text-xs font-medium text-denon-muted uppercase tracking-wider">Input Profiles</h2>
-          <p className="text-[10px] text-denon-muted/60 mt-1">Configure each input without switching the AVR</p>
+          <h2 className="text-xs font-medium text-denon-muted uppercase tracking-wider">{t('profiles')}</h2>
+          <p className="text-[10px] text-denon-muted/60 mt-1">{language === 'de' ? 'Jeden Eingang konfigurieren, ohne den AVR umzuschalten' : 'Configure each input without switching the AVR'}</p>
         </div>
         <span className="text-[10px] text-denon-muted">{selectedName}</span>
       </div>

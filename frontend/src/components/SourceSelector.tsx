@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import RadioBrowser from './RadioBrowser'
 import type { ReceiverState, SendCommandFn, SourceEntry, RadioFavorite, Zone } from '../types'
+import { useLanguage } from '../language'
 
 const RadioTowerIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"
@@ -157,6 +158,7 @@ export default function SourceSelector({
   onRadioFavoriteChange,
   zone = 'main',
 }: Props) {
+  const { tr } = useLanguage()
   const current = zone === 'main' ? state?.source : zone === 'zone2' ? state?.z2_source : state?.z3_source
   const prefix = zone === 'main' ? 'SI' : zone === 'zone2' ? 'Z2' : 'Z3'
   const getSourceCommand = (sourceCode: string) => `${prefix}${sourceCode === 'IRADIO' ? 'NET' : sourceCode}`
@@ -293,7 +295,7 @@ export default function SourceSelector({
     <div className="card">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <h2 className="text-xs font-medium text-denon-muted uppercase tracking-wider">Input Source</h2>
+          <h2 className="text-xs font-medium text-denon-muted uppercase tracking-wider">{tr('Input Source')}</h2>
           <button
             onClick={() => { setEditMode(v => !v); setEditingCode(null) }}
             className={`text-xs transition-colors ${editMode ? 'text-denon-gold' : 'text-denon-muted hover:text-denon-text'}`}
@@ -482,7 +484,7 @@ export default function SourceSelector({
       </div>}
 
       {visibleSources.length === 0 && (
-        <p className="py-4 text-center text-xs text-denon-muted">No sources in this category</p>
+        <p className="py-4 text-center text-xs text-denon-muted">{tr('No sources in this category')}</p>
       )}
 
       {configOpen && createPortal(
@@ -493,7 +495,7 @@ export default function SourceSelector({
                 <h3 id="source-config-title" className="text-sm font-semibold text-denon-text">Input Source Config</h3>
                 <p className="mt-1 text-[10px] text-denon-muted">Inputs deaktivieren, die nicht angezeigt werden sollen.</p>
               </div>
-              <button type="button" onClick={() => setConfigOpen(false)} className="text-lg text-denon-muted hover:text-denon-text" aria-label="Close">×</button>
+              <button type="button" onClick={() => setConfigOpen(false)} className="text-lg text-denon-muted hover:text-denon-text" aria-label={tr('Close')}>×</button>
             </div>
             <div className="max-h-[60vh] space-y-1 overflow-y-auto pr-1">
               {displaySources.map(source => {
@@ -513,8 +515,8 @@ export default function SourceSelector({
               })}
             </div>
             <div className="mt-4 flex justify-end gap-2 border-t border-denon-border/50 pt-3">
-              <button type="button" onClick={() => setConfigOpen(false)} className="btn-ghost px-4 py-2 text-xs">Cancel</button>
-              <button type="button" onClick={saveSourceConfig} className="btn-primary px-4 py-2 text-xs">Save</button>
+              <button type="button" onClick={() => setConfigOpen(false)} className="btn-ghost px-4 py-2 text-xs">{tr('Cancel')}</button>
+              <button type="button" onClick={saveSourceConfig} className="btn-primary px-4 py-2 text-xs">{tr('Save')}</button>
             </div>
           </div>
         </div>,

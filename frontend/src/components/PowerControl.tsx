@@ -1,4 +1,5 @@
 import type { ReceiverState, SendCommandFn, Zone } from '../types'
+import { useLanguage } from '../language'
 
 interface Props {
   state: ReceiverState
@@ -7,6 +8,7 @@ interface Props {
 }
 
 export default function PowerControl({ state, sendCommand, zone = 'main' }: Props) {
+    const { tr } = useLanguage()
   const power = zone === 'main' ? state?.power : zone === 'zone2' ? state?.z2_power : state?.z3_power
 
   // Use ZMON/ZMOFF for main zone only (PWON turns on both zones)
@@ -17,7 +19,7 @@ export default function PowerControl({ state, sendCommand, zone = 'main' }: Prop
   return (
     <div className="card flex items-center justify-between">
       <div>
-        <h2 className="text-xs font-medium text-denon-muted uppercase tracking-wider mb-1">Power</h2>
+        <h2 className="text-xs font-medium text-denon-muted uppercase tracking-wider mb-1">{tr('Power')}</h2>
         <p className="text-lg font-bold">
           {power ? 'On' : power === false ? 'Standby' : '—'}
         </p>

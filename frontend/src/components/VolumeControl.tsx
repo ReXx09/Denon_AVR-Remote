@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import type { ReceiverState, SendCommandFn, PostFn } from '../types'
+import { useLanguage } from '../language'
 
 interface Props {
   state: ReceiverState
@@ -10,6 +11,7 @@ interface Props {
 }
 
 export default function VolumeControl({ state, sendCommand, post, zone2VolumeMax, zone3VolumeMax }: Props) {
+  const { tr } = useLanguage()
   const volume = state?.volume
   const muted = state?.muted
   const volumeMax = state?.volume_max || 98
@@ -53,7 +55,7 @@ export default function VolumeControl({ state, sendCommand, post, zone2VolumeMax
       <div className="flex items-center justify-between mb-4">
         <div>
           <div className="mb-1 flex items-center gap-2">
-            <h2 className="text-xs font-medium text-denon-muted uppercase tracking-wider">Volume</h2>
+            <h2 className="text-xs font-medium text-denon-muted uppercase tracking-wider">{tr('Volume')}</h2>
             {(state.z2_power || state.z3_power) && (
               <button
                 type="button"

@@ -3,6 +3,7 @@ import RadioBrowser from './RadioBrowser'
 import ServerBrowser from './ServerBrowser'
 import NavidromeBrowser from './NavidromeBrowser'
 import type { ReceiverState, SendCommandFn, PostFn, Zone, RadioFavorite } from '../types'
+import { useLanguage } from '../language'
 
 const MEDIA_SOURCES = ['NET', 'MPLAY', 'BT', 'USB', 'USB/IPOD', 'SPOTIFY', 'AMAZON', 'PANDORA', 'SIRIUSXM', 'IRADIO', 'SERVER', 'FAVORITES']
 const HEOS_PRESET_SOURCES = new Set(['NET', 'IRADIO'])
@@ -53,6 +54,7 @@ export default function MediaControls({
   sourceFavorites = [],
   onSourceFavoriteChange,
 }: Props) {
+    const { tr } = useLanguage()
   const source = zone === 'main' ? state?.source : zone === 'zone2' ? state?.z2_source : state?.z3_source
   const sourceName = zone === 'main'
     ? state?.source_name
@@ -68,6 +70,7 @@ export default function MediaControls({
   const [queueLoading, setQueueLoading] = useState(false)
   const [queueError, setQueueError] = useState(false)
   const [heosPresets, setHeosPresets] = useState<HeosPreset[]>([])
+  const [heosPresetsLoading, setHeosPresetsLoading] = useState(false)
   const [heosPresetsOpen, setHeosPresetsOpen] = useState(false)
   const [radioOpen, setRadioOpen] = useState(false)
   const [optimisticPlayState, setOptimisticPlayState] = useState<string | null>(null)
@@ -113,12 +116,15 @@ export default function MediaControls({
   useEffect(() => {
     if (!heosSourceSelected) {
       setHeosPresetsOpen(false)
+      setHeosPresets([])
       return
     }
+    setHeosPresetsLoading(true)
     fetch('/api/v1/media/heos/favorites')
       .then(response => response.ok ? response.json() as Promise<{ items?: HeosPreset[] }> : Promise.reject())
       .then(data => setHeosPresets((data.items || []).filter(item => item.mid && item.playable === 'yes')))
       .catch(() => setHeosPresets([]))
+      .finally(() => setHeosPresetsLoading(false))
   }, [heosSourceSelected])
 
   const playPreset = async (preset: HeosPreset) => {
@@ -135,7 +141,7 @@ export default function MediaControls({
       <div className="card">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-xs font-medium text-denon-muted uppercase tracking-wider">Media</h2>
-          <span className="text-[10px] px-2 py-0.5 rounded-full bg-denon-green/10 text-denon-green">Active input</span>
+          <span className="text-[10px] px-2 py-0.5 rounded-full bg-denon-green/10 text-denon-green">{tr('Active input')}</span>
         </div>
         <div className="flex items-center gap-3">
           <div className="w-11 h-11 rounded-xl bg-denon-surface flex items-center justify-center text-lg" aria-hidden="true">
@@ -166,7 +172,7 @@ export default function MediaControls({
     <div className="card">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <h2 className="text-xs font-medium text-denon-muted uppercase tracking-wider">Now Playing</h2>
+          <h2 className="text-xs font-medium text-denon-muted uppercase tracking-wider">{tr('Now Playing')}</h2>
           {source && onSourceFavoriteChange && (
             <button
               type="button"
@@ -267,7 +273,7 @@ export default function MediaControls({
         </button>
       </div>
 
-      {heosSourceSelected && heosPresets.length > 0 && (
+      {heosSourceSelected && (
         <div className="mt-3 border-t border-denon-border/50 pt-3">
           <button
             type="button"
@@ -275,10 +281,16 @@ export default function MediaControls({
             className="mb-2 w-full flex items-center justify-between text-xs text-denon-muted hover:text-denon-text transition-colors"
             aria-expanded={heosPresetsOpen}
           >
-            <span className="uppercase tracking-wider">HEOS Presets</span>
+            <span className="uppercase tracking-wider">{tr('HEOS Presets')}</span>
             <span aria-hidden="true">{heosPresetsOpen ? '▲' : '▼'}</span>
           </button>
-          {heosPresetsOpen && <div className="flex gap-3 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+          {heosPresetsOpen && heosPresetsLoading && (
+            <p className="py-3 text-xs text-denon-muted">{tr('Loading presets...')}</p>
+          )}
+          {heosPresetsOpen && !heosPresetsLoading && heosPresets.length === 0 && (
+            <p className="py-3 text-xs text-denon-muted">{tr('No presets available')}</p>
+          )}
+          {heosPresetsOpen && !heosPresetsLoading && heosPresets.length > 0 && <div className="flex gap-3 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
             {heosPresets.map((preset, index) => (
               <button
                 key={`${preset.sid}-${preset.mid}`}
@@ -321,7 +333,7 @@ export default function MediaControls({
           className="w-full flex items-center justify-between text-xs text-denon-muted hover:text-denon-text transition-colors"
           aria-expanded={queueOpen}
         >
-          <span className="uppercase tracking-wider">Queue {queue.length > 0 ? `(${queue.length})` : ''}</span>
+          <span className="uppercase tracking-wider">{tr('Queue')} {queue.length > 0 ? `(${queue.length})` : ''}</span>
           <span aria-hidden="true">{queueOpen ? '▲' : '▼'}</span>
         </button>
 

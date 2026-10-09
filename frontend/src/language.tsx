@@ -47,9 +47,51 @@ interface LanguageContextValue {
   language: Language
   setLanguage: (language: Language) => void
   t: (key: TranslationKey) => string
+  tr: (text: string) => string
 }
 
 const LanguageContext = createContext<LanguageContextValue | null>(null)
+
+const germanText: Record<string, string> = {
+  'Media': 'Medien',
+  'Active input': 'Aktiver Eingang',
+  'Audio/video signal from this input': 'Audio-/Videosignal dieses Eingangs',
+  'Now Playing': 'Wiedergabe',
+  'Source:': 'Quelle:',
+  'Station:': 'Sender:',
+  'Playing': 'Wiedergabe',
+  'Paused': 'Pausiert',
+  'HEOS Presets': 'HEOS-Presets',
+  'Queue': 'Warteschlange',
+  'Input Source': 'Eingangsquelle',
+  'Inputs': 'Eingänge',
+  'Favorites': 'Favoriten',
+  'Cycle Modes': 'Modi wechseln',
+  'Available Sound Modes': 'Verfügbare Sound-Modi',
+  'Signal': 'Signal',
+  'Stereo is the incoming audio codec or selected playback mode currently used by the receiver.': 'Stereo ist der aktuell vom Receiver verwendete Audio-Codec oder Wiedergabemodus.',
+  'Audio Settings': 'Audio-Einstellungen',
+  'Dialog Enhancer': 'Dialogverstärker',
+  'Dialog Level': 'Dialogpegel',
+  'Reference Level Offset': 'Referenzpegel-Versatz',
+  'Speaker Levels': 'Lautsprecherpegel',
+  'Turn on the receiver to see speaker levels.': 'Schalte den Receiver ein, um die Lautsprecherpegel zu sehen.',
+  'Power': 'Ein/Aus',
+  'Volume': 'Lautstärke',
+  'Mute': 'Stummschaltung',
+  'Tone': 'Klang',
+  'Bass': 'Bass',
+  'Treble': 'Höhen',
+  'Subwoofer': 'Subwoofer',
+  'Sound mode': 'Sound-Modus',
+  'Use current mode': 'Aktuellen Modus verwenden',
+  'Auto (automatic sound detection)': 'Auto (automatische Sound-Erkennung)',
+  'Profile saved': 'Profil gespeichert',
+  'New profile': 'Neues Profil',
+  'Save profile': 'Profil speichern',
+  'Apply to AVR': 'Auf AVR anwenden',
+  'Changes are local until saved': 'Änderungen sind bis zum Speichern lokal',
+}
 
 function initialLanguage(): Language {
   try {
@@ -69,6 +111,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     language,
     setLanguage,
     t: (key: TranslationKey) => translations[language][key],
+    tr: (text: string) => language === 'de' ? germanText[text] || text : text,
   }), [language, setLanguage])
 
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>

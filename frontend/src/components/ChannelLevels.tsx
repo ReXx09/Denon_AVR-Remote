@@ -1,3 +1,4 @@
+import { useLanguage } from '../language'
 import { useState, useCallback } from 'react'
 import type { PostFn, SendCommandFn } from '../types'
 
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export default function ChannelLevels({ channels, channelNames, post, calibration }: Props) {
+    const { tr } = useLanguage()
   const [localLevels, setLocalLevels] = useState<Record<string, number>>({})
 
   const entries = Object.entries(channels).sort((a, b) =>
@@ -51,8 +53,8 @@ export default function ChannelLevels({ channels, channelNames, post, calibratio
   if (entries.length === 0) {
     return (
       <div className="card">
-        <h2 className="text-xs font-medium text-denon-muted uppercase tracking-wider mb-3">Speaker Levels</h2>
-        <p className="text-xs text-denon-muted/60">Turn on the receiver to see speaker levels.</p>
+        <h2 className="text-xs font-medium text-denon-muted uppercase tracking-wider mb-3">{tr('Speaker Levels')}</h2>
+        <p className="text-xs text-denon-muted/60">{tr('Turn on the receiver to see speaker levels.')}</p>
       </div>
     )
   }
@@ -60,7 +62,7 @@ export default function ChannelLevels({ channels, channelNames, post, calibratio
   return (
     <div className="card">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xs font-medium text-denon-muted uppercase tracking-wider">Speaker Levels</h2>
+          <h2 className="text-xs font-medium text-denon-muted uppercase tracking-wider">{tr('Speaker Levels')}</h2>
         <button
           onClick={() => post('/channel-volume/reset')}
           className="text-xs text-denon-muted hover:text-denon-red transition-colors"

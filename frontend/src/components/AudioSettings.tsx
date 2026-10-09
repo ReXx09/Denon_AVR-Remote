@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { ReceiverState, PostFn } from '../types'
+import { useLanguage } from '../language'
 
 interface Props {
   state: ReceiverState
@@ -7,6 +8,7 @@ interface Props {
 }
 
 export default function AudioSettings({ state, post }: Props) {
+  const { tr } = useLanguage()
   const [settingMessage, setSettingMessage] = useState('')
   const dynamicEq = state?.dynamic_eq
   const dynamicVol = state?.dynamic_volume
@@ -31,22 +33,22 @@ export default function AudioSettings({ state, post }: Props) {
 
   return (
     <div className="card space-y-5">
-      <h2 className="text-sm font-medium text-denon-muted">Audio Settings</h2>
+      <h2 className="text-sm font-medium text-denon-muted">{tr('Audio Settings')}</h2>
 
       {/* Dialog Enhancer */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <span className="text-xs text-denon-muted">Dialog Enhancer</span>
+          <span className="text-xs text-denon-muted">{tr('Dialog Enhancer')}</span>
           <button
             onClick={() => post('/dialog', { enabled: !dialogEnabled })}
             className={`text-xs px-3 py-1.5 rounded-lg transition-all ${dialogEnabled ? 'bg-denon-gold/20 text-denon-gold' : 'bg-denon-surface text-denon-muted'}`}
           >
-            {dialogEnabled ? 'On' : 'Off'}
+            {dialogEnabled ? tr('On') : tr('Off')}
           </button>
         </div>
         <div>
           <div className="flex items-center justify-between mb-1">
-            <span className="text-xs text-denon-muted">Dialog Level</span>
+            <span className="text-xs text-denon-muted">{tr('Dialog Level')}</span>
             <span className="text-xs tabular-nums text-denon-text">{dialogLevel}</span>
           </div>
           <input
@@ -61,7 +63,7 @@ export default function AudioSettings({ state, post }: Props) {
 
       {/* Reference Level Offset */}
       <div>
-        <span className="text-xs text-denon-muted block mb-2">Reference Level Offset</span>
+        <span className="text-xs text-denon-muted block mb-2">{tr('Reference Level Offset')}</span>
         <div className="flex gap-1.5">
           {[0, 5, 10, 15].map(offset => (
             <button
@@ -77,7 +79,7 @@ export default function AudioSettings({ state, post }: Props) {
 
       {/* MultEQ */}
       <div>
-        <span className="text-xs text-denon-muted block mb-2">MultEQ</span>
+        <span className="text-xs text-denon-muted block mb-2">{tr('MultEQ')}</span>
         <div className="flex flex-wrap gap-1.5">
           {multeqModes.map(m => (
             <button
@@ -97,7 +99,7 @@ export default function AudioSettings({ state, post }: Props) {
 
       {/* Dynamic EQ */}
       <div className="flex items-center justify-between">
-        <span className="text-xs text-denon-muted">Dynamic EQ</span>
+        <span className="text-xs text-denon-muted">{tr('Dynamic EQ')}</span>
         <button
           type="button"
           onClick={() => void updateSetting('/dynamic-eq', { enabled: !dynamicEq })}
@@ -115,7 +117,7 @@ export default function AudioSettings({ state, post }: Props) {
 
       {/* Dynamic Volume */}
       <div>
-        <span className="text-xs text-denon-muted block mb-2">Dynamic Volume</span>
+        <span className="text-xs text-denon-muted block mb-2">{tr('Dynamic Volume')}</span>
         <div className="flex gap-1.5">
           {dynVolModes.map(m => (
             <button
@@ -135,7 +137,7 @@ export default function AudioSettings({ state, post }: Props) {
 
       {/* Eco Mode */}
       <div>
-        <span className="text-xs text-denon-muted block mb-2">Eco Mode</span>
+        <span className="text-xs text-denon-muted block mb-2">{tr('Eco Mode')}</span>
         <div className="flex gap-1.5">
           {ecoModes.map(m => (
             <button
@@ -155,7 +157,7 @@ export default function AudioSettings({ state, post }: Props) {
 
       {/* Sleep Timer */}
       <div className="flex items-center justify-between">
-        <span className="text-xs text-denon-muted">Sleep Timer</span>
+        <span className="text-xs text-denon-muted">{tr('Sleep Timer')}</span>
         <div className="flex items-center gap-2">
           <span className="text-xs tabular-nums text-denon-text">
             {sleepTimer ? `${sleepTimer} min` : 'Off'}
@@ -165,7 +167,7 @@ export default function AudioSettings({ state, post }: Props) {
             onChange={(e) => post('/sleep', { minutes: e.target.value ? parseInt(e.target.value) : 0 })}
             className="bg-denon-surface text-denon-text text-xs rounded-lg px-2 py-1.5 border border-denon-border"
           >
-            <option value="">Off</option>
+            <option value="">{tr('Off')}</option>
             <option value="10">10 min</option>
             <option value="20">20 min</option>
             <option value="30">30 min</option>

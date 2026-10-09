@@ -5,6 +5,7 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException, Depends, Response
 from pydantic import BaseModel, Field
 import httpx
+import re
 
 from api.models import RadioFavoriteRequest
 
@@ -262,6 +263,11 @@ def _add_cached_station_images(result: dict) -> dict:
     def normalize_name(value: object) -> str:
         return "".join(char for char in str(value).casefold() if char.isalnum())
 
+    def tunein_image_url(mid: object) -> str | None:
+        """Build TuneIn's stable logo URL for station mids such as ``s12345``."""
+        match = re.fullmatch(r"s(\d+)", str(mid or "").strip(), re.IGNORECASE)
+        return f"https://cdn-profiles.tunein.com/{match.group(1)}/images/logoq.png" if match else None
+
     for _, (_, cached) in _BROWSE_CACHE.items():
         for station in cached.get("items", []):
             image_url = station.get("image_url")
@@ -298,6 +304,8 @@ def _add_cached_station_images(result: dict) -> dict:
                     image_url = exact or related
                     if image_url:
                         break
+        if not image_url:
+            image_url = tunein_image_url(item.get("mid"))
         enriched.append({**item, "image_url": image_url} if image_url else item)
 
     return {**result, "items": enriched}

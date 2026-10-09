@@ -4,6 +4,7 @@ import ModeInfoPopover from './ModeInfoPopover'
 import ModeInfoPanel from './ModeInfoPanel'
 import ModeSignal from '../experience/ModeSignal'
 import type { ReceiverState, SendCommandFn, SurroundModeEntry } from '../types'
+import { useLanguage } from '../language'
 
 interface Category {
   label: string
@@ -75,6 +76,7 @@ interface Props {
 }
 
 export default function SurroundMode({ state, sendCommand }: Props) {
+  const { tr } = useLanguage()
   const current = state?.surround_mode
   const modeList = state?.surround_mode_list
   const hasModeList = Boolean(modeList && modeList.length > 0)
@@ -188,7 +190,7 @@ export default function SurroundMode({ state, sendCommand }: Props) {
     <>
       {/* Cycle Modes */}
       <div className="card">
-        <h2 className="text-xs font-medium text-denon-muted uppercase tracking-wider mb-2">Cycle Modes</h2>
+        <h2 className="text-xs font-medium text-denon-muted uppercase tracking-wider mb-2">{tr('Cycle Modes')}</h2>
         <div className="grid grid-cols-4 gap-1.5">
           {CATEGORIES.map(cat => (
             <button
@@ -246,7 +248,7 @@ export default function SurroundMode({ state, sendCommand }: Props) {
             className="flex items-center gap-2 text-left text-xs text-denon-muted hover:text-denon-text transition-colors"
             aria-expanded={availableModesOpen}
           >
-            <h2 className="font-medium uppercase tracking-wider">Available Sound Modes</h2>
+            <h2 className="font-medium uppercase tracking-wider">{tr('Available Sound Modes')}</h2>
             <span aria-hidden="true">{availableModesOpen ? '▲' : '▼'}</span>
           </button>
           <div className="flex items-center gap-2">

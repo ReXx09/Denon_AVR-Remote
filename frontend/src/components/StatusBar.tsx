@@ -2,6 +2,7 @@ import { useState } from 'react'
 import ThemePicker from './ThemePicker'
 import SetupMenu from './SetupMenu'
 import type { ReceiverState, DeviceInfo, ThemeName } from '../types'
+import { useLanguage } from '../language'
 
 interface Props {
   deviceName?: string
@@ -15,6 +16,7 @@ interface Props {
 }
 
 export default function StatusBar({ deviceName, state, info, wsConnected, wsConnecting, receiverIp, currentTheme, onThemeChange }: Props) {
+  const { tr } = useLanguage()
   const [expanded, setExpanded] = useState(false)
   const telnetOk = state?.connected
   const power = state?.power
@@ -29,7 +31,7 @@ export default function StatusBar({ deviceName, state, info, wsConnected, wsConn
             type="button"
             onClick={() => window.location.reload()}
             className="h-8 w-8 rounded-full text-denon-muted hover:bg-denon-surface hover:text-denon-text transition-colors"
-            aria-label="Reload dashboard"
+            aria-label={tr('Reload dashboard')}
             title="Reload dashboard"
           >
             <svg className="mx-auto h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -53,34 +55,34 @@ export default function StatusBar({ deviceName, state, info, wsConnected, wsConn
       {expanded && (
         <div className="mt-2 p-3 bg-denon-surface/50 rounded-xl border border-denon-border/50 text-xs space-y-1.5 fade-in">
           <div className="flex justify-between">
-            <span className="text-denon-muted">Receiver IP</span>
+            <span className="text-denon-muted">{tr('Receiver IP')}</span>
             <span className="text-denon-text font-mono">{receiverIp || '—'}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-denon-muted">Telnet Connection</span>
+            <span className="text-denon-muted">{tr('Telnet Connection')}</span>
             <span className={telnetOk ? 'text-denon-green' : 'text-denon-red'}>
               {telnetOk ? '● Connected' : '● Disconnected'}
             </span>
           </div>
           <div className="flex justify-between">
-            <span className="text-denon-muted">WebSocket</span>
+            <span className="text-denon-muted">{tr('WebSocket')}</span>
             <span className={wsConnected ? 'text-denon-green' : wsConnecting ? 'text-denon-gold' : 'text-denon-muted'}>
               {wsConnected ? '● Connected' : wsConnecting ? '● Connecting' : '● HTTP fallback'}
             </span>
           </div>
           <div className="flex justify-between">
-            <span className="text-denon-muted">Power State</span>
+            <span className="text-denon-muted">{tr('Power State')}</span>
             <span className="text-denon-text">{power === true ? 'On' : power === false ? 'Standby' : 'Unknown'}</span>
           </div>
           {state?.surround_mode && (
             <div className="flex justify-between">
-              <span className="text-denon-muted">Surround Mode</span>
+              <span className="text-denon-muted">{tr('Surround Mode')}</span>
               <span className="text-denon-text">{state.surround_mode}</span>
             </div>
           )}
           {state?.eco_mode && (
             <div className="flex justify-between">
-              <span className="text-denon-muted">Eco Mode</span>
+              <span className="text-denon-muted">{tr('Eco Mode')}</span>
               <span className="text-denon-text">{state.eco_mode}</span>
             </div>
           )}

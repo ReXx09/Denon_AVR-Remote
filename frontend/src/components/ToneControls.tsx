@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react'
 import type { ReceiverState, PostFn } from '../types'
+import { useLanguage } from '../language'
 
 interface Props {
   state: ReceiverState
@@ -7,6 +8,7 @@ interface Props {
 }
 
 export default function ToneControls({ state, post }: Props) {
+  const { tr } = useLanguage()
   const [bass, setBass] = useState<number>(state?.bass ?? 50)
   const [treble, setTreble] = useState<number>(state?.treble ?? 50)
 
@@ -47,13 +49,13 @@ export default function ToneControls({ state, post }: Props) {
   return (
     <div className="card">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-xs font-medium text-denon-muted uppercase tracking-wider">Tone Controls</h2>
+        <h2 className="text-xs font-medium text-denon-muted uppercase tracking-wider">{tr('Tone Controls')}</h2>
       </div>
 
       <div className="space-y-4 fade-in">
           <div>
             <div className="flex items-center justify-between mb-1">
-              <span className="text-xs text-denon-muted">Bass</span>
+              <span className="text-xs text-denon-muted">{tr('Bass')}</span>
               <span className="text-xs tabular-nums text-denon-text font-semibold">{dB(bass)} dB</span>
             </div>
             <div className="flex items-center gap-2">
@@ -65,7 +67,7 @@ export default function ToneControls({ state, post }: Props) {
           </div>
           <div>
             <div className="flex items-center justify-between mb-1">
-              <span className="text-xs text-denon-muted">Treble</span>
+              <span className="text-xs text-denon-muted">{tr('Treble')}</span>
               <span className="text-xs tabular-nums text-denon-text font-semibold">{dB(treble)} dB</span>
             </div>
             <div className="flex items-center gap-2">
