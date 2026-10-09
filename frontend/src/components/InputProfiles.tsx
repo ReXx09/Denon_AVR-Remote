@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import type { ReceiverState, SourceEntry } from '../types'
 
 interface SourceProfile {
+  surround_mode?: string
   analog_input_level?: number
   digital_input_level?: number
   bass?: number
@@ -152,6 +153,25 @@ export default function InputProfiles({ sources, state, channelNames }: Props) {
               </div>
             )
           })}
+        </div>
+
+        <div>
+          <div className="flex justify-between text-xs mb-1">
+            <span className="text-denon-muted">Sound mode</span>
+            <strong>{profile.surround_mode || 'Current receiver mode'}</strong>
+          </div>
+          <select
+            value={profile.surround_mode || ''}
+            onChange={event => updateProfile({ surround_mode: event.target.value || undefined })}
+            className="w-full rounded-lg bg-denon-surface px-3 py-2 text-xs text-denon-text"
+            aria-label="Sound mode profile setting"
+          >
+            <option value="">Use current mode</option>
+            <option value="AUTO">Auto (automatic sound detection)</option>
+            {(state.surround_mode_list || []).map(mode => (
+              <option key={`${mode.category}-${mode.id}`} value={mode.command} disabled={mode.command === 'AUTO'}>{mode.display_name}</option>
+            ))}
+          </select>
         </div>
 
         <div>

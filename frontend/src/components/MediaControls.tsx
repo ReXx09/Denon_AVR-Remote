@@ -272,11 +272,11 @@ export default function MediaControls({
           <button
             type="button"
             onClick={() => setHeosPresetsOpen(open => !open)}
-            className="mb-2 flex w-full items-center justify-between text-left text-[10px] uppercase tracking-wider text-denon-muted hover:text-denon-text"
+            className="mb-2 w-full flex items-center justify-between text-xs text-denon-muted hover:text-denon-text transition-colors"
             aria-expanded={heosPresetsOpen}
           >
-            <span>HEOS Presets</span>
-            <span aria-hidden="true">{heosPresetsOpen ? '▴' : '▾'}</span>
+            <span className="uppercase tracking-wider">HEOS Presets</span>
+            <span aria-hidden="true">{heosPresetsOpen ? '▲' : '▼'}</span>
           </button>
           {heosPresetsOpen && <div className="flex gap-3 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
             {heosPresets.map((preset, index) => (

@@ -221,6 +221,8 @@ class AppState:
         if profile.get("volume") is not None:
             volume = float(profile["volume"])
             commands.append(f"MV{int(volume):02d}" + ("5" if volume % 1 else ""))
+        if profile.get("surround_mode") is not None:
+            commands.append(f"MS{profile['surround_mode']}")
         if profile.get("tone_enabled") is not None:
             commands.append(f"PSTONE CTRL {'ON' if profile['tone_enabled'] else 'OFF'}")
         elif profile.get("bass") is not None or profile.get("treble") is not None:

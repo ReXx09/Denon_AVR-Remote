@@ -78,6 +78,7 @@ class SourceRequest(BaseModel):
 
 class SourceAudioProfile(BaseModel):
     volume: float | None = Field(None, ge=0, le=98)
+    surround_mode: str | None = Field(None, pattern=r"^[A-Z0-9 :./+\-]{1,35}$")
     channel_volumes: dict[str, int] | None = None
     analog_input_level: int | None = Field(None, ge=-12, le=12)
     digital_input_level: int | None = Field(None, ge=-12, le=12)
