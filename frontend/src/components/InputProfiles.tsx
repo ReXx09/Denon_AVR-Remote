@@ -20,6 +20,14 @@ interface Props {
 
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value))
 
+const FALLBACK_SOUND_MODES = [
+  'STEREO', 'DIRECT', 'PURE DIRECT',
+  'DOLBY SURROUND', 'DOLBY DIGITAL', 'DOLBY ATMOS',
+  'DTS SURROUND', 'DTS:X', 'MCH STEREO',
+  'ROCK ARENA', 'JAZZ CLUB', 'MONO MOVIE',
+  'MATRIX', 'VIDEO GAME', 'VIRTUAL',
+]
+
 const toDb = (value: number | undefined, zero = 50): string => {
   if (value == null) return '—'
   const db = value - zero
@@ -55,6 +63,9 @@ export default function InputProfiles({ sources, state, channelNames }: Props) {
   }
   const channels = useMemo(() => Object.keys({ ...liveChannels, ...profile.channel_volumes }), [liveChannels, profile.channel_volumes])
   const selectedName = sources.find(source => source.id === selectedSource)?.name || selectedSource
+  const availableSoundModes = state.surround_mode_list?.length
+    ? state.surround_mode_list.map(mode => ({ value: mode.command, label: mode.display_name }))
+    : FALLBACK_SOUND_MODES.map(mode => ({ value: mode, label: mode }))
 
   const updateProfile = (updates: Partial<SourceProfile>) => {
     setProfiles(current => ({ ...current, [selectedSource]: { ...profile, ...updates } }))
@@ -168,8 +179,8 @@ export default function InputProfiles({ sources, state, channelNames }: Props) {
           >
             <option value="">Use current mode</option>
             <option value="AUTO">Auto (automatic sound detection)</option>
-            {(state.surround_mode_list || []).map(mode => (
-              <option key={`${mode.category}-${mode.id}`} value={mode.command} disabled={mode.command === 'AUTO'}>{mode.display_name}</option>
+            {availableSoundModes.map(mode => (
+              <option key={mode.value} value={mode.value} disabled={mode.value === 'AUTO'}>{mode.label}</option>
             ))}
           </select>
         </div>

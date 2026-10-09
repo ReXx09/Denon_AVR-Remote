@@ -80,6 +80,7 @@ export default function SurroundMode({ state, sendCommand }: Props) {
   const hasModeList = Boolean(modeList && modeList.length > 0)
 
   const [expandedCat, setExpandedCat] = useState<string | null>(null)
+  const [availableModesOpen, setAvailableModesOpen] = useState(false)
   const collapseTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const expandedRef = useRef<string | null>(null) // tracks if category was already expanded
 
@@ -238,9 +239,17 @@ export default function SurroundMode({ state, sendCommand }: Props) {
 
       {/* Available Sound Modes */}
       <div className="card">
-          <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center justify-between mb-2">
+          <button
+            type="button"
+            onClick={() => setAvailableModesOpen(open => !open)}
+            className="flex items-center gap-2 text-left text-xs text-denon-muted hover:text-denon-text transition-colors"
+            aria-expanded={availableModesOpen}
+          >
+            <h2 className="font-medium uppercase tracking-wider">Available Sound Modes</h2>
+            <span aria-hidden="true">{availableModesOpen ? '▲' : '▼'}</span>
+          </button>
           <div className="flex items-center gap-2">
-            <h2 className="text-sm font-medium text-denon-muted">Available Sound Modes</h2>
             <button
               onClick={() => { setInfoMode(m => !m); setSelectedInfoMode(null) }}
               className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold transition-all ${
@@ -252,15 +261,12 @@ export default function SurroundMode({ state, sendCommand }: Props) {
             >
               i
             </button>
+            {current && <span className="text-xs text-denon-gold font-medium bg-denon-gold/10 px-2 py-0.5 rounded-lg">{current}</span>}
           </div>
-          {current && (
-            <span className="text-xs text-denon-gold font-medium bg-denon-gold/10 px-2 py-0.5 rounded-lg">
-              {current}
-            </span>
-          )}
         </div>
-        <ModeSignal mode={current} />
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+        {availableModesOpen && <>
+          <ModeSignal mode={current} />
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
           {hasModeList ? (
             uniqueModes.map(mode => {
               const playing = isPlaying(mode)
@@ -346,25 +352,26 @@ export default function SurroundMode({ state, sendCommand }: Props) {
               )
             })
           )}
-        </div>
+          </div>
 
-        {/* Mobile info panel (shown when info mode toggle is active) */}
-        {infoMode && selectedInfoMode && (
-          <ModeInfoPanel
-            modeName={selectedInfoMode}
-            modeInfo={getModeInfo(selectedInfoMode)}
-            onClose={() => setSelectedInfoMode(null)}
-          />
-        )}
+          {/* Mobile info panel (shown when info mode toggle is active) */}
+          {infoMode && selectedInfoMode && (
+            <ModeInfoPanel
+              modeName={selectedInfoMode}
+              modeInfo={getModeInfo(selectedInfoMode)}
+              onClose={() => setSelectedInfoMode(null)}
+            />
+          )}
 
-        {/* Desktop hover popover */}
-        {hoveredMode && !infoMode && (
-          <ModeInfoPopover
-            modeName={hoveredMode}
-            modeInfo={getModeInfo(hoveredMode)}
-            anchorEl={buttonRefs.current[hoveredMode]}
-          />
-        )}
+          {/* Desktop hover popover */}
+          {hoveredMode && !infoMode && (
+            <ModeInfoPopover
+              modeName={hoveredMode}
+              modeInfo={getModeInfo(hoveredMode)}
+              anchorEl={buttonRefs.current[hoveredMode]}
+            />
+          )}
+        </>}
       </div>
     </>
   )
