@@ -5,6 +5,7 @@ import NavidromeBrowser from './NavidromeBrowser'
 import type { ReceiverState, SendCommandFn, PostFn, Zone, RadioFavorite } from '../types'
 
 const MEDIA_SOURCES = ['NET', 'MPLAY', 'BT', 'USB', 'USB/IPOD', 'SPOTIFY', 'AMAZON', 'PANDORA', 'SIRIUSXM', 'IRADIO', 'SERVER', 'FAVORITES']
+const HEOS_PRESET_SOURCES = new Set(['NET', 'IRADIO'])
 const VALID_ACTIONS = new Set(['play', 'pause', 'stop', 'next', 'previous'])
 
 /** Sanitize album art URL — only allow http(s) to prevent XSS via javascript: or data: URIs. */
@@ -57,6 +58,7 @@ export default function MediaControls({
     ? state?.source_name
     : zone === 'zone2' ? state?.z2_source_name : state?.z3_source_name
   const mediaCapable = source != null && MEDIA_SOURCES.includes(source)
+  const heosSourceSelected = source != null && HEOS_PRESET_SOURCES.has(source)
 
   // Now-playing data comes from WebSocket state (backend polls HEOS once for all clients)
   const nowPlaying = state?.now_playing
@@ -66,6 +68,7 @@ export default function MediaControls({
   const [queueLoading, setQueueLoading] = useState(false)
   const [queueError, setQueueError] = useState(false)
   const [heosPresets, setHeosPresets] = useState<HeosPreset[]>([])
+  const [heosPresetsOpen, setHeosPresetsOpen] = useState(false)
   const [radioOpen, setRadioOpen] = useState(false)
   const [optimisticPlayState, setOptimisticPlayState] = useState<string | null>(null)
 
@@ -108,19 +111,22 @@ export default function MediaControls({
   }, [mediaCapable, nowPlaying?.song, nowPlaying?.station])
 
   useEffect(() => {
-    if (!mediaCapable) return
+    if (!heosSourceSelected) {
+      setHeosPresetsOpen(false)
+      return
+    }
     fetch('/api/v1/media/heos/favorites')
       .then(response => response.ok ? response.json() as Promise<{ items?: HeosPreset[] }> : Promise.reject())
       .then(data => setHeosPresets((data.items || []).filter(item => item.mid && item.playable === 'yes')))
       .catch(() => setHeosPresets([]))
-  }, [mediaCapable])
+  }, [heosSourceSelected])
 
   const playPreset = async (preset: HeosPreset) => {
-    if (!preset.mid || preset.sid == null) return
+    if (!preset.mid) return
     await fetch('/api/v1/media/heos/favorites/play', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sid: Number(preset.sid), mid: preset.mid }),
+      body: JSON.stringify({ sid: Number(preset.sid ?? 1028), mid: preset.mid }),
     })
   }
 
@@ -261,10 +267,18 @@ export default function MediaControls({
         </button>
       </div>
 
-      {heosPresets.length > 0 && (
+      {heosSourceSelected && heosPresets.length > 0 && (
         <div className="mt-3 border-t border-denon-border/50 pt-3">
-          <p className="mb-2 text-[10px] uppercase tracking-wider text-denon-muted">HEOS Presets</p>
-          <div className="flex gap-3 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+          <button
+            type="button"
+            onClick={() => setHeosPresetsOpen(open => !open)}
+            className="mb-2 flex w-full items-center justify-between text-left text-[10px] uppercase tracking-wider text-denon-muted hover:text-denon-text"
+            aria-expanded={heosPresetsOpen}
+          >
+            <span>HEOS Presets</span>
+            <span aria-hidden="true">{heosPresetsOpen ? '▴' : '▾'}</span>
+          </button>
+          {heosPresetsOpen && <div className="flex gap-3 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
             {heosPresets.map((preset, index) => (
               <button
                 key={`${preset.sid}-${preset.mid}`}
@@ -293,7 +307,7 @@ export default function MediaControls({
                 </span>
               </button>
             ))}
-          </div>
+          </div>}
         </div>
       )}
 

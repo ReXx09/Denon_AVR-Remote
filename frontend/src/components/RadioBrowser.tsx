@@ -352,11 +352,11 @@ export default function RadioBrowser({ open, onClose, favorites = [], onFavorite
       // Play station
       setPlayingMid(item.mid)
       try {
-        const isHeosFavorite = currentCid === '__heos_favorites__' && item.sid != null
+        const isHeosFavorite = currentCid === '__heos_favorites__'
         const resp = await fetch(isHeosFavorite ? '/api/v1/media/heos/favorites/play' : '/api/v1/media/radio/play', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(isHeosFavorite ? { sid: Number(item.sid), mid: item.mid } : { mid: item.mid }),
+          body: JSON.stringify(isHeosFavorite ? { sid: Number(item.sid ?? 1028), mid: item.mid } : { mid: item.mid }),
         })
         if (!resp.ok) throw new Error()
         if (!inline) setTimeout(handleClose, 600)
