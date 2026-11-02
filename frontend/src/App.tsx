@@ -25,7 +25,7 @@ import CacheReset from './components/CacheReset'
 import AmbientBackground from './experience/AmbientBackground'
 import SeasonalEffects from './experience/SeasonalEffects'
 import ShortcutOverlay from './experience/ShortcutOverlay'
-import type { Zone, ThemeName, UiEffects, RadioFavorite } from './types'
+import type { Zone, ThemeName, UiEffects, RadioFavorite, SourceAudioProfile } from './types'
 import { useLanguage } from './language'
 
 type Section = 'controls' | 'audio' | 'profiles' | 'heos'
@@ -72,6 +72,23 @@ export default function App() {
   useKeyboardShortcuts({ state, post, sendCommand, zone, setZone })
   const [activeSection, setActiveSection] = useState<Section>('controls')
   const [currentTheme, setCurrentTheme] = useState<ThemeName>('gold')
+  const [sourceProfiles, setSourceProfiles] = useState<Record<string, SourceAudioProfile>>({})
+
+  useEffect(() => {
+    let cancelled = false
+    void fetch('/api/v1/source-profiles')
+      .then(async response => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`)
+        return await response.json() as { profiles?: Record<string, SourceAudioProfile> }
+      })
+      .then(data => {
+        if (!cancelled) setSourceProfiles(data.profiles || {})
+      })
+      .catch(error => {
+        if (!cancelled) console.warn('Source profiles could not be loaded', error)
+      })
+    return () => { cancelled = true }
+  }, [])
 
   // Apply theme whenever device info loads. Server-persisted theme is the default;
   // localStorage remains a browser-local override for users who want it.
@@ -315,6 +332,7 @@ export default function App() {
                   onSourceFavoriteChange={saveSourceFavorite}
                   sourceDisabled={sourceDisabled}
                   onSourceDisabledChange={saveSourceDisabled}
+                  sourceProfiles={sourceProfiles}
                   radioFavorites={radioFavorites}
                   onRenameSource={renameSource}
                   onRadioFavoriteChange={saveRadioFavorite}
@@ -341,7 +359,15 @@ export default function App() {
 
             {activeSection === 'profiles' && (
               <>
-                <InputProfiles sources={configuredSources} state={state} channelNames={channelNames} />
+                <InputProfiles
+                  sources={configuredSources}
+                  state={state}
+                  channelNames={channelNames}
+                  sourceProfiles={sourceProfiles}
+                  onSourceProfileSaved={(source, profile) => {
+                    setSourceProfiles(current => ({ ...current, [source]: profile }))
+                  }}
+                />
               </>
             )}
 

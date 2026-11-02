@@ -99,6 +99,17 @@ export interface SourceEntry {
   name: string
 }
 
+export interface SourceAudioProfile {
+  surround_mode?: string
+  analog_input_level?: number
+  digital_input_level?: number
+  bass?: number
+  treble?: number
+  tone_enabled?: boolean
+  subwoofer_level?: number
+  channel_volumes?: Record<string, number>
+}
+
 export interface UiEffects {
   ambient_background: boolean
   seasonal_effects: string

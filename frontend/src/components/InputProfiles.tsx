@@ -1,22 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
-import type { ReceiverState, SourceEntry } from '../types'
+import type { ReceiverState, SourceAudioProfile, SourceEntry } from '../types'
 import { useLanguage } from '../language'
-
-interface SourceProfile {
-  surround_mode?: string
-  analog_input_level?: number
-  digital_input_level?: number
-  bass?: number
-  treble?: number
-  tone_enabled?: boolean
-  subwoofer_level?: number
-  channel_volumes?: Record<string, number>
-}
 
 interface Props {
   sources: SourceEntry[]
   state: ReceiverState
   channelNames: Record<string, string>
+  sourceProfiles: Record<string, SourceAudioProfile>
+  onSourceProfileSaved: (source: string, profile: SourceAudioProfile) => void
 }
 
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value))
@@ -35,20 +26,15 @@ const toDb = (value: number | undefined, zero = 50): string => {
   return `${db > 0 ? '+' : ''}${db} dB`
 }
 
-export default function InputProfiles({ sources, state, channelNames }: Props) {
+export default function InputProfiles({ sources, state, channelNames, sourceProfiles, onSourceProfileSaved }: Props) {
   const { language, t } = useLanguage()
   const [selectedSource, setSelectedSource] = useState(state.source || sources[0]?.id || '')
-  const [profiles, setProfiles] = useState<Record<string, SourceProfile>>({})
+  const [profiles, setProfiles] = useState(sourceProfiles)
   const [message, setMessage] = useState('')
 
   useEffect(() => {
-    let cancelled = false
-    fetch('/api/v1/source-profiles')
-      .then(response => response.ok ? response.json() as Promise<{ profiles?: Record<string, SourceProfile> }> : Promise.reject())
-      .then(data => { if (!cancelled) setProfiles(data.profiles || {}) })
-      .catch(() => { if (!cancelled) setProfiles({}) })
-    return () => { cancelled = true }
-  }, [])
+    setProfiles(sourceProfiles)
+  }, [sourceProfiles])
 
   useEffect(() => {
     if (!selectedSource && sources[0]) setSelectedSource(sources[0].id)
@@ -56,7 +42,7 @@ export default function InputProfiles({ sources, state, channelNames }: Props) {
 
   const liveChannels = state.channel_volumes || {}
   const savedProfile = profiles[selectedSource]
-  const profile: SourceProfile = savedProfile || {
+  const profile: SourceAudioProfile = savedProfile || {
     bass: state.bass ?? 50,
     treble: state.treble ?? 50,
     tone_enabled: state.tone_control,
@@ -69,7 +55,7 @@ export default function InputProfiles({ sources, state, channelNames }: Props) {
     ? state.surround_mode_list.map(mode => ({ value: mode.command, label: mode.display_name }))
     : FALLBACK_SOUND_MODES.map(mode => ({ value: mode, label: mode }))
 
-  const updateProfile = (updates: Partial<SourceProfile>) => {
+  const updateProfile = (updates: Partial<SourceAudioProfile>) => {
     setProfiles(current => ({ ...current, [selectedSource]: { ...profile, ...updates } }))
     setMessage('')
   }
@@ -92,8 +78,12 @@ export default function InputProfiles({ sources, state, channelNames }: Props) {
         const error = await response.json().catch(() => null) as { detail?: string } | null
         throw new Error(error?.detail || `HTTP ${response.status}`)
       }
-      const data = await response.json() as { profile?: SourceProfile }
-      if (data.profile) setProfiles(current => ({ ...current, [selectedSource]: data.profile! }))
+      const data = await response.json() as { profile?: SourceAudioProfile }
+      const savedProfile = data.profile
+      if (savedProfile) {
+        setProfiles(current => ({ ...current, [selectedSource]: savedProfile }))
+        onSourceProfileSaved(selectedSource, savedProfile)
+      }
       setMessage('Profile saved')
     } catch (error) {
       setMessage(`Profile could not be saved: ${error instanceof Error ? error.message : 'network error'}`)

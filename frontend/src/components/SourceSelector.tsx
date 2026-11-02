@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import RadioBrowser from './RadioBrowser'
-import type { ReceiverState, SendCommandFn, SourceEntry, RadioFavorite, Zone } from '../types'
+import type { ReceiverState, SendCommandFn, SourceAudioProfile, SourceEntry, RadioFavorite, Zone } from '../types'
 import { useLanguage } from '../language'
 
 const RadioTowerIcon = () => (
@@ -108,6 +108,16 @@ const DEFAULT_SOURCES: Record<string, string> = {
 
 const isHeosName = (name: string) => /\bheos\b/i.test(name)
 
+function formatSoundMode(mode: string, modes: ReceiverState['surround_mode_list']): string {
+  const displayName = modes?.find(entry => entry.command.toUpperCase() === mode.toUpperCase())?.display_name
+  if (displayName) return displayName
+
+  const normalized = mode.trim().toUpperCase()
+  if (normalized === 'AUTO') return 'Auto'
+  if (normalized === 'PCM' || normalized === 'DTS:X') return normalized
+  return normalized.toLowerCase().replace(/\b[a-z]/g, letter => letter.toUpperCase())
+}
+
 type SourceFilter = 'inputs' | 'network' | 'favorites'
 type SourceCategory = 'inputs' | 'network' | 'media' | 'other'
 
@@ -133,6 +143,7 @@ interface Props {
   state: ReceiverState
   sendCommand: SendCommandFn
   sources: SourceEntry[]
+  sourceProfiles?: Record<string, SourceAudioProfile>
   sourceNameMap?: Record<string, string>
   sourceNameOverrides?: Record<string, string>
   radioFavorites?: RadioFavorite[]
@@ -149,6 +160,7 @@ export default function SourceSelector({
   state,
   sendCommand,
   sources,
+  sourceProfiles = {},
   sourceNameMap,
   sourceNameOverrides = {},
   radioFavorites = [],
@@ -350,23 +362,38 @@ export default function SourceSelector({
           <div className="flex min-w-max gap-1.5">
             {quickSources.map(source => {
               const active = activeSource === source.id || (source.id === 'GAME' && activeSource === 'GAME1')
+              const soundMode = sourceProfiles[source.id]?.surround_mode?.trim()
+              const soundModeLabel = soundMode ? formatSoundMode(soundMode, state.surround_mode_list) : undefined
+              const sourceName = getName(source.id)
               return (
                 <button
                   key={source.id}
                   type="button"
                   onClick={() => sendCommand(getSourceCommand(source.id))}
-                  className={`h-14 w-28 shrink-0 rounded-lg border px-3 text-xs font-medium transition-all ${
+                  title={soundModeLabel ? `${sourceName} · ${soundModeLabel}` : sourceName}
+                  className={`group relative flex h-[6.5rem] w-40 shrink-0 flex-col items-center gap-1 rounded-xl border px-3 py-2 text-center text-xs font-medium transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400 ${
                     active
-                      ? 'border-denon-gold/50 bg-gradient-to-br from-denon-gold/20 to-amber-500/10 text-denon-gold'
-                      : 'border-denon-border/70 bg-denon-surface/80 text-denon-text shadow-sm shadow-black/20 hover:border-denon-gold/40 hover:bg-denon-surface hover:text-denon-gold'
+                      ? 'border-sky-400/90 bg-gradient-to-b from-sky-400/10 to-denon-surface/90 text-denon-text shadow-[0_0_16px_rgba(14,165,233,0.18)]'
+                      : 'border-denon-border/80 bg-denon-surface/70 text-denon-text hover:border-slate-400/70 hover:bg-denon-surface'
                   }`}
                 >
-                  <span className="block text-base leading-5">{getIcon(source.id, getName(source.id))}</span>
-                  <span className="block max-w-[100px] truncate">{getName(source.id)}</span>
-                  {active && heosServiceCode === source.id && !isHeosName(getName(source.id)) && (
-                    <span className="mt-0.5 inline-block rounded-full bg-denon-green/10 px-1.5 py-0.5 text-[8px] uppercase tracking-wider text-denon-green">
-                      HEOS
-                    </span>
+                  <span
+                    className={`mt-0.5 h-3 w-3 shrink-0 rounded-full border ${
+                      active
+                        ? 'border-sky-200 bg-sky-400 shadow-[0_0_10px_3px_rgba(14,165,233,0.8)]'
+                        : 'border-slate-600 bg-slate-800 shadow-[inset_0_1px_2px_rgba(0,0,0,0.9)]'
+                    }`}
+                    aria-hidden="true"
+                  />
+                  <span className="block w-full truncate text-xs font-semibold">{sourceName}</span>
+                  {soundModeLabel
+                    ? <span className="max-w-full truncate rounded-full border border-sky-300/30 bg-sky-400/5 px-2 py-0.5 text-[9px] leading-3 text-sky-100">{soundModeLabel}</span>
+                    : <span className="h-[18px]" aria-hidden="true" />}
+                  {active && (
+                    <span
+                      className="absolute inset-x-4 bottom-0 h-[3px] rounded-full bg-sky-300 shadow-[0_0_12px_2px_rgba(34,211,238,0.8)]"
+                      aria-hidden="true"
+                    />
                   )}
                 </button>
               )
