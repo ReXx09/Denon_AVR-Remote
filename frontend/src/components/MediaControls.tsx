@@ -18,6 +18,24 @@ function safeImageUrl(url: string | undefined): string | null {
   } catch { return null }
 }
 
+function PresetArtwork({ url }: { url?: string }) {
+  const imageUrl = safeImageUrl(url)
+  const [failedUrl, setFailedUrl] = useState<string | null>(null)
+
+  if (!imageUrl || failedUrl === imageUrl) {
+    return <span className="text-3xl text-denon-muted" aria-hidden="true">♫</span>
+  }
+
+  return (
+    <img
+      src={imageUrl}
+      alt=""
+      className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
+      onError={() => setFailedUrl(imageUrl)}
+    />
+  )
+}
+
 interface Props {
   state: ReceiverState
   sendCommand: SendCommandFn
@@ -300,15 +318,7 @@ export default function MediaControls({
                 title={preset.station || preset.name}
               >
                 <span className="relative mb-1.5 flex aspect-square w-full items-center justify-center overflow-hidden rounded-lg bg-denon-dark">
-                  {safeImageUrl(preset.image_url) ? (
-                    <img
-                      src={safeImageUrl(preset.image_url) || undefined}
-                      alt=""
-                      className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
-                    />
-                  ) : (
-                    <span className="text-3xl text-denon-muted" aria-hidden="true">♫</span>
-                  )}
+                  <PresetArtwork url={preset.image_url} />
                   <span className="absolute bottom-1 left-1 rounded bg-black/65 px-1.5 py-0.5 text-[10px] font-semibold text-denon-gold">
                     #{index + 1}
                   </span>

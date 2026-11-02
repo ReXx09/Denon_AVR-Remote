@@ -266,7 +266,7 @@ def _add_cached_station_images(result: dict) -> dict:
     def tunein_image_url(mid: object) -> str | None:
         """Build TuneIn's stable logo URL for station mids such as ``s12345``."""
         match = re.fullmatch(r"(s\d+)", str(mid or "").strip(), re.IGNORECASE)
-        return f"https://cdn-profiles.tunein.com/{match.group(1).lower()}/images/logoq.png" if match else None
+        return f"https://cdn-profiles.tunein.com/{match.group(1).lower()}/images/logoq.jpg" if match else None
 
     for _, (_, cached) in _BROWSE_CACHE.items():
         for station in cached.get("items", []):

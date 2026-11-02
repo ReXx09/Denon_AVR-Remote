@@ -346,8 +346,8 @@ def test_heos_favorite_image_fallback_preserves_tunein_station_id(monkeypatch):
     })
 
     assert [item["image_url"] for item in response["items"]] == [
-        "https://cdn-profiles.tunein.com/s309360/images/logoq.png",
-        "https://cdn-profiles.tunein.com/s24854/images/logoq.png",
+        "https://cdn-profiles.tunein.com/s309360/images/logoq.jpg",
+        "https://cdn-profiles.tunein.com/s24854/images/logoq.jpg",
     ]
 
 
