@@ -191,14 +191,14 @@ export default function MediaControls({
             onClick={() => setRadioOpen(true)}
             className="text-xs text-denon-gold hover:text-denon-text transition-colors"
           >
-            Radio
+            {tr('Browse stations')}
           </button>
         )}
       </div>
 
       {sourceName && (
         <p className="mb-3 truncate text-xs text-denon-muted" title={sourceName}>
-          Source: <span className="text-denon-text">{sourceName}</span>
+          {tr('Source:')} <span className="text-denon-text">{sourceName}</span>
         </p>
       )}
 
@@ -213,7 +213,7 @@ export default function MediaControls({
             />
           )}
           <div className="min-w-0 flex-1">
-            {station && <p className="text-xs text-denon-muted truncate">Station: {station}</p>}
+            {station && <p className="text-xs text-denon-muted truncate">{tr('Station:')} {station}</p>}
             {title && <p className="text-base font-semibold text-denon-text truncate">{title}</p>}
             {subtitle && subtitle !== station && <p className="text-xs text-denon-muted truncate">{subtitle}</p>}
           </div>

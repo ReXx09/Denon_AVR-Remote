@@ -59,6 +59,7 @@ const germanText: Record<string, string> = {
   'Now Playing': 'Wiedergabe',
   'Source:': 'Quelle:',
   'Station:': 'Sender:',
+  'Browse stations': 'Sender durchsuchen',
   'Playing': 'Wiedergabe',
   'Paused': 'Pausiert',
   'HEOS Presets': 'HEOS-Presets',

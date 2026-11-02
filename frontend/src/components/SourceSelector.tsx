@@ -106,6 +106,8 @@ const DEFAULT_SOURCES: Record<string, string> = {
   AUX1: 'AUX1', AUX2: 'AUX2',
 }
 
+const isHeosName = (name: string) => /\bheos\b/i.test(name)
+
 type SourceFilter = 'inputs' | 'network' | 'favorites'
 type SourceCategory = 'inputs' | 'network' | 'media' | 'other'
 
@@ -288,6 +290,8 @@ export default function SourceSelector({
   // Backend resolves the actual HEOS service (Spotify, TuneIn, etc.) when source=NET
   const backendDisplayName = zone === 'main' ? state?.source_name : zone === 'zone2' ? state?.z2_source_name : state?.z3_source_name
   const activeSource = heosServiceCode || current
+  const activeSourceName = activeSource === 'BT' ? 'Bluetooth' : activeSource ? getName(activeSource) : ''
+  const showActiveHeosBadge = Boolean(heosServiceCode || activeSource === 'NET') && !isHeosName(activeSourceName)
   const activeDisplayName = activeSource === 'BT'
       ? 'Bluetooth'
       : (current ? sourceNameOverrides?.[current] : undefined) || backendDisplayName || (current ? getName(current) : '')
@@ -316,8 +320,8 @@ export default function SourceSelector({
         {activeSource && (
           <span className="text-xs text-denon-gold font-medium flex items-center gap-1">
             <span className="text-base">{getIcon(activeSource, activeDisplayName)}</span>
-            {activeSource === 'BT' ? 'Bluetooth' : getName(activeSource)}
-            {(heosServiceCode || activeSource === 'NET') && (
+            {activeSourceName}
+            {showActiveHeosBadge && (
               <span className="ml-1 rounded-full bg-denon-green/10 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-denon-green">
                 HEOS
               </span>
@@ -359,7 +363,7 @@ export default function SourceSelector({
                 >
                   <span className="block text-base leading-5">{getIcon(source.id, getName(source.id))}</span>
                   <span className="block max-w-[100px] truncate">{getName(source.id)}</span>
-                  {active && heosServiceCode === source.id && (
+                  {active && heosServiceCode === source.id && !isHeosName(getName(source.id)) && (
                     <span className="mt-0.5 inline-block rounded-full bg-denon-green/10 px-1.5 py-0.5 text-[8px] uppercase tracking-wider text-denon-green">
                       HEOS
                     </span>
