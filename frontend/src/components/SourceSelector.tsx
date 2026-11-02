@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import RadioBrowser from './RadioBrowser'
 import type { ReceiverState, SendCommandFn, SourceAudioProfile, SourceEntry, RadioFavorite, Zone } from '../types'
+import { findSourceProfile } from '../sourceProfiles'
 import { useLanguage } from '../language'
 
 const RadioTowerIcon = () => (
@@ -109,7 +110,7 @@ const DEFAULT_SOURCES: Record<string, string> = {
 const isHeosName = (name: string) => /\bheos\b/i.test(name)
 
 function formatSoundMode(mode: string, modes: ReceiverState['surround_mode_list']): string {
-  const displayName = modes?.find(entry => entry.command.toUpperCase() === mode.toUpperCase())?.display_name
+  const displayName = modes?.find(entry => entry.command.trim().toUpperCase() === mode.trim().toUpperCase())?.display_name
   if (displayName) return displayName
 
   const normalized = mode.trim().toUpperCase()
@@ -352,7 +353,7 @@ export default function SourceSelector({
         <button
           type="button"
           onClick={() => scrollHorizontalInputs('left')}
-          className="flex h-14 w-8 shrink-0 items-center justify-center rounded-lg bg-denon-card text-denon-muted hover:bg-denon-border/70 hover:text-denon-text"
+          className="flex h-[5.75rem] w-8 shrink-0 items-center justify-center rounded-lg bg-denon-card text-denon-muted hover:bg-denon-border/70 hover:text-denon-text"
           aria-label="Scroll inputs left"
           title="Previous inputs"
         >
@@ -362,7 +363,8 @@ export default function SourceSelector({
           <div className="flex min-w-max gap-1.5">
             {quickSources.map(source => {
               const active = activeSource === source.id || (source.id === 'GAME' && activeSource === 'GAME1')
-              const soundMode = sourceProfiles[source.id]?.surround_mode?.trim()
+              const profile = findSourceProfile(sourceProfiles, source.id)
+              const soundMode = profile?.surround_mode?.trim()
               const soundModeLabel = soundMode ? formatSoundMode(soundMode, state.surround_mode_list) : undefined
               const sourceName = getName(source.id)
               return (
@@ -371,14 +373,14 @@ export default function SourceSelector({
                   type="button"
                   onClick={() => sendCommand(getSourceCommand(source.id))}
                   title={soundModeLabel ? `${sourceName} · ${soundModeLabel}` : sourceName}
-                  className={`group relative flex h-[6.5rem] w-40 shrink-0 flex-col items-center gap-1 rounded-xl border px-3 py-2 text-center text-xs font-medium transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400 ${
+                  className={`group relative flex h-[5.75rem] w-40 shrink-0 flex-col items-center justify-center gap-1 rounded-xl border px-3 py-1.5 text-center text-xs font-medium transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400 ${
                     active
                       ? 'border-sky-400/90 bg-gradient-to-b from-sky-400/10 to-denon-surface/90 text-denon-text shadow-[0_0_16px_rgba(14,165,233,0.18)]'
                       : 'border-denon-border/80 bg-denon-surface/70 text-denon-text hover:border-slate-400/70 hover:bg-denon-surface'
                   }`}
                 >
                   <span
-                    className={`mt-0.5 h-3 w-3 shrink-0 rounded-full border ${
+                    className={`h-3 w-3 shrink-0 rounded-full border ${
                       active
                         ? 'border-sky-200 bg-sky-400 shadow-[0_0_10px_3px_rgba(14,165,233,0.8)]'
                         : 'border-slate-600 bg-slate-800 shadow-[inset_0_1px_2px_rgba(0,0,0,0.9)]'
@@ -403,7 +405,7 @@ export default function SourceSelector({
         <button
           type="button"
           onClick={() => scrollHorizontalInputs('right')}
-          className="flex h-14 w-8 shrink-0 items-center justify-center rounded-lg bg-denon-card text-denon-muted hover:bg-denon-border/70 hover:text-denon-text"
+          className="flex h-[5.75rem] w-8 shrink-0 items-center justify-center rounded-lg bg-denon-card text-denon-muted hover:bg-denon-border/70 hover:text-denon-text"
           aria-label="Scroll inputs right"
           title="Next inputs"
         >

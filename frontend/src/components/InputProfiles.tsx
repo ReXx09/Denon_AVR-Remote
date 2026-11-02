@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { ReceiverState, SourceAudioProfile, SourceEntry } from '../types'
+import { findSourceProfile } from '../sourceProfiles'
 import { useLanguage } from '../language'
 
 interface Props {
@@ -41,7 +42,7 @@ export default function InputProfiles({ sources, state, channelNames, sourceProf
   }, [selectedSource, sources])
 
   const liveChannels = state.channel_volumes || {}
-  const savedProfile = profiles[selectedSource]
+  const savedProfile = findSourceProfile(profiles, selectedSource)
   const profile: SourceAudioProfile = savedProfile || {
     bass: state.bass ?? 50,
     treble: state.treble ?? 50,
