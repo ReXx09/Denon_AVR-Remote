@@ -521,6 +521,7 @@ async def test_streamdeck_audio_profile_export_is_opt_in(mock_app_state, tmp_pat
 
     settings_path = tmp_path / "integration_settings.json"
     settings_path.write_text('{"receiver":{"host":"192.168.1.50"}}', encoding="utf-8")
+    monkeypatch.setattr(integration_settings, "_DATA_DIR", tmp_path)
     monkeypatch.setattr(integration_settings, "_SETTINGS_PATH", settings_path)
     mock_app_state.source_profiles = {"GAME": {"bass": 52}}
     transport = ASGITransport(app=app)
