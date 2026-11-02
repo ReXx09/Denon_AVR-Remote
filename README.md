@@ -228,6 +228,18 @@ The dashboard exposes a full REST API at `/api/v1/`. All POST endpoints accept J
 | `POST` | `/api/v1/eco` | `{"mode": "AUTO"}` | Eco mode (ON/AUTO/OFF) |
 | `POST` | `/api/v1/sleep` | `{"minutes": 30}` | Sleep timer |
 
+### Stream Deck Integration
+
+Stream Deck access to saved audio profiles is opt-in and disabled by default. Enable **Setup → Stream Deck → Share saved audio profiles** in the Dashboard. The plugin also needs its Dashboard URL configured and Dashboard Extras enabled.
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/v1/integrations/streamdeck/capabilities` | Reports whether profile access is enabled and which features are available |
+| `GET` | `/api/v1/integrations/streamdeck/source-profiles` | Exports saved input/audio profiles; returns `403` unless enabled |
+| `POST` | `/api/v1/integrations/streamdeck/source-profiles/{source}/apply` | Applies a saved profile; returns `403` unless enabled |
+
+This opt-in controls feature availability, not authentication. The integration API has no access token, so enable it only on a trusted local network.
+
 ### Zone 2
 
 | Method | Endpoint | Body | Description |

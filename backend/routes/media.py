@@ -265,8 +265,8 @@ def _add_cached_station_images(result: dict) -> dict:
 
     def tunein_image_url(mid: object) -> str | None:
         """Build TuneIn's stable logo URL for station mids such as ``s12345``."""
-        match = re.fullmatch(r"s(\d+)", str(mid or "").strip(), re.IGNORECASE)
-        return f"https://cdn-profiles.tunein.com/{match.group(1)}/images/logoq.png" if match else None
+        match = re.fullmatch(r"(s\d+)", str(mid or "").strip(), re.IGNORECASE)
+        return f"https://cdn-profiles.tunein.com/{match.group(1).lower()}/images/logoq.png" if match else None
 
     for _, (_, cached) in _BROWSE_CACHE.items():
         for station in cached.get("items", []):
@@ -558,4 +558,3 @@ async def radio_play(req: RadioPlayRequest, state: AppState = Depends(get_app_st
     if not ok:
         raise HTTPException(502, "Failed to play station")
     return {"ok": True}
-

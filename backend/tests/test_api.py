@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import sys
 import os
+import json
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -333,6 +334,23 @@ async def test_radio_status_no_heos(mock_app_no_connection):
     assert data["reason"] == "no_heos"
 
 
+def test_heos_favorite_image_fallback_preserves_tunein_station_id(monkeypatch):
+    import routes.media as media
+
+    monkeypatch.setattr(media, "_BROWSE_CACHE", {})
+    response = media._add_cached_station_images({
+        "items": [
+            {"mid": "s309360", "name": "RADIO BOB - NRW (Rock)", "image_url": ""},
+            {"mid": "s24854", "name": "Bayern 1", "image_url": ""},
+        ]
+    })
+
+    assert [item["image_url"] for item in response["items"]] == [
+        "https://cdn-profiles.tunein.com/s309360/images/logoq.png",
+        "https://cdn-profiles.tunein.com/s24854/images/logoq.png",
+    ]
+
+
 # ── Zone 2 ─────────────────────────────────────────────────────────────────────
 
 @pytest.mark.asyncio
@@ -494,6 +512,58 @@ async def test_source_audio_profile_applies_digital_input_level(mock_app_state):
 
     assert resp.status_code == 200
     set_level.assert_awaited_once_with("192.168.1.100", 5)
+
+
+@pytest.mark.asyncio
+async def test_streamdeck_audio_profile_export_is_opt_in(mock_app_state, tmp_path, monkeypatch):
+    import integration_settings
+    from main import app
+
+    settings_path = tmp_path / "integration_settings.json"
+    settings_path.write_text('{"receiver":{"host":"192.168.1.50"}}', encoding="utf-8")
+    monkeypatch.setattr(integration_settings, "_SETTINGS_PATH", settings_path)
+    mock_app_state.source_profiles = {"GAME": {"bass": 52}}
+    transport = ASGITransport(app=app)
+
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        capabilities = await ac.get("/api/v1/integrations/streamdeck/capabilities")
+        assert capabilities.json() == {"enabled": False, "features": []}
+
+        profiles = await ac.get("/api/v1/integrations/streamdeck/source-profiles")
+        assert profiles.status_code == 403
+        apply_disabled = await ac.post(
+            "/api/v1/integrations/streamdeck/source-profiles/GAME/apply"
+        )
+        assert apply_disabled.status_code == 403
+
+        dashboard_profiles = await ac.get("/api/v1/source-profiles")
+        assert dashboard_profiles.status_code == 200
+        assert dashboard_profiles.json()["profiles"]["GAME"]["bass"] == 52
+
+        saved = await ac.put(
+            "/api/v1/integrations/streamdeck/settings",
+            json={"audio_profiles": True},
+        )
+        assert saved.status_code == 200
+        assert saved.json()["audio_profiles_enabled"] is True
+
+        capabilities = await ac.get("/api/v1/integrations/streamdeck/capabilities")
+        assert capabilities.json() == {"enabled": True, "features": ["audio_profiles"]}
+
+        profiles = await ac.get("/api/v1/integrations/streamdeck/source-profiles")
+        assert profiles.status_code == 200
+        assert profiles.json()["profiles"] == mock_app_state.source_profiles
+
+        with patch.object(mock_app_state, "apply_source_profile", new=AsyncMock(return_value=True)) as apply_profile, \
+             patch.object(mock_app_state, "broadcast_state", new=AsyncMock()):
+            applied = await ac.post("/api/v1/integrations/streamdeck/source-profiles/GAME/apply")
+
+    assert applied.status_code == 200
+    assert applied.json() == {"ok": True, "source": "GAME"}
+    apply_profile.assert_awaited_once_with("GAME")
+    persisted = json.loads(settings_path.read_text(encoding="utf-8"))
+    assert persisted["receiver"]["host"] == "192.168.1.50"
+    assert persisted["streamdeck"]["audio_profiles"] is True
 
 
 @pytest.mark.asyncio

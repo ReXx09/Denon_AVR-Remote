@@ -31,10 +31,11 @@ export default function SetupMenu({ state, info }: Props) {
   const [telnetPort, setTelnetPort] = useState(23)
   const [heosPort, setHeosPort] = useState(1255)
   const [heosSources, setHeosSources] = useState(true)
+  const [streamDeckAudioProfiles, setStreamDeckAudioProfiles] = useState(false)
   const [heosAccount, setHeosAccount] = useState<boolean | null>(null)
   const [heosAccountName, setHeosAccountName] = useState<string | null>(null)
   const [heosServices, setHeosServices] = useState<string[]>([])
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({ navidrome: true, receiver: false, heos: false })
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({ navidrome: true, receiver: false, heos: false, streamdeck: false })
   const [saving, setSaving] = useState(false)
   const [testing, setTesting] = useState(false)
   const [setupMessage, setSetupMessage] = useState('')
@@ -48,16 +49,18 @@ export default function SetupMenu({ state, info }: Props) {
       fetch('/api/v1/media/navidrome/status'),
       fetch('/api/v1/media/navidrome/settings'),
       fetch('/api/v1/setup/settings'),
+      fetch('/api/v1/integrations/streamdeck/settings'),
     ])
-      .then(async ([statusResponse, settingsResponse, setupResponse]) => {
-        if (!statusResponse.ok || !settingsResponse.ok || !setupResponse.ok) throw new Error()
+      .then(async ([statusResponse, settingsResponse, setupResponse, streamDeckResponse]) => {
+        if (!statusResponse.ok || !settingsResponse.ok || !setupResponse.ok || !streamDeckResponse.ok) throw new Error()
         return await Promise.all([
           statusResponse.json() as Promise<{ configured?: boolean; service_name?: string }>,
           settingsResponse.json() as Promise<{ service_name?: string; url?: string; username?: string; has_password?: boolean }>,
           setupResponse.json() as Promise<{ receiver?: { host?: string; telnet_port?: number; heos_port?: number; heos_sources?: boolean } }>,
+          streamDeckResponse.json() as Promise<{ audio_profiles_enabled?: boolean }>,
         ])
       })
-      .then(([status, saved, setup]) => {
+      .then(([status, saved, setup, streamDeck]) => {
         setNavidromeConfigured(Boolean(status.configured))
         setMusicServerName(saved.service_name || status.service_name || 'Music server')
         setNavidromeUrl(saved.url || '')
@@ -67,6 +70,7 @@ export default function SetupMenu({ state, info }: Props) {
         setTelnetPort(setup.receiver?.telnet_port || 23)
         setHeosPort(setup.receiver?.heos_port || 1255)
         setHeosSources(setup.receiver?.heos_sources ?? true)
+        setStreamDeckAudioProfiles(streamDeck.audio_profiles_enabled === true)
       })
       .catch(() => {
         setNavidromeConfigured(false)
@@ -161,6 +165,27 @@ export default function SetupMenu({ state, info }: Props) {
     }
   }
 
+  const saveStreamDeckSettings = async () => {
+    setSaving(true)
+    setSetupMessage('')
+    setSetupError('')
+    try {
+      const response = await fetch('/api/v1/integrations/streamdeck/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ audio_profiles: streamDeckAudioProfiles }),
+      })
+      const data = await response.json() as { detail?: string; audio_profiles_enabled?: boolean }
+      if (!response.ok) throw new Error(data.detail || 'Could not save Stream Deck settings')
+      setStreamDeckAudioProfiles(data.audio_profiles_enabled === true)
+      setSetupMessage('Stream Deck integration settings saved')
+    } catch (error) {
+      setSetupError(error instanceof Error ? error.message : 'Could not save Stream Deck settings')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   const toggleSection = (section: string) => {
     setExpanded(current => ({ ...current, [section]: !current[section] }))
   }
@@ -227,6 +252,12 @@ export default function SetupMenu({ state, info }: Props) {
                 <span className="text-denon-green">Built in</span>
               </div>
               <div className="flex items-center justify-between rounded-xl bg-denon-surface/60 px-3 py-2.5">
+                <span className="text-denon-muted">Stream Deck</span>
+                <span className={streamDeckAudioProfiles ? 'text-denon-green' : 'text-denon-muted'}>
+                  {streamDeckAudioProfiles ? 'Audio profiles shared' : 'Not shared'}
+                </span>
+              </div>
+              <div className="flex items-center justify-between rounded-xl bg-denon-surface/60 px-3 py-2.5">
                 <span className="text-denon-muted">Navidrome</span>
                 <span className={navidromeConfigured ? 'text-denon-green' : 'text-denon-muted'}>
                   {navidromeConfigured === null ? 'Checking...' : navidromeConfigured ? 'Configured' : 'Not configured'}
@@ -269,6 +300,21 @@ export default function SetupMenu({ state, info }: Props) {
                   <button type="button" onClick={() => void saveNavidrome()} disabled={saving || Boolean(navidromeValidation)} className="flex-1 rounded-lg bg-denon-gold px-3 py-2 text-sm font-medium text-denon-dark hover:brightness-110 disabled:opacity-50">{saving ? 'Saving...' : 'Save'}</button>
                   <button type="button" onClick={() => void testNavidrome()} disabled={testing || !navidromeConfigured || Boolean(navidromeValidation)} className="flex-1 rounded-lg bg-denon-surface px-3 py-2 text-sm font-medium text-denon-text hover:bg-denon-border/70 disabled:opacity-50">{testing ? 'Testing...' : 'Test connection'}</button>
                 </div>
+              </div>}
+            </div>
+
+            <div className="border-t border-denon-border/50 pt-3">
+              <button type="button" onClick={() => toggleSection('streamdeck')} className="flex w-full items-center justify-between py-2 text-left">
+                <span><span className="block text-sm font-medium text-denon-text">Stream Deck</span><span className="mt-1 block text-xs text-denon-muted">Optional access to Dashboard audio profiles</span></span>
+                <span className="text-denon-muted" aria-hidden="true">{expanded.streamdeck ? '▲' : '▼'}</span>
+              </button>
+              {expanded.streamdeck && <div className="space-y-3 pt-3">
+                <label className="flex items-center justify-between rounded-lg bg-denon-surface px-3 py-2.5 text-sm text-denon-text">
+                  Share saved audio profiles
+                  <input type="checkbox" checked={streamDeckAudioProfiles} onChange={event => setStreamDeckAudioProfiles(event.target.checked)} className="h-4 w-4 accent-[var(--accent)]" />
+                </label>
+                <p className="text-xs leading-relaxed text-denon-muted">Allows the Stream Deck plugin to list and apply saved input/audio profiles through this Dashboard. This API has no access token; enable it only on a trusted local network.</p>
+                <button type="button" onClick={() => void saveStreamDeckSettings()} disabled={saving} className="w-full rounded-lg bg-denon-gold px-3 py-2 text-sm font-medium text-denon-dark hover:brightness-110 disabled:opacity-50">{saving ? 'Saving...' : 'Save Stream Deck settings'}</button>
               </div>}
             </div>
 

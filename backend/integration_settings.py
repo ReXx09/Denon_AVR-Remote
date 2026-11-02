@@ -74,3 +74,16 @@ def save_receiver_settings(host: str, telnet_port: int, heos_port: int, heos_sou
         "heos_sources": heos_sources,
     }
     _save(current)
+
+
+def streamdeck_settings() -> dict[str, bool]:
+    persisted = _load().get("streamdeck", {})
+    if not isinstance(persisted, dict):
+        persisted = {}
+    return {"audio_profiles": persisted.get("audio_profiles") is True}
+
+
+def save_streamdeck_settings(audio_profiles: bool) -> None:
+    current = _load()
+    current["streamdeck"] = {"audio_profiles": audio_profiles}
+    _save(current)
