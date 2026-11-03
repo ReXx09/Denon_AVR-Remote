@@ -379,24 +379,24 @@ export default function SourceSelector({
                   type="button"
                   onClick={() => sendCommand(getSourceCommand(source.id))}
                   title={soundModeLabel ? `${sourceName} · ${soundModeLabel}` : sourceName}
-                  className={`group relative flex h-[5.75rem] w-40 shrink-0 flex-col items-center justify-center gap-1 rounded-xl border px-3 py-1.5 text-center text-xs font-medium transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400 ${
+                  className={`group relative flex h-[5.75rem] w-40 shrink-0 flex-col items-center justify-start rounded-xl border px-3 py-1.5 text-center text-xs font-medium transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400 ${
                     active
                       ? 'border-sky-400/90 bg-gradient-to-b from-sky-400/10 to-denon-surface/90 text-denon-text shadow-[0_0_16px_rgba(14,165,233,0.18)]'
                       : 'border-denon-border/80 bg-denon-surface/70 text-denon-text hover:border-slate-400/70 hover:bg-denon-surface'
                   }`}
                 >
                   <span
-                    className={`h-3 w-3 shrink-0 rounded-full border ${
+                    className={`mt-1 h-3 w-3 shrink-0 rounded-full border ${
                       active
                         ? 'border-sky-200 bg-sky-400 shadow-[0_0_10px_3px_rgba(14,165,233,0.8)]'
                         : 'border-slate-600 bg-slate-800 shadow-[inset_0_1px_2px_rgba(0,0,0,0.9)]'
                     }`}
                     aria-hidden="true"
                   />
-                  <span className="block w-full truncate text-xs font-semibold">{sourceName}</span>
+                  <span className="mt-3 block w-full truncate text-xs font-semibold">{sourceName}</span>
                   {soundModeLabel
-                    ? <span className="max-w-full truncate rounded-full border border-sky-300/30 bg-sky-400/5 px-2 py-0.5 text-[9px] leading-3 text-sky-100">{soundModeLabel}</span>
-                    : <span className="h-[18px]" aria-hidden="true" />}
+                    ? <span className="mt-auto mb-1 max-w-full truncate rounded-full border border-sky-300/30 bg-sky-400/5 px-2 py-0.5 text-[9px] leading-3 text-sky-100">{soundModeLabel}</span>
+                    : <span className="mt-auto mb-1 h-[18px]" aria-hidden="true" />}
                   {active && (
                     <span
                       className="absolute inset-x-4 bottom-0 h-[3px] rounded-full bg-sky-300 shadow-[0_0_12px_2px_rgba(34,211,238,0.8)]"

@@ -3,6 +3,7 @@ import PowerControl from './PowerControl'
 import MediaControls from './MediaControls'
 import SourceSelector from './SourceSelector'
 import type { ReceiverState, SendCommandFn, PostFn, SourceEntry, RadioFavorite } from '../types'
+import { useVolumeSlider } from '../hooks/useVolumeSlider'
 
 interface Props {
   state: ReceiverState
@@ -26,7 +27,7 @@ export default function Zone2Controls({ state, sendCommand, post, volumeMax, onV
   const muted = state?.z2_muted
   const sleepTimer = state?.z2_sleep_timer
 
-  const [localVol, setLocalVol] = useState<number>(volume ?? 0)
+  const { localValue: localVol, change, finish } = useVolumeSlider(volume, post, '/zone2/volume')
   const [selectedSleep, setSelectedSleep] = useState<'OFF' | number>(sleepTimer ?? 'OFF')
   const [audioValues, setAudioValues] = useState({
     bass: state.z2_bass ?? 50,
@@ -34,10 +35,6 @@ export default function Zone2Controls({ state, sendCommand, post, volumeMax, onV
     balance: state.z2_balance ?? 50,
   })
   const [mono, setMono] = useState(state.z2_mono ?? false)
-
-  useEffect(() => {
-    if (volume != null) setLocalVol(volume)
-  }, [volume])
 
   useEffect(() => {
     setSelectedSleep(sleepTimer ?? 'OFF')
@@ -51,12 +48,6 @@ export default function Zone2Controls({ state, sendCommand, post, volumeMax, onV
     }))
     if (state.z2_mono != null) setMono(state.z2_mono)
   }, [state.z2_bass, state.z2_treble, state.z2_balance, state.z2_mono])
-
-  const handleVolChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const v = parseInt(e.target.value)
-    setLocalVol(v)
-    void post('/zone2/volume', { level: v })
-  }, [post])
 
   const setSleep = useCallback(() => {
     if (selectedSleep === 'OFF') sendCommand('Z2SLPOFF')
@@ -99,7 +90,10 @@ export default function Zone2Controls({ state, sendCommand, post, volumeMax, onV
         <input
           type="range" min={0} max={volumeMax} step={1}
           value={Math.min(localVol ?? 0, volumeMax)}
-          onChange={handleVolChange}
+          onChange={event => change(Number(event.target.value))}
+          onPointerUp={event => finish(Number(event.currentTarget.value))}
+          onPointerCancel={event => finish(Number(event.currentTarget.value))}
+          onKeyUp={event => finish(Number(event.currentTarget.value))}
           className="w-full"
         />
         <div className="mt-4 border-t border-denon-border/50 pt-3">

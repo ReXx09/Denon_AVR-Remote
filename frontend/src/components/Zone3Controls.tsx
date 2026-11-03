@@ -1,8 +1,9 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import PowerControl from './PowerControl'
 import MediaControls from './MediaControls'
 import SourceSelector from './SourceSelector'
 import type { ReceiverState, SendCommandFn, PostFn, SourceEntry, RadioFavorite } from '../types'
+import { useVolumeSlider } from '../hooks/useVolumeSlider'
 
 interface Props {
   state: ReceiverState
@@ -24,22 +25,12 @@ export default function Zone3Controls({ state, sendCommand, post, volumeMax, onV
   const volume = state?.z3_volume
   const muted = state?.z3_muted
   const sleepTimer = state?.z3_sleep_timer
-  const [localVol, setLocalVol] = useState<number>(volume ?? 0)
+  const { localValue: localVol, change, finish } = useVolumeSlider(volume, post, '/zone3/volume')
   const [selectedSleep, setSelectedSleep] = useState<'OFF' | number>(sleepTimer ?? 'OFF')
-
-  useEffect(() => {
-    if (volume != null) setLocalVol(volume)
-  }, [volume])
 
   useEffect(() => {
     setSelectedSleep(sleepTimer ?? 'OFF')
   }, [sleepTimer])
-
-  const handleVolChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value, 10)
-    setLocalVol(value)
-    void post('/zone3/volume', { level: value })
-  }, [post])
 
   return (
     <div className="space-y-4">
@@ -65,7 +56,18 @@ export default function Zone3Controls({ state, sendCommand, post, volumeMax, onV
             <button disabled={volume == null || volume >= volumeMax} onClick={() => void post('/zone3/volume', { level: Math.min(volumeMax, (volume ?? 0) + 1) })} className="btn-ghost w-10 h-10 flex items-center justify-center text-lg font-bold disabled:opacity-40">+</button>
           </div>
         </div>
-        <input type="range" min={0} max={volumeMax} step={1} value={Math.min(localVol, volumeMax)} onChange={handleVolChange} className="w-full" />
+        <input
+          type="range"
+          min={0}
+          max={volumeMax}
+          step={1}
+          value={Math.min(localVol ?? 0, volumeMax)}
+          onChange={event => change(Number(event.target.value))}
+          onPointerUp={event => finish(Number(event.currentTarget.value))}
+          onPointerCancel={event => finish(Number(event.currentTarget.value))}
+          onKeyUp={event => finish(Number(event.currentTarget.value))}
+          className="w-full"
+        />
         <div className="mt-4 border-t border-denon-border/50 pt-3">
           <label className="mb-1 flex items-center justify-between text-xs text-denon-muted" htmlFor="zone3-volume-max">
             <span>Dashboard-Maximum</span>

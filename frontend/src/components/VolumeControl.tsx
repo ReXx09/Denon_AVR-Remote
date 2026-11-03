@@ -1,6 +1,7 @@
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import type { ReceiverState, SendCommandFn, PostFn } from '../types'
 import { useLanguage } from '../language'
+import { useVolumeSlider } from '../hooks/useVolumeSlider'
 
 interface Props {
   state: ReceiverState
@@ -15,14 +16,9 @@ export default function VolumeControl({ state, sendCommand, post, zone2VolumeMax
   const volume = state?.volume
   const muted = state?.muted
   const volumeMax = state?.volume_max || 98
-  const [dragging, setDragging] = useState(false)
-  const [localVol, setLocalVol] = useState<number | undefined>(volume)
+  const { localValue: localVol, dragging, change, finish } = useVolumeSlider(volume, post, '/volume')
   const [zonesLinked, setZonesLinked] = useState(true)
   const previousVolume = useRef<number | undefined>(undefined)
-
-  useEffect(() => {
-    if (!dragging && volume != null) setLocalVol(volume)
-  }, [volume, dragging])
 
   useEffect(() => {
     if (volume == null) return
@@ -42,13 +38,6 @@ export default function VolumeControl({ state, sendCommand, post, zone2VolumeMax
 
   const displayVol = dragging ? localVol : volume
   const dB = displayVol != null ? (displayVol - 80).toFixed(1) : '—'
-
-  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = parseFloat(e.target.value)
-    setLocalVol(val)
-    setDragging(true)
-    void post('/volume', { level: val })
-  }, [post])
 
   return (
     <div className="card">
@@ -117,9 +106,10 @@ export default function VolumeControl({ state, sendCommand, post, zone2VolumeMax
         aria-label="Main zone volume"
         min={0} max={Math.min(volumeMax, 98)} step={0.5}
         value={displayVol ?? 0}
-        onChange={handleChange}
-        onPointerUp={() => setDragging(false)}
-        onPointerCancel={() => setDragging(false)}
+        onChange={event => change(parseFloat(event.target.value))}
+        onPointerUp={event => finish(parseFloat(event.currentTarget.value))}
+        onPointerCancel={event => finish(parseFloat(event.currentTarget.value))}
+        onKeyUp={event => finish(parseFloat(event.currentTarget.value))}
         className="w-full"
       />
       <div className="flex justify-between text-[10px] text-denon-muted/50 mt-1.5 px-0.5">
