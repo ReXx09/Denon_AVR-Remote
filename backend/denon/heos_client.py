@@ -298,6 +298,7 @@ class HeosClient:
     async def play_stream(self, sid: int, mid: str) -> bool:
         """Play a stream directly (e.g., a TuneIn radio station)."""
         if not self._pid:
+            _LOGGER.warning("HEOS play_stream failed: no player ID (sid=%s, mid=%s)", sid, mid[:80])
             return False
             
         # Prevent HEOS command injection via mid parameter
@@ -307,5 +308,14 @@ class HeosClient:
             
         encoded_mid = quote(mid, safe="")
         resp = await self._command("browse/play_stream", f"pid={self._pid}&sid={sid}&mid={encoded_mid}")
-        return resp is not None and resp.get("heos", {}).get("result") == "success"
-
+        heos = resp.get("heos") if isinstance(resp, dict) else None
+        if not isinstance(heos, dict) or heos.get("result") != "success":
+            _LOGGER.warning(
+                "HEOS play_stream rejected: sid=%s, mid=%s, result=%s, message=%s",
+                sid,
+                mid[:80],
+                heos.get("result") if heos else "no response",
+                heos.get("message") if heos else "no HEOS response",
+            )
+            return False
+        return True
