@@ -6,9 +6,11 @@ const SOURCE_PROFILE_ALIASES: Record<string, string> = {
 }
 
 export function findSourceProfile(
-  profiles: Record<string, SourceAudioProfile>,
-  sourceCode: string,
+  profiles: Record<string, SourceAudioProfile> | null | undefined,
+  sourceCode: string | null | undefined,
 ): SourceAudioProfile | undefined {
+  if (!profiles || typeof sourceCode !== 'string') return undefined
+
   const normalize = (code: string) => {
     const normalized = code.trim().toUpperCase()
     return SOURCE_PROFILE_ALIASES[normalized] || normalized

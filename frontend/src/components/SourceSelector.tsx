@@ -109,11 +109,17 @@ const DEFAULT_SOURCES: Record<string, string> = {
 
 const isHeosName = (name: string) => /\bheos\b/i.test(name)
 
-function formatSoundMode(mode: string, modes: ReceiverState['surround_mode_list']): string {
-  const displayName = modes?.find(entry => entry.command.trim().toUpperCase() === mode.trim().toUpperCase())?.display_name
+function formatSoundMode(mode: string | null | undefined, modes: ReceiverState['surround_mode_list']): string {
+  if (typeof mode !== 'string') return ''
+  const normalizedMode = mode.trim().toUpperCase()
+  if (!normalizedMode) return ''
+
+  const displayName = modes?.find(
+    entry => typeof entry?.command === 'string' && entry.command.trim().toUpperCase() === normalizedMode,
+  )?.display_name
   if (displayName) return displayName
 
-  const normalized = mode.trim().toUpperCase()
+  const normalized = normalizedMode
   if (normalized === 'AUTO') return 'Auto'
   if (normalized === 'PCM' || normalized === 'DTS:X') return normalized
   return normalized.toLowerCase().replace(/\b[a-z]/g, letter => letter.toUpperCase())
