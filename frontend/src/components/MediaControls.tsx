@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import RadioBrowser from './RadioBrowser'
 import ServerBrowser from './ServerBrowser'
 import NavidromeBrowser from './NavidromeBrowser'
@@ -89,6 +89,8 @@ export default function MediaControls({
   const [queueError, setQueueError] = useState(false)
   const [heosPresets, setHeosPresets] = useState<HeosPreset[]>([])
   const [heosPresetsLoading, setHeosPresetsLoading] = useState(false)
+  const [heosPresetsError, setHeosPresetsError] = useState(false)
+  const [presetActionError, setPresetActionError] = useState(false)
   const [heosPresetsOpen, setHeosPresetsOpen] = useState(false)
   const [radioOpen, setRadioOpen] = useState(false)
   const [optimisticPlayState, setOptimisticPlayState] = useState<string | null>(null)
@@ -131,27 +133,50 @@ export default function MediaControls({
     if (mediaCapable) void loadQueue()
   }, [mediaCapable, nowPlaying?.song, nowPlaying?.station])
 
+  const loadHeosPresets = useCallback(async (signal?: AbortSignal) => {
+    setHeosPresetsLoading(true)
+    setHeosPresetsError(false)
+    try {
+      const response = await fetch('/api/v1/media/heos/favorites', { signal })
+      if (!response.ok) throw new Error(`HEOS presets request failed: ${response.status}`)
+      const data = await response.json() as { items?: HeosPreset[] }
+      setHeosPresets((data.items || []).filter(item => item.mid && item.playable === 'yes'))
+    } catch (error) {
+      if (signal?.aborted) return
+      console.warn('HEOS presets unavailable:', error)
+      setHeosPresets([])
+      setHeosPresetsError(true)
+    } finally {
+      if (!signal?.aborted) setHeosPresetsLoading(false)
+    }
+  }, [])
+
   useEffect(() => {
     if (!heosSourceSelected) {
       setHeosPresetsOpen(false)
       setHeosPresets([])
+      setHeosPresetsError(false)
       return
     }
-    setHeosPresetsLoading(true)
-    fetch('/api/v1/media/heos/favorites')
-      .then(response => response.ok ? response.json() as Promise<{ items?: HeosPreset[] }> : Promise.reject())
-      .then(data => setHeosPresets((data.items || []).filter(item => item.mid && item.playable === 'yes')))
-      .catch(() => setHeosPresets([]))
-      .finally(() => setHeosPresetsLoading(false))
-  }, [heosSourceSelected])
+    const controller = new AbortController()
+    void loadHeosPresets(controller.signal)
+    return () => controller.abort()
+  }, [heosSourceSelected, loadHeosPresets])
 
   const playPreset = async (preset: HeosPreset) => {
     if (!preset.mid) return
-    await fetch('/api/v1/media/heos/favorites/play', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sid: Number(preset.sid ?? 1028), mid: preset.mid }),
-    })
+    setPresetActionError(false)
+    try {
+      const response = await fetch('/api/v1/media/heos/favorites/play', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sid: Number(preset.sid ?? 1028), mid: preset.mid }),
+      })
+      if (!response.ok) throw new Error(`HEOS preset playback failed: ${response.status}`)
+    } catch (error) {
+      console.warn('Could not start HEOS preset:', error)
+      setPresetActionError(true)
+    }
   }
 
   if (!mediaCapable) {
@@ -305,8 +330,23 @@ export default function MediaControls({
           {heosPresetsOpen && heosPresetsLoading && (
             <p className="py-3 text-xs text-denon-muted">{tr('Loading presets...')}</p>
           )}
-          {heosPresetsOpen && !heosPresetsLoading && heosPresets.length === 0 && (
+          {heosPresetsOpen && !heosPresetsLoading && heosPresetsError && (
+            <div className="flex items-center justify-between gap-3 py-3">
+              <p role="status" className="text-xs text-denon-red">{tr('HEOS presets could not be loaded')}</p>
+              <button
+                type="button"
+                onClick={() => void loadHeosPresets()}
+                className="text-xs text-denon-gold hover:text-denon-text"
+              >
+                {tr('Retry')}
+              </button>
+            </div>
+          )}
+          {heosPresetsOpen && !heosPresetsLoading && !heosPresetsError && heosPresets.length === 0 && (
             <p className="py-3 text-xs text-denon-muted">{tr('No presets available')}</p>
+          )}
+          {heosPresetsOpen && presetActionError && (
+            <p role="alert" className="py-2 text-xs text-denon-red">{tr('Could not start preset')}</p>
           )}
           {heosPresetsOpen && !heosPresetsLoading && heosPresets.length > 0 && <div className="flex gap-3 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
             {heosPresets.map((preset, index) => (
@@ -352,12 +392,12 @@ export default function MediaControls({
             {queueLoading && <p className="text-xs text-denon-muted">Loading queue...</p>}
             {!queueLoading && queueError && (
               <div className="flex items-center justify-between gap-3">
-                <p className="text-xs text-denon-muted">Queue unavailable</p>
+                <p className="text-xs text-denon-muted">{tr('Queue unavailable')}</p>
                 <button
                   onClick={() => void loadQueue()}
                   className="text-xs text-denon-gold hover:text-denon-text"
                 >
-                  Retry
+                  {tr('Retry')}
                 </button>
               </div>
             )}

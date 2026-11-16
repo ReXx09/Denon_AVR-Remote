@@ -295,6 +295,11 @@ class HealthResponse(BaseModel):
     status: str
     telnet_connected: bool
     receiver_ip: str
+    heos_enabled: bool = True
+    heos_connected: bool = False
+    heos_player_available: bool = False
+    heos_last_response_at: str | None = None
+    heos_last_error: str | None = None
     receiver_power: bool | None = None
     device_name: str | None = None
     discovery_mode: bool = False

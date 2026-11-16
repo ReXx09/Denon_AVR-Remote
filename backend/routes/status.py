@@ -85,10 +85,20 @@ async def update_setup_settings(req: ReceiverSettingsRequest, state: AppState = 
 
 @router.get("/health", response_model=HealthResponse)
 async def health(state: AppState = Depends(get_app_state)):
+    configured = receiver_settings()
+    telnet_connected = bool(state.telnet and state.telnet.connected)
+    heos_connected = bool(state.heos and state.heos.connected)
+    heos_enabled = configured["heos_sources"]
+    status_ok = telnet_connected and (not heos_enabled or heos_connected)
     return HealthResponse(
-        status="ok" if (state.telnet and state.telnet.connected) else "degraded",
-        telnet_connected=state.telnet.connected if state.telnet else False,
+        status="ok" if status_ok else "degraded",
+        telnet_connected=telnet_connected,
         receiver_ip=state.telnet.host if state.telnet else "0.0.0.0",
+        heos_enabled=heos_enabled,
+        heos_connected=heos_connected,
+        heos_player_available=bool(state.heos and state.heos.player_id is not None),
+        heos_last_response_at=state.heos.last_response_at if state.heos else None,
+        heos_last_error=(state.heos.last_error or "")[:160] or None if state.heos else None,
         receiver_power=state.telnet.state.get("power") if state.telnet else None,
         device_name=settings.denon_device_name,
         discovery_mode=not bool(settings.denon_host),

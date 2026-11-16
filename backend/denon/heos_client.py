@@ -4,12 +4,16 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import time
+from datetime import datetime, timezone
 from urllib.parse import quote
 from typing import Any, Callable, Coroutine
 
 _LOGGER = logging.getLogger("denon.heos_client")
 
 HEOS_PORT = 1255
+RECONNECT_INITIAL_DELAY = 2.0
+RECONNECT_MAX_DELAY = 30.0
 
 
 class HeosClient:
@@ -21,10 +25,15 @@ class HeosClient:
         self._reader: asyncio.StreamReader | None = None
         self._writer: asyncio.StreamWriter | None = None
         self._lock = asyncio.Lock()
+        self._reconnect_lock = asyncio.Lock()
         self._pid: int | None = None
         self._listen_task: asyncio.Task | None = None
         self._pending_commands: list[tuple[str, asyncio.Future]] = []
         self._callbacks: list[Callable[[dict[str, Any]], Coroutine]] = []
+        self._last_response_at: str | None = None
+        self._last_error: str | None = None
+        self._next_reconnect_at = 0.0
+        self._reconnect_delay = RECONNECT_INITIAL_DELAY
 
     def on_event(self, cb: Callable[[dict[str, Any]], Coroutine]) -> None:
         """Register a callback for unsolicited HEOS events."""
@@ -53,27 +62,41 @@ class HeosClient:
             # Enable change events
             await self._command("system/register_for_change_events", "enable=on")
         except Exception as exc:
+            self._last_error = str(exc) or exc.__class__.__name__
             _LOGGER.warning("HEOS connection failed: %s", exc)
             await self.disconnect()
 
     async def disconnect(self) -> None:
-        if self._listen_task:
-            self._listen_task.cancel()
-            self._listen_task = None
-            
-        for _, fut in self._pending_commands:
-            if not fut.done():
-                fut.cancel()
-        self._pending_commands.clear()
-        
-        if self._writer:
-            try:
-                self._writer.close()
-                await self._writer.wait_closed()
-            except Exception:
-                pass
+        current_task = asyncio.current_task()
+        listen_task, self._listen_task = self._listen_task, None
+        writer, self._writer = self._writer, None
         self._reader = None
-        self._writer = None
+
+        pending_commands, self._pending_commands = self._pending_commands, []
+        for _, fut in pending_commands:
+            if not fut.done():
+                fut.set_result(None)
+
+        try:
+            if listen_task and listen_task is not current_task:
+                listen_task.cancel()
+                try:
+                    await listen_task
+                except asyncio.CancelledError:
+                    if current_task and current_task.cancelling():
+                        raise
+
+        finally:
+            if writer:
+                writer.close()
+                try:
+                    await writer.wait_closed()
+                except asyncio.CancelledError:
+                    if current_task and current_task.cancelling():
+                        raise
+                    _LOGGER.debug("HEOS writer close waiter was already cancelled")
+                except (ConnectionError, OSError) as exc:
+                    _LOGGER.debug("HEOS writer close failed: %s", exc)
 
     @property
     def connected(self) -> bool:
@@ -83,6 +106,14 @@ class HeosClient:
     def player_id(self) -> int | None:
         return self._pid
 
+    @property
+    def last_response_at(self) -> str | None:
+        return self._last_response_at
+
+    @property
+    def last_error(self) -> str | None:
+        return self._last_error
+
     async def _listen(self) -> None:
         """Background task to read HEOS stream."""
         try:
@@ -90,6 +121,7 @@ class HeosClient:
                 try:
                     line = await self._reader.readline()
                     if not line:
+                        self._last_error = "HEOS connection closed by receiver"
                         break
                     
                     data = json.loads(line.decode().strip())
@@ -100,7 +132,11 @@ class HeosClient:
                     msg = heos.get("message", "")
                     
                     # Unsolicited events
-                    if "event" in cmd or cmd in ("player/state_changed", "player/now_playing_changed", "player/now_playing_progress"):
+                    if cmd.startswith("event/") or cmd in (
+                        "player/state_changed",
+                        "player/now_playing_changed",
+                        "player/now_playing_progress",
+                    ):
                         for cb in self._callbacks:
                             try:
                                 await cb(data)
@@ -131,12 +167,14 @@ class HeosClient:
 
     async def _command(self, cmd: str, params: str = "", timeout: float = 8.0) -> dict[str, Any] | None:
         """Send a HEOS command and wait for parsed JSON response via the event loop."""
+        if not self.connected:
+            await self._reconnect()
+            if not self.connected:
+                return None
+
         async with self._lock:
             if not self.connected:
-                await self._reconnect()
-                if not self.connected:
-                    return None
-                    
+                return None
             try:
                 url = f"heos://{cmd}"
                 if params:
@@ -149,20 +187,40 @@ class HeosClient:
                 self._writer.write(f"{url}\r\n".encode())
                 await self._writer.drain()
             except Exception as exc:
+                self._last_error = str(exc) or exc.__class__.__name__
                 _LOGGER.warning("HEOS command send error (%s): %s", cmd, exc)
                 await self.disconnect()
                 return None
                 
         try:
-            return await asyncio.wait_for(fut, timeout=timeout)
+            response = await asyncio.wait_for(fut, timeout=timeout)
+            if response is not None:
+                self._last_response_at = datetime.now(timezone.utc).isoformat()
+                self._last_error = None
+            return response
         except asyncio.TimeoutError:
+            self._last_error = f"{cmd} timed out"
             _LOGGER.warning("HEOS command timeout: %s", cmd)
             self._pending_commands = [(c, f) for c, f in self._pending_commands if f != fut]
             return None
 
     async def _reconnect(self) -> None:
-        await self.disconnect()
-        await self.connect()
+        async with self._reconnect_lock:
+            if self.connected:
+                return
+
+            now = time.monotonic()
+            if now < self._next_reconnect_at:
+                return
+
+            self._next_reconnect_at = now + self._reconnect_delay
+            await self.disconnect()
+            await self.connect()
+            if self.connected:
+                self._reconnect_delay = RECONNECT_INITIAL_DELAY
+                self._next_reconnect_at = 0.0
+            else:
+                self._reconnect_delay = min(self._reconnect_delay * 2, RECONNECT_MAX_DELAY)
 
     def _pid_param(self) -> str:
         return f"pid={self._pid}" if self._pid else ""
@@ -204,12 +262,12 @@ class HeosClient:
             return resp["payload"]
         return None
 
-    async def get_queue(self) -> list[dict[str, Any]]:
-        """Return the current HEOS playback queue."""
+    async def get_queue(self) -> list[dict[str, Any]] | None:
+        """Return the playback queue, or None when HEOS could not provide it."""
         resp = await self._command("player/get_queue", self._pid_param(), timeout=5.0)
-        if resp and isinstance(resp.get("payload"), list):
+        if resp and resp.get("heos", {}).get("result") != "fail" and isinstance(resp.get("payload"), list):
             return resp["payload"]
-        return []
+        return None
 
     async def get_music_sources(self) -> list[dict[str, Any]]:
         """Return available HEOS music sources (streaming services)."""

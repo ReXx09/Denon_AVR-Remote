@@ -32,6 +32,9 @@ def _make_mock_heos():
     """Create a mock HEOS client."""
     mock = MagicMock()
     mock.connected = True
+    mock.player_id = 123
+    mock.last_response_at = "2026-11-16T17:00:00+00:00"
+    mock.last_error = None
     mock.play = AsyncMock(return_value=True)
     mock.pause = AsyncMock(return_value=True)
     mock.stop = AsyncMock(return_value=True)
@@ -83,6 +86,23 @@ async def test_health_connected(mock_app_state):
     data = resp.json()
     assert data["status"] == "ok"
     assert data["telnet_connected"] is True
+    assert data["heos_connected"] is True
+    assert data["heos_player_available"] is True
+
+
+@pytest.mark.asyncio
+async def test_health_reports_heos_unavailable_separately(mock_app_state):
+    from main import app
+
+    mock_app_state.heos.connected = False
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        resp = await ac.get("/api/v1/health")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["status"] == "degraded"
+    assert data["telnet_connected"] is True
+    assert data["heos_connected"] is False
 
 
 @pytest.mark.asyncio
@@ -281,6 +301,37 @@ async def test_media_queue(mock_app_state):
     assert data["total"] == 1
     assert data["queue"][0]["song"] == "Queued Song"
     mock_app_state.heos.get_queue.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_media_queue_reports_heos_failure_not_empty_queue(mock_app_state):
+    from main import app
+
+    mock_app_state.heos.get_queue = AsyncMock(return_value=None)
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        resp = await ac.get("/api/v1/media/queue")
+    assert resp.status_code == 502
+
+
+@pytest.mark.asyncio
+async def test_heos_favorites_preserve_empty_list_but_report_browse_failure(mock_app_state):
+    from main import app
+
+    mock_app_state.heos.browse_source = AsyncMock(
+        return_value={"items": [], "count": 0, "returned": 0, "_debug": "no_items"}
+    )
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        empty_response = await ac.get("/api/v1/media/heos/favorites")
+        mock_app_state.heos.browse_source = AsyncMock(
+            return_value={"items": [], "count": 0, "returned": 0, "_debug": "timeout_or_error"}
+        )
+        failed_response = await ac.get("/api/v1/media/heos/favorites")
+
+    assert empty_response.status_code == 200
+    assert empty_response.json()["items"] == []
+    assert failed_response.status_code == 502
 
 
 # ── Radio status ───────────────────────────────────────────────────────────────

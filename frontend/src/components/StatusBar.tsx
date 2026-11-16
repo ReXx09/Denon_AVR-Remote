@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import ThemePicker from './ThemePicker'
 import SetupMenu from './SetupMenu'
 import type { ReceiverState, DeviceInfo, ThemeName } from '../types'
@@ -18,9 +18,43 @@ interface Props {
 export default function StatusBar({ deviceName, state, info, wsConnected, wsConnecting, receiverIp, currentTheme, onThemeChange }: Props) {
   const { tr } = useLanguage()
   const [expanded, setExpanded] = useState(false)
+  const [health, setHealth] = useState<{
+    heos_enabled: boolean
+    heos_connected: boolean
+    heos_player_available: boolean
+    heos_last_response_at: string | null
+    heos_last_error: string | null
+  } | null>(null)
   const telnetOk = state?.connected
   const power = state?.power
   const ok = telnetOk && (wsConnected || wsConnecting)
+
+  useEffect(() => {
+    let active = true
+    const loadHealth = async () => {
+      try {
+        const response = await fetch('/api/v1/health')
+        if (!response.ok) throw new Error(`Health request failed: ${response.status}`)
+        const data = await response.json()
+        if (active) setHealth(data)
+      } catch (error) {
+        console.warn('Health status unavailable:', error)
+      }
+    }
+
+    void loadHealth()
+    const timer = setInterval(() => void loadHealth(), 10000)
+    return () => {
+      active = false
+      clearInterval(timer)
+    }
+  }, [])
+
+  const heosStatus = health?.heos_enabled === false
+    ? tr('Disabled')
+    : health?.heos_connected
+      ? health.heos_player_available ? tr('Connected') : `${tr('Connected')} · ${tr('No player')}`
+      : health ? tr('Unavailable') : tr('Unknown')
 
   return (
     <div className="pt-5 pb-3">
@@ -70,6 +104,23 @@ export default function StatusBar({ deviceName, state, info, wsConnected, wsConn
               {wsConnected ? '● Connected' : wsConnecting ? '● Connecting' : '● HTTP fallback'}
             </span>
           </div>
+          <div className="flex justify-between">
+            <span className="text-denon-muted">{tr('HEOS Connection')}</span>
+            <span className={health?.heos_connected ? 'text-denon-green' : health?.heos_enabled === false ? 'text-denon-muted' : 'text-denon-red'}>
+              {health?.heos_connected ? '● ' : health?.heos_enabled === false ? '' : '● '}{heosStatus}
+            </span>
+          </div>
+          {health?.heos_last_response_at && (
+            <div className="flex justify-between">
+              <span className="text-denon-muted">{tr('Last HEOS response')}</span>
+              <span className="text-denon-text">
+                {new Date(health.heos_last_response_at).toLocaleTimeString()}
+              </span>
+            </div>
+          )}
+          {!health?.heos_connected && health?.heos_last_error && (
+            <p className="break-words text-[10px] text-denon-red/80">{health.heos_last_error}</p>
+          )}
           <div className="flex justify-between">
             <span className="text-denon-muted">{tr('Power State')}</span>
             <span className="text-denon-text">{power === true ? 'On' : power === false ? 'Standby' : 'Unknown'}</span>

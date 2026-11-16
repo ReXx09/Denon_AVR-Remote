@@ -209,6 +209,9 @@ async def media_queue(state: AppState = Depends(get_app_state)):
     if not state.heos:
         raise HTTPException(503, "HEOS not connected")
     queue = await state.heos.get_queue()
+    if queue is None:
+        status_code = 502 if state.heos.connected else 503
+        raise HTTPException(status_code, "HEOS queue could not be loaded")
     return {"queue": queue, "total": len(queue)}
 
 
@@ -372,7 +375,11 @@ async def heos_favorites(state: AppState = Depends(get_app_state)):
     """Read presets saved on the receiver through the HEOS Favorites source."""
     if not state.heos:
         raise HTTPException(503, "HEOS not connected")
-    return _add_cached_station_images(await state.heos.browse_source(1028))
+    result = await state.heos.browse_source(1028)
+    if result.get("_debug") in {"timeout_or_error", "fail"}:
+        status_code = 502 if state.heos.connected else 503
+        raise HTTPException(status_code, "HEOS presets could not be loaded")
+    return _add_cached_station_images(result)
 
 
 @router.get("/heos/services")
